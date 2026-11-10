@@ -68,6 +68,14 @@ RULES: list[tuple[str, str]] = [
     (r"AMAZON|AMZN|TARGET|WALMART|WAL-MART|BEST BUY|SHEIN|TEMU|ETSY|EBAY|NIKE|OLD NAVY|TJ ?MAXX|ROSS|MARSHALLS|HOME DEPOT|LOWE'S|LOWES|IKEA|APPLE STORE", "shopping"),
     (r"AMC|REGAL|CINEMA|TICKETMASTER|STUBHUB|EVENTBRITE|STEAM|BOWLING|TOPGOLF|CONCERT|DAVE & BUSTER", "entertainment"),
     (r"OVERDRAFT|NSF FEE|MONTHLY SERVICE FEE|ATM FEE|LATE FEE|SERVICE CHARGE", "fees"),
+    # plain words people type in chat ("$20 on food", "gas", "groceries")
+    (r"\bGROCER", "groceries"),
+    (r"\b(FOOD|LUNCH|DINNER|BREAKFAST|BRUNCH|COFFEE|TAKEOUT|TAKE OUT|DRINKS|SNACKS?|PIZZA|FAST FOOD)\b", "dining"),
+    (r"\b(GAS|FUEL|PARKING|BUS|TRAIN|RIDE|RIDES|TOLLS?)\b", "transport"),
+    (r"\b(CLOTHES|SHOES|OUTFIT)\b", "shopping"),
+    (r"\b(MOVIES?|CONCERT|GAMES?|BOWLING|TICKETS?)\b", "entertainment"),
+    (r"\b(HAIRCUT|NAILS)\b", "personal"),
+    (r"\b(MEDICINE|MEDS|DOCTOR|COPAY|PRESCRIPTION)\b", "health"),
 ]
 _COMPILED = [(re.compile(p), c) for p, c in RULES]
 
