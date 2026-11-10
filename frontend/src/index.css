@@ -1,0 +1,87 @@
+@import "@fontsource-variable/bricolage-grotesque";
+@import "@fontsource-variable/figtree";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Design tokens (RGB triplets so Tailwind can add opacity).
+   Forest green = money that's safe, marigold = careful, berry = stop. */
+:root {
+  --canvas: 244 246 241;      /* cool, slightly green off-white */
+  --surface: 255 255 255;
+  --sunken: 234 238 231;
+  --line: 218 225 215;
+  --ink: 22 36 29;            /* deep green-black text */
+  --muted: 86 104 94;
+  --faint: 140 155 146;
+  --forest: 31 111 84;
+  --forest-soft: 216 236 226;
+  --marigold: 214 145 22;
+  --marigold-soft: 252 238 205;
+  --berry: 196 60 72;
+  --berry-soft: 250 223 225;
+  --sky: 52 120 196;
+  --shadow: 22 36 29;
+  color-scheme: light;
+}
+
+.dark {
+  --canvas: 13 20 17;
+  --surface: 21 30 26;
+  --sunken: 28 39 34;
+  --line: 44 58 51;
+  --ink: 230 239 233;
+  --muted: 160 178 168;
+  --faint: 112 130 120;
+  --forest: 88 200 154;
+  --forest-soft: 25 58 45;
+  --marigold: 245 190 84;
+  --marigold-soft: 66 52 22;
+  --berry: 244 120 128;
+  --berry-soft: 70 30 34;
+  --sky: 120 172 236;
+  --shadow: 0 0 0;
+  color-scheme: dark;
+}
+
+@layer base {
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    @apply bg-canvas text-ink font-sans antialiased;
+    font-size: 15.5px;
+    line-height: 1.55;
+    font-feature-settings: "tnum" 0;
+  }
+  h1, h2, h3 { @apply font-display text-ink; letter-spacing: -0.015em; }
+  :focus-visible { outline: 2px solid rgb(var(--forest)); outline-offset: 2px; border-radius: 8px; }
+  ::selection { background: rgb(var(--forest) / 0.18); }
+}
+
+@layer components {
+  .num { font-variant-numeric: tabular-nums; }
+  .panel { @apply bg-surface rounded-2xl border border-line; }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[0.95rem] font-semibold
+           transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-primary { @apply btn bg-forest text-white hover:bg-forest/90 dark:text-canvas; }
+  .btn-quiet { @apply btn bg-sunken text-ink hover:bg-line/70; }
+  .btn-ghost { @apply btn bg-transparent text-muted hover:text-ink hover:bg-sunken; }
+  .field {
+    @apply w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-ink placeholder:text-faint
+           focus:outline-none focus:ring-2 focus:ring-forest/40 focus:border-forest/60;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[0.8rem] font-medium;
+  }
+  .prose-chat p { @apply my-1.5; }
+  .prose-chat ul { @apply my-1.5 list-disc pl-5 space-y-0.5; }
+  .prose-chat ol { @apply my-1.5 list-decimal pl-5 space-y-0.5; }
+  .prose-chat strong { @apply font-semibold text-ink; }
+  .prose-chat em { @apply text-muted; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
