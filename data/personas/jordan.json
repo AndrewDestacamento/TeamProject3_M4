@@ -1,0 +1,1318 @@
+{
+ "id": "jordan",
+ "name": "Jordan",
+ "emoji": "\ud83d\ude97",
+ "tagline": "Rideshare & delivery driver",
+ "description": "Full-time gig worker who drives for Uber and delivers for DoorDash. Pay lands every week but the amount swings a lot, and rent plus car costs are big fixed bills.",
+ "settings": {
+  "current_balance": 1742.15,
+  "savings_buffer": 150.0,
+  "goal": {
+   "name": "Emergency fund",
+   "target": 1000.0,
+   "saved": 260.0,
+   "deadline_days": 90
+  }
+ },
+ "plan_history": [
+  {
+   "start_days_ago": 7,
+   "daily_limit": 45.0,
+   "focus_category": "dining",
+   "focus_category_cap": 70.0,
+   "save_this_week": 40.0,
+   "summary": "Keep spending under $45/day, cap fast food at $70, save $40."
+  }
+ ],
+ "transactions": [
+  {
+   "id": "jordan-0000",
+   "days_ago": 0,
+   "description": "SHELL OIL 57442365",
+   "amount": -41.2,
+   "category": "transport"
+  },
+  {
+   "id": "jordan-0001",
+   "days_ago": 1,
+   "description": "JIFFY LUBE #1422",
+   "amount": -89.99,
+   "category": "transport"
+  },
+  {
+   "id": "jordan-0002",
+   "days_ago": 2,
+   "description": "CHATGPT SUBSCRIPTION OPENAI",
+   "amount": -20.0,
+   "category": "subscriptions"
+  },
+  {
+   "id": "jordan-0003",
+   "days_ago": 2,
+   "description": "SUNPASS*ACC 9921",
+   "amount": -48.64,
+   "category": "transport"
+  },
+  {
+   "id": "jordan-0004",
+   "days_ago": 3,
+   "description": "TACO BELL #032211",
+   "amount": -14.17,
+   "category": "dining"
+  },
+  {
+   "id": "jordan-0005",
+   "days_ago": 3,
+   "description": "UBER DRIVER PAYOUT",
+   "amount": 530.79,
+   "category": "income"
+  },
+  {
+   "id": "jordan-0006",
+   "days_ago": 4,
+   "description": "DAVE & BUSTERS #133",
+   "amount": -19.77,
+   "category": "entertainment"
+  },
+  {
+   "id": "jordan-0007",
+   "days_ago": 4,
+   "description": "WALMART SUPERCENTER #1871",
+   "amount": -72.14,
+   "category": "shopping"
+  },
+  {
+   "id": "jordan-0008",
+   "days_ago": 5,
+   "description": "DOORDASH DASHER PAYOUT",
+   "amount": 93.72,
+   "category": "income"
+  },
+  {
+   "id": "jordan-0009",
+   "days_ago": 5,
+   "description": "WAWA 5232",
+   "amount": -31.51,
+   "category": "transport"
+  },
+  {
+   "id": "jordan-0010",
+   "days_ago": 6,
+   "description": "DUNKIN #348812",
+   "amount": -18.29,
+   "category": "dining"
+  },
+  {
+   "id": "jordan-0011",
+   "days_ago": 7,
+   "description": "DUKE ENERGY PAYMENT",
+   "amount": -116.37,
+   "category": "utilities"
+  },
+  {
+   "id": "jordan-0012",
+   "days_ago": 8,
+   "description": "WAWA 5232",
+   "amount": -37.81,
+   "category": "transport"
+  },
+  {
+   "id": "jordan-0013",
+   "days_ago": 9,
+   "description": "POPEYES 12091",
+   "amount": -23.56,
+   "category": "dining"
+  },
+  {
+   "id": "jordan-0014",
+   "days_ago": 10,
+   "description": "SUNPASS*ACC 9921",
+   "amount": -35.92,
+   "category": "transport"
+  },
+  {
+   "id": "jordan-0015",
+   "days_ago": 10,
+   "description": "UBER DRIVER PAYOUT",
+   "amount": 252.73,
+   "category": "income"
+  },
+  {
+   "id": "jordan-0016",
+   "days_ago": 11,
+   "description": "ALDI 72031 FORT MYERS",
+   "amount": -114.55,
+   "category": "groceries"
+  },
+  {
+   "id": "jordan-0017",
+   "days_ago": 11,
+   "description": "SPOTIFY USA",
+   "amount": -11.99,
+   "category": "subscriptions"
+  },
+  {
+   "id": "jordan-0018",
+   "days_ago": 12,
+   "description": "AMAZON.COM*RT4KL2",
+   "amount": -79.68,
+   "category": "shopping"
+  },
+  {
+   "id": "jordan-0019",
+   "days_ago": 12,
+   "description": "DOORDASH DASHER PAYOUT",
+   "amount": 243.65,
+   "category": "income"
+  },
+  {
+   "id": "jordan-0020",
+   "days_ago": 13,
+   "description": "SHELL OIL 57442365",
+   "amount": -51.88,
+   "category": "transport"
+  },
+  {
+   "id": "jordan-0021",
+   "days_ago": 13,
+   "description": "WINGSTOP 1123",
+   "amount": -11.77,
+   "category": "dining"
+  },
+  {
+   "id": "jordan-0022",
+   "days_ago": 15,
+   "description": "GEICO AUTO INSURANCE",
+   "amount": -142.36,
+   "category": "insurance"
+  },
+  {
+   "id": "jordan-0023",
+   "days_ago": 15,
+   "description": "MCDONALD'S F12345",
+   "amount": -20.8,
+   "category": "dining"
+  },
+  {
+   "id": "jordan-0024",
+   "days_ago": 16,
+   "description": "RACETRAC 2471",
+   "amount": -35.41,
+   "category": "transport"
+  },
+  {
+   "id": "jordan-0025",
+   "days_ago": 16,
+   "description": "YOUTUBE PREMIUM GOOGLE",
+   "amount": -13.99,
+   "category": "subscriptions"
+  },
+  {
+   "id": "jordan-0026",
+   "days_ago": 17,
+   "description": "ALDI 72031 FORT MYERS",
+   "amount": -51.49,
+   "category": "groceries"
+  },
+  {
+   "id": "jordan-0027",
+   "days_ago": 17,
+   "description": "UBER DRIVER PAYOUT",
+   "amount": 213.03,
+   "category": "income"
+  },
+  {
+   "id": "jordan-0028",
+   "days_ago": 18,
+   "description": "DUNKIN #348812",
+   "amount": -15.13,
+   "category": "dining"
+  },
+  {
+   "id": "jordan-0029",
+   "days_ago": 19,
+   "description": "DOORDASH DASHER PAYOUT",
+   "amount": 191.12,
+   "category": "income"
+  },
+  {
+   "id": "jordan-0030",
+   "days_ago": 19,
+   "description": "RACETRAC 2471",
+   "amount": -19.03,
+   "category": "transport"
+  },
+  {
+   "id": "jordan-0031",
+   "days_ago": 20,
+   "description": "CAPITAL ONE AUTO LOAN PMT",
+   "amount": -289.0,
+   "category": "debt_payment"
+  },
+  {
+   "id": "jordan-0032",
+   "days_ago": 21,
+   "description": "CIRCLE K 2711",
+   "amount": -39.4,
+   "category": "transport"
+  },
+  {
+   "id": "jordan-0033",
+   "days_ago": 21,
+   "description": "WINGSTOP 1123",
+   "amount": -7.48,
+   "category": "dining"
+  },
+  {
+   "id": "jordan-0034",
+   "days_ago": 24,
+   "description": "COSTCO WHSE #1032",
+   "amount": -70.22,
+   "category": "groceries"
+  },
+  {
+   "id": "jordan-0035",
+   "days_ago": 24,
+   "description": "CULVERS OF CAPE CORAL",
+   "amount": -10.88,
+   "category": "dining"
+  },
+  {
+   "id": "jordan-0036",
+   "days_ago": 24,
+   "description": "T-MOBILE AUTOPAY",
+   "amount": -60.0,
+   "category": "utilities"
+  },
+  {
+   "id": "jordan-0037",
+   "days_ago": 24,
+   "description": "UBER DRIVER PAYOUT",
+   "amount": 544.53,
+   "category": "income"
+  },
+  {
+   "id": "jordan-0038",
+   "days_ago": 25,
+   "description": "AUTOZONE #4412",
+   "amount": -36.31,
+   "category": "other"
+  },
+  {
+   "id": "jordan-0039",
+   "days_ago": 25,
+   "description": "RACETRAC 2471",
+   "amount": -40.29,
+   "category": "transport"
+  },
+  {
+   "id": "jordan-0040",
+   "days_ago": 26,
+   "description": "DOORDASH DASHER PAYOUT",
+   "amount": 140.92,
+   "category": "income"
+  },
+  {
+   "id": "jordan-0041",
+   "days_ago": 26,
+   "description": "ONLINE PAYMENT PALM GROVE APARTMENT RENT",
+   "amount": -1150.0,
+   "category": "housing"
+  },
+  {
+   "id": "jordan-0042",
+   "days_ago": 28,
+   "description": "RACETRAC 2471",
+   "amount": -49.31,
+   "category": "transport"
+  },
+  {
+   "id": "jordan-0043",
+   "days_ago": 28,
+   "description": "WENDYS #11293",
+   "amount": -20.28,
+   "category": "dining"
+  },
+  {
+   "id": "jordan-0044",
+   "days_ago": 30,
+   "description": "MCDONALD'S F12345",
+   "amount": -20.02,
+   "category": "dining"
+  },
+  {
+   "id": "jordan-0045",
+   "days_ago": 30,
+   "description": "WALMART SUPERCENTER #1871",
+   "amount": -52.37,
+   "category": "shopping"
+  },
+  {
+   "id": "jordan-0046",
+   "days_ago": 31,
+   "description": "SUNPASS*ACC 9921",
+   "amount": -22.61,
+   "category": "transport"
+  },
+  {
+   "id": "jordan-0047",
+   "days_ago": 31,
+   "description": "UBER DRIVER PAYOUT",
+   "amount": 267.65,
+   "category": "income"
+  },
+  {
+   "id": "jordan-0048",
+   "days_ago": 32,
+   "description": "CHATGPT SUBSCRIPTION OPENAI",
+   "amount": -20.0,
+   "category": "subscriptions"
+  },
+  {
+   "id": "jordan-0049",
+   "days_ago": 33,
+   "description": "DAVE & BUSTERS #133",
+   "amount": -39.64,
+   "category": "entertainment"
+  },
+  {
+   "id": "jordan-0050",
+   "days_ago": 33,
+   "description": "DOORDASH DASHER PAYOUT",
+   "amount": 119.22,
+   "category": "income"
+  },
+  {
+   "id": "jordan-0051",
+   "days_ago": 33,
+   "description": "WAWA 5232",
+   "amount": -34.19,
+   "category": "transport"
+  },
+  {
+   "id": "jordan-0052",
+   "days_ago": 34,
+   "description": "WENDYS #11293",
+   "amount": -22.53,
+   "category": "dining"
+  },
+  {
+   "id": "jordan-0053",
+   "days_ago": 36,
+   "description": "ALDI 72031 FORT MYERS",
+   "amount": -78.01,
+   "category": "groceries"
+  },
+  {
+   "id": "jordan-0054",
+   "days_ago": 36,
+   "description": "SHELL OIL 57442365",
+   "amount": -45.87,
+   "category": "transport"
+  },
+  {
+   "id": "jordan-0055",
+   "days_ago": 37,
+   "description": "DUKE ENERGY PAYMENT",
+   "amount": -105.43,
+   "category": "utilities"
+  },
+  {
+   "id": "jordan-0056",
+   "days_ago": 37,
+   "description": "DUNKIN #348812",
+   "amount": -8.19,
+   "category": "dining"
+  },
+  {
+   "id": "jordan-0057",
+   "days_ago": 38,
+   "description": "SHELL OIL 57442365",
+   "amount": -24.35,
+   "category": "transport"
+  },
+  {
+   "id": "jordan-0058",
+   "days_ago": 38,
+   "description": "UBER DRIVER PAYOUT",
+   "amount": 246.0,
+   "category": "income"
+  },
+  {
+   "id": "jordan-0059",
+   "days_ago": 40,
+   "description": "AUTOZONE #4412",
+   "amount": -89.97,
+   "category": "other"
+  },
+  {
+   "id": "jordan-0060",
+   "days_ago": 40,
+   "description": "DOORDASH DASHER PAYOUT",
+   "amount": 237.97,
+   "category": "income"
+  },
+  {
+   "id": "jordan-0061",
+   "days_ago": 40,
+   "description": "WENDYS #11293",
+   "amount": -17.79,
+   "category": "dining"
+  },
+  {
+   "id": "jordan-0062",
+   "days_ago": 41,
+   "description": "SPOTIFY USA",
+   "amount": -11.99,
+   "category": "subscriptions"
+  },
+  {
+   "id": "jordan-0063",
+   "days_ago": 42,
+   "description": "ALDI 72031 FORT MYERS",
+   "amount": -88.4,
+   "category": "groceries"
+  },
+  {
+   "id": "jordan-0064",
+   "days_ago": 42,
+   "description": "SUNPASS*ACC 9921",
+   "amount": -32.77,
+   "category": "transport"
+  },
+  {
+   "id": "jordan-0065",
+   "days_ago": 43,
+   "description": "MCDONALD'S F12345",
+   "amount": -22.84,
+   "category": "dining"
+  },
+  {
+   "id": "jordan-0066",
+   "days_ago": 45,
+   "description": "CIRCLE K 2711",
+   "amount": -41.08,
+   "category": "transport"
+  },
+  {
+   "id": "jordan-0067",
+   "days_ago": 45,
+   "description": "GEICO AUTO INSURANCE",
+   "amount": -142.36,
+   "category": "insurance"
+  },
+  {
+   "id": "jordan-0068",
+   "days_ago": 45,
+   "description": "UBER DRIVER PAYOUT",
+   "amount": 426.48,
+   "category": "income"
+  },
+  {
+   "id": "jordan-0069",
+   "days_ago": 46,
+   "description": "DUNKIN #348812",
+   "amount": -11.99,
+   "category": "dining"
+  },
+  {
+   "id": "jordan-0070",
+   "days_ago": 46,
+   "description": "YOUTUBE PREMIUM GOOGLE",
+   "amount": -13.99,
+   "category": "subscriptions"
+  },
+  {
+   "id": "jordan-0071",
+   "days_ago": 47,
+   "description": "DOORDASH DASHER PAYOUT",
+   "amount": 189.91,
+   "category": "income"
+  },
+  {
+   "id": "jordan-0072",
+   "days_ago": 47,
+   "description": "WAWA 5232",
+   "amount": -47.45,
+   "category": "transport"
+  },
+  {
+   "id": "jordan-0073",
+   "days_ago": 48,
+   "description": "COSTCO WHSE #1032",
+   "amount": -77.4,
+   "category": "groceries"
+  },
+  {
+   "id": "jordan-0074",
+   "days_ago": 50,
+   "description": "CAPITAL ONE AUTO LOAN PMT",
+   "amount": -289.0,
+   "category": "debt_payment"
+  },
+  {
+   "id": "jordan-0075",
+   "days_ago": 50,
+   "description": "MCDONALD'S F12345",
+   "amount": -18.64,
+   "category": "dining"
+  },
+  {
+   "id": "jordan-0076",
+   "days_ago": 50,
+   "description": "WAWA 5232",
+   "amount": -39.03,
+   "category": "transport"
+  },
+  {
+   "id": "jordan-0077",
+   "days_ago": 52,
+   "description": "POPEYES 12091",
+   "amount": -14.01,
+   "category": "dining"
+  },
+  {
+   "id": "jordan-0078",
+   "days_ago": 52,
+   "description": "UBER DRIVER PAYOUT",
+   "amount": 322.52,
+   "category": "income"
+  },
+  {
+   "id": "jordan-0079",
+   "days_ago": 53,
+   "description": "SUNPASS*ACC 9921",
+   "amount": -46.36,
+   "category": "transport"
+  },
+  {
+   "id": "jordan-0080",
+   "days_ago": 54,
+   "description": "ALDI 72031 FORT MYERS",
+   "amount": -113.58,
+   "category": "groceries"
+  },
+  {
+   "id": "jordan-0081",
+   "days_ago": 54,
+   "description": "AUTOZONE #4412",
+   "amount": -34.18,
+   "category": "other"
+  },
+  {
+   "id": "jordan-0082",
+   "days_ago": 54,
+   "description": "DOORDASH DASHER PAYOUT",
+   "amount": 253.84,
+   "category": "income"
+  },
+  {
+   "id": "jordan-0083",
+   "days_ago": 54,
+   "description": "T-MOBILE AUTOPAY",
+   "amount": -60.0,
+   "category": "utilities"
+  },
+  {
+   "id": "jordan-0084",
+   "days_ago": 55,
+   "description": "WENDYS #11293",
+   "amount": -12.46,
+   "category": "dining"
+  },
+  {
+   "id": "jordan-0085",
+   "days_ago": 56,
+   "description": "ONLINE PAYMENT PALM GROVE APARTMENT RENT",
+   "amount": -1150.0,
+   "category": "housing"
+  },
+  {
+   "id": "jordan-0086",
+   "days_ago": 56,
+   "description": "SHELL OIL 57442365",
+   "amount": -24.98,
+   "category": "transport"
+  },
+  {
+   "id": "jordan-0087",
+   "days_ago": 58,
+   "description": "DUNKIN #348812",
+   "amount": -14.52,
+   "category": "dining"
+  },
+  {
+   "id": "jordan-0088",
+   "days_ago": 58,
+   "description": "SHELL OIL 57442365",
+   "amount": -43.51,
+   "category": "transport"
+  },
+  {
+   "id": "jordan-0089",
+   "days_ago": 59,
+   "description": "UBER DRIVER PAYOUT",
+   "amount": 507.45,
+   "category": "income"
+  },
+  {
+   "id": "jordan-0090",
+   "days_ago": 61,
+   "description": "AMC THEATRES 2231",
+   "amount": -35.51,
+   "category": "entertainment"
+  },
+  {
+   "id": "jordan-0091",
+   "days_ago": 61,
+   "description": "COSTCO WHSE #1032",
+   "amount": -59.64,
+   "category": "groceries"
+  },
+  {
+   "id": "jordan-0092",
+   "days_ago": 61,
+   "description": "DOORDASH DASHER PAYOUT",
+   "amount": 224.31,
+   "category": "income"
+  },
+  {
+   "id": "jordan-0093",
+   "days_ago": 61,
+   "description": "RACETRAC 2471",
+   "amount": -21.83,
+   "category": "transport"
+  },
+  {
+   "id": "jordan-0094",
+   "days_ago": 61,
+   "description": "WENDYS #11293",
+   "amount": -11.66,
+   "category": "dining"
+  },
+  {
+   "id": "jordan-0095",
+   "days_ago": 62,
+   "description": "CHATGPT SUBSCRIPTION OPENAI",
+   "amount": -20.0,
+   "category": "subscriptions"
+  },
+  {
+   "id": "jordan-0096",
+   "days_ago": 63,
+   "description": "SUNPASS*ACC 9921",
+   "amount": -23.36,
+   "category": "transport"
+  },
+  {
+   "id": "jordan-0097",
+   "days_ago": 64,
+   "description": "MCDONALD'S F12345",
+   "amount": -16.86,
+   "category": "dining"
+  },
+  {
+   "id": "jordan-0098",
+   "days_ago": 65,
+   "description": "SHELL OIL 57442365",
+   "amount": -19.02,
+   "category": "transport"
+  },
+  {
+   "id": "jordan-0099",
+   "days_ago": 66,
+   "description": "UBER DRIVER PAYOUT",
+   "amount": 283.79,
+   "category": "income"
+  },
+  {
+   "id": "jordan-0100",
+   "days_ago": 67,
+   "description": "DUKE ENERGY PAYMENT",
+   "amount": -87.12,
+   "category": "utilities"
+  },
+  {
+   "id": "jordan-0101",
+   "days_ago": 67,
+   "description": "POPEYES 12091",
+   "amount": -13.57,
+   "category": "dining"
+  },
+  {
+   "id": "jordan-0102",
+   "days_ago": 68,
+   "description": "COSTCO WHSE #1032",
+   "amount": -94.32,
+   "category": "groceries"
+  },
+  {
+   "id": "jordan-0103",
+   "days_ago": 68,
+   "description": "DOORDASH DASHER PAYOUT",
+   "amount": 258.01,
+   "category": "income"
+  },
+  {
+   "id": "jordan-0104",
+   "days_ago": 68,
+   "description": "SHELL OIL 57442365",
+   "amount": -27.42,
+   "category": "transport"
+  },
+  {
+   "id": "jordan-0105",
+   "days_ago": 69,
+   "description": "BEST BUY 00001234",
+   "amount": -44.99,
+   "category": "shopping"
+  },
+  {
+   "id": "jordan-0106",
+   "days_ago": 70,
+   "description": "TACO BELL #032211",
+   "amount": -8.9,
+   "category": "dining"
+  },
+  {
+   "id": "jordan-0107",
+   "days_ago": 71,
+   "description": "SPOTIFY USA",
+   "amount": -11.99,
+   "category": "subscriptions"
+  },
+  {
+   "id": "jordan-0108",
+   "days_ago": 71,
+   "description": "WAWA 5232",
+   "amount": -46.78,
+   "category": "transport"
+  },
+  {
+   "id": "jordan-0109",
+   "days_ago": 73,
+   "description": "RACETRAC 2471",
+   "amount": -30.08,
+   "category": "transport"
+  },
+  {
+   "id": "jordan-0110",
+   "days_ago": 73,
+   "description": "UBER DRIVER PAYOUT",
+   "amount": 531.22,
+   "category": "income"
+  },
+  {
+   "id": "jordan-0111",
+   "days_ago": 73,
+   "description": "WENDYS #11293",
+   "amount": -17.22,
+   "category": "dining"
+  },
+  {
+   "id": "jordan-0112",
+   "days_ago": 75,
+   "description": "COSTCO WHSE #1032",
+   "amount": -43.0,
+   "category": "groceries"
+  },
+  {
+   "id": "jordan-0113",
+   "days_ago": 75,
+   "description": "DOORDASH DASHER PAYOUT",
+   "amount": 186.94,
+   "category": "income"
+  },
+  {
+   "id": "jordan-0114",
+   "days_ago": 75,
+   "description": "GEICO AUTO INSURANCE",
+   "amount": -142.36,
+   "category": "insurance"
+  },
+  {
+   "id": "jordan-0115",
+   "days_ago": 76,
+   "description": "CULVERS OF CAPE CORAL",
+   "amount": -21.44,
+   "category": "dining"
+  },
+  {
+   "id": "jordan-0116",
+   "days_ago": 76,
+   "description": "WAWA 5232",
+   "amount": -38.68,
+   "category": "transport"
+  },
+  {
+   "id": "jordan-0117",
+   "days_ago": 76,
+   "description": "YOUTUBE PREMIUM GOOGLE",
+   "amount": -13.99,
+   "category": "subscriptions"
+  },
+  {
+   "id": "jordan-0118",
+   "days_ago": 78,
+   "description": "SUNPASS*ACC 9921",
+   "amount": -36.75,
+   "category": "transport"
+  },
+  {
+   "id": "jordan-0119",
+   "days_ago": 79,
+   "description": "TACO BELL #032211",
+   "amount": -19.29,
+   "category": "dining"
+  },
+  {
+   "id": "jordan-0120",
+   "days_ago": 80,
+   "description": "CAPITAL ONE AUTO LOAN PMT",
+   "amount": -289.0,
+   "category": "debt_payment"
+  },
+  {
+   "id": "jordan-0121",
+   "days_ago": 80,
+   "description": "UBER DRIVER PAYOUT",
+   "amount": 313.61,
+   "category": "income"
+  },
+  {
+   "id": "jordan-0122",
+   "days_ago": 81,
+   "description": "RACETRAC 2471",
+   "amount": -26.81,
+   "category": "transport"
+  },
+  {
+   "id": "jordan-0123",
+   "days_ago": 82,
+   "description": "ALDI 72031 FORT MYERS",
+   "amount": -61.05,
+   "category": "groceries"
+  },
+  {
+   "id": "jordan-0124",
+   "days_ago": 82,
+   "description": "AUTOZONE #4412",
+   "amount": -84.97,
+   "category": "other"
+  },
+  {
+   "id": "jordan-0125",
+   "days_ago": 82,
+   "description": "DOORDASH DASHER PAYOUT",
+   "amount": 210.71,
+   "category": "income"
+  },
+  {
+   "id": "jordan-0126",
+   "days_ago": 82,
+   "description": "TACO BELL #032211",
+   "amount": -11.59,
+   "category": "dining"
+  },
+  {
+   "id": "jordan-0127",
+   "days_ago": 84,
+   "description": "T-MOBILE AUTOPAY",
+   "amount": -60.0,
+   "category": "utilities"
+  },
+  {
+   "id": "jordan-0128",
+   "days_ago": 84,
+   "description": "WAWA 5232",
+   "amount": -41.69,
+   "category": "transport"
+  },
+  {
+   "id": "jordan-0129",
+   "days_ago": 85,
+   "description": "WINGSTOP 1123",
+   "amount": -11.89,
+   "category": "dining"
+  },
+  {
+   "id": "jordan-0130",
+   "days_ago": 86,
+   "description": "ONLINE PAYMENT PALM GROVE APARTMENT RENT",
+   "amount": -1150.0,
+   "category": "housing"
+  },
+  {
+   "id": "jordan-0131",
+   "days_ago": 86,
+   "description": "RACETRAC 2471",
+   "amount": -34.97,
+   "category": "transport"
+  },
+  {
+   "id": "jordan-0132",
+   "days_ago": 87,
+   "description": "UBER DRIVER PAYOUT",
+   "amount": 409.39,
+   "category": "income"
+  },
+  {
+   "id": "jordan-0133",
+   "days_ago": 87,
+   "description": "WINGSTOP 1123",
+   "amount": -19.65,
+   "category": "dining"
+  },
+  {
+   "id": "jordan-0134",
+   "days_ago": 88,
+   "description": "ALDI 72031 FORT MYERS",
+   "amount": -40.59,
+   "category": "groceries"
+  },
+  {
+   "id": "jordan-0135",
+   "days_ago": 88,
+   "description": "AMC THEATRES 2231",
+   "amount": -18.34,
+   "category": "entertainment"
+  },
+  {
+   "id": "jordan-0136",
+   "days_ago": 88,
+   "description": "SHELL OIL 57442365",
+   "amount": -31.15,
+   "category": "transport"
+  },
+  {
+   "id": "jordan-0137",
+   "days_ago": 89,
+   "description": "DOORDASH DASHER PAYOUT",
+   "amount": 195.22,
+   "category": "income"
+  },
+  {
+   "id": "jordan-0138",
+   "days_ago": 90,
+   "description": "WENDYS #11293",
+   "amount": -19.05,
+   "category": "dining"
+  },
+  {
+   "id": "jordan-0139",
+   "days_ago": 91,
+   "description": "SHELL OIL 57442365",
+   "amount": -49.31,
+   "category": "transport"
+  },
+  {
+   "id": "jordan-0140",
+   "days_ago": 92,
+   "description": "CHATGPT SUBSCRIPTION OPENAI",
+   "amount": -20.0,
+   "category": "subscriptions"
+  },
+  {
+   "id": "jordan-0141",
+   "days_ago": 92,
+   "description": "POPEYES 12091",
+   "amount": -20.89,
+   "category": "dining"
+  },
+  {
+   "id": "jordan-0142",
+   "days_ago": 93,
+   "description": "ALDI 72031 FORT MYERS",
+   "amount": -96.34,
+   "category": "groceries"
+  },
+  {
+   "id": "jordan-0143",
+   "days_ago": 94,
+   "description": "RACETRAC 2471",
+   "amount": -24.69,
+   "category": "transport"
+  },
+  {
+   "id": "jordan-0144",
+   "days_ago": 94,
+   "description": "UBER DRIVER PAYOUT",
+   "amount": 521.91,
+   "category": "income"
+  },
+  {
+   "id": "jordan-0145",
+   "days_ago": 95,
+   "description": "AUTOZONE #4412",
+   "amount": -62.39,
+   "category": "other"
+  },
+  {
+   "id": "jordan-0146",
+   "days_ago": 95,
+   "description": "MCDONALD'S F12345",
+   "amount": -20.59,
+   "category": "dining"
+  },
+  {
+   "id": "jordan-0147",
+   "days_ago": 96,
+   "description": "DOORDASH DASHER PAYOUT",
+   "amount": 131.51,
+   "category": "income"
+  },
+  {
+   "id": "jordan-0148",
+   "days_ago": 97,
+   "description": "CIRCLE K 2711",
+   "amount": -44.11,
+   "category": "transport"
+  },
+  {
+   "id": "jordan-0149",
+   "days_ago": 97,
+   "description": "DUKE ENERGY PAYMENT",
+   "amount": -111.71,
+   "category": "utilities"
+  },
+  {
+   "id": "jordan-0150",
+   "days_ago": 98,
+   "description": "TACO BELL #032211",
+   "amount": -22.93,
+   "category": "dining"
+  },
+  {
+   "id": "jordan-0151",
+   "days_ago": 99,
+   "description": "ALDI 72031 FORT MYERS",
+   "amount": -46.73,
+   "category": "groceries"
+  },
+  {
+   "id": "jordan-0152",
+   "days_ago": 100,
+   "description": "SHELL OIL 57442365",
+   "amount": -21.35,
+   "category": "transport"
+  },
+  {
+   "id": "jordan-0153",
+   "days_ago": 101,
+   "description": "DUNKIN #348812",
+   "amount": -12.18,
+   "category": "dining"
+  },
+  {
+   "id": "jordan-0154",
+   "days_ago": 101,
+   "description": "SPOTIFY USA",
+   "amount": -11.99,
+   "category": "subscriptions"
+  },
+  {
+   "id": "jordan-0155",
+   "days_ago": 101,
+   "description": "UBER DRIVER PAYOUT",
+   "amount": 437.99,
+   "category": "income"
+  },
+  {
+   "id": "jordan-0156",
+   "days_ago": 103,
+   "description": "CIRCLE K 2711",
+   "amount": -48.92,
+   "category": "transport"
+  },
+  {
+   "id": "jordan-0157",
+   "days_ago": 103,
+   "description": "DOORDASH DASHER PAYOUT",
+   "amount": 257.21,
+   "category": "income"
+  },
+  {
+   "id": "jordan-0158",
+   "days_ago": 103,
+   "description": "POPEYES 12091",
+   "amount": -13.9,
+   "category": "dining"
+  },
+  {
+   "id": "jordan-0159",
+   "days_ago": 105,
+   "description": "GEICO AUTO INSURANCE",
+   "amount": -142.36,
+   "category": "insurance"
+  },
+  {
+   "id": "jordan-0160",
+   "days_ago": 105,
+   "description": "WALMART SUPERCENTER #1871",
+   "amount": -70.46,
+   "category": "shopping"
+  },
+  {
+   "id": "jordan-0161",
+   "days_ago": 106,
+   "description": "CIRCLE K 2711",
+   "amount": -28.96,
+   "category": "transport"
+  },
+  {
+   "id": "jordan-0162",
+   "days_ago": 106,
+   "description": "MCDONALD'S F12345",
+   "amount": -19.37,
+   "category": "dining"
+  },
+  {
+   "id": "jordan-0163",
+   "days_ago": 106,
+   "description": "YOUTUBE PREMIUM GOOGLE",
+   "amount": -13.99,
+   "category": "subscriptions"
+  },
+  {
+   "id": "jordan-0164",
+   "days_ago": 108,
+   "description": "BEST BUY 00001234",
+   "amount": -46.01,
+   "category": "shopping"
+  },
+  {
+   "id": "jordan-0165",
+   "days_ago": 108,
+   "description": "SHELL OIL 57442365",
+   "amount": -48.65,
+   "category": "transport"
+  },
+  {
+   "id": "jordan-0166",
+   "days_ago": 108,
+   "description": "UBER DRIVER PAYOUT",
+   "amount": 519.11,
+   "category": "income"
+  },
+  {
+   "id": "jordan-0167",
+   "days_ago": 109,
+   "description": "TACO BELL #032211",
+   "amount": -23.4,
+   "category": "dining"
+  },
+  {
+   "id": "jordan-0168",
+   "days_ago": 110,
+   "description": "CAPITAL ONE AUTO LOAN PMT",
+   "amount": -289.0,
+   "category": "debt_payment"
+  },
+  {
+   "id": "jordan-0169",
+   "days_ago": 110,
+   "description": "CIRCLE K 2711",
+   "amount": -41.09,
+   "category": "transport"
+  },
+  {
+   "id": "jordan-0170",
+   "days_ago": 110,
+   "description": "DOORDASH DASHER PAYOUT",
+   "amount": 141.25,
+   "category": "income"
+  },
+  {
+   "id": "jordan-0171",
+   "days_ago": 112,
+   "description": "WALMART SUPERCENTER #1871",
+   "amount": -58.1,
+   "category": "shopping"
+  },
+  {
+   "id": "jordan-0172",
+   "days_ago": 112,
+   "description": "WINGSTOP 1123",
+   "amount": -19.9,
+   "category": "dining"
+  },
+  {
+   "id": "jordan-0173",
+   "days_ago": 114,
+   "description": "SHELL OIL 57442365",
+   "amount": -49.85,
+   "category": "transport"
+  },
+  {
+   "id": "jordan-0174",
+   "days_ago": 114,
+   "description": "T-MOBILE AUTOPAY",
+   "amount": -60.0,
+   "category": "utilities"
+  },
+  {
+   "id": "jordan-0175",
+   "days_ago": 114,
+   "description": "TACO BELL #032211",
+   "amount": -20.31,
+   "category": "dining"
+  },
+  {
+   "id": "jordan-0176",
+   "days_ago": 115,
+   "description": "UBER DRIVER PAYOUT",
+   "amount": 445.76,
+   "category": "income"
+  },
+  {
+   "id": "jordan-0177",
+   "days_ago": 116,
+   "description": "DAVE & BUSTERS #133",
+   "amount": -31.02,
+   "category": "entertainment"
+  },
+  {
+   "id": "jordan-0178",
+   "days_ago": 116,
+   "description": "ONLINE PAYMENT PALM GROVE APARTMENT RENT",
+   "amount": -1150.0,
+   "category": "housing"
+  },
+  {
+   "id": "jordan-0179",
+   "days_ago": 117,
+   "description": "DOORDASH DASHER PAYOUT",
+   "amount": 225.6,
+   "category": "income"
+  },
+  {
+   "id": "jordan-0180",
+   "days_ago": 117,
+   "description": "RACETRAC 2471",
+   "amount": -23.43,
+   "category": "transport"
+  },
+  {
+   "id": "jordan-0181",
+   "days_ago": 118,
+   "description": "POPEYES 12091",
+   "amount": -10.08,
+   "category": "dining"
+  },
+  {
+   "id": "jordan-0182",
+   "days_ago": 118,
+   "description": "WALMART SUPERCENTER #1871",
+   "amount": -60.24,
+   "category": "shopping"
+  },
+  {
+   "id": "jordan-0183",
+   "days_ago": 119,
+   "description": "RACETRAC 2471",
+   "amount": -45.65,
+   "category": "transport"
+  }
+ ],
+ "order": 1
+}
