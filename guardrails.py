@@ -1,11 +1,14 @@
 """BudgetWise guardrail checks (plain Python, no LLM).
 
-agent.py wraps these in Agents SDK guardrails:
-  - check_user_input        -> input guardrail on the Analyst (runs before any model call)
-  - find_ungrounded_amounts -> output guardrail on both agents (every $ amount must come from a tool)
-  - check_payload           -> verifies the handoff payload numbers against the tool results
+budgetwise/agents.py runs these around every agent:
+  - check_user_input        -> input guardrail: runs before any model call (scope, privacy, injection)
+  - find_ungrounded_amounts -> output guardrail: every $ amount must come from the data or a tool
+  - sanitize_for_model      -> cleans untrusted text (bank descriptions) before a model sees it
+  - check_payload           -> verifies numbers passed between agents against the tool results
 
-Keeping the checks deterministic makes them free, fast, and easy to unit test (tests/test_guardrails.py).
+Chapter 4's cost ladder: cheapest checks first. These are deterministic, so they are free,
+fast, and easy to unit test (tests/test_guardrails.py). The Critic agent is the only
+LLM-based check, and it is never the only line of defense.
 """
 
 import re
@@ -51,8 +54,18 @@ OUT_OF_SCOPE_MESSAGE = (
     "licensed professional."
 )
 SENSITIVE_MESSAGE = (
-    "Please don't share your {what}. BudgetWise never needs it, and this prototype only uses the "
-    "sample data in data/. Your question was not sent to the AI model."
+    "Please don't share your {what}. BudgetWise never needs it. Your message was not sent to the AI model."
+)
+
+# Direct prompt injection (Chapter 8): attempts to override the agent's instructions.
+INJECTION = [
+    r"ignore (all |any |the |your )?(previous|prior|above) (instructions|rules|prompts?)",
+    r"(reveal|show|print|repeat) (me )?(your|the) (system )?(prompt|instructions)",
+    r"you are now (?!able)", r"\bjailbreak\b", r"developer mode",
+]
+INJECTION_MESSAGE = (
+    "I can't change how I work, but I'm happy to help with your budget: spending, bills, "
+    "what you can afford, or a plan for this week."
 )
 
 
@@ -71,6 +84,9 @@ def check_user_input(text: str) -> InputCheck:
             return InputCheck(
                 True, "sensitive_data", SENSITIVE_MESSAGE.format(what=what)
             )
+    for pattern in INJECTION:
+        if re.search(pattern, lowered):
+            return InputCheck(True, "prompt_injection", INJECTION_MESSAGE)
     for topic, patterns in OUT_OF_SCOPE.items():
         if any(re.search(p, lowered) for p in patterns):
             return InputCheck(
@@ -105,15 +121,30 @@ def evidence_numbers(evidence: list[str]) -> set[Decimal]:
 def find_ungrounded_amounts(answer: str, evidence: list[str]) -> list[str]:
     """Return the dollar amounts in the answer that do not appear in any tool result
     (or in the user's own question). An empty list means the answer is grounded.
-    Matching is exact to the cent, so "$360" for a tool value of 359.10 is flagged."""
+    Amounts with cents must match exactly. A whole-dollar amount ("$27") is accepted when it
+    is a value from the evidence rounded to the dollar (27.40 -> $27), since people talk that way."""
     allowed = evidence_numbers(evidence)
+    rounded = {v.quantize(Decimal("1")) for v in allowed} | {v.to_integral_value(rounding="ROUND_FLOOR") for v in allowed}
     bad = []
     for whole, cents in _MONEY.findall(answer):
         shown = f"${whole}{cents}"
         value = _to_cents(whole + cents)
-        if value is not None and value not in allowed and shown not in bad:
+        if value is None or value in allowed:
+            continue
+        if not cents and value.quantize(Decimal("1")) in rounded:
+            continue
+        if shown not in bad:
             bad.append(shown)
     return bad
+
+
+def sanitize_for_model(text: str, limit: int = 80) -> str:
+    """Untrusted text (bank descriptions from an uploaded file) goes to the Categorizer model.
+    Keep only characters a real statement line uses and cap the length, so a planted
+    "ignore your instructions" line cannot smuggle in much (Chapter 8, indirect injection)."""
+    cleaned = re.sub(r"[^A-Za-z0-9 &'*#.,/@+-]", " ", str(text))
+    cleaned = re.sub(r"\s+", " ", cleaned).strip()
+    return cleaned[:limit]
 
 
 def check_payload(payload: dict, evidence: list[str]) -> list[str]:
