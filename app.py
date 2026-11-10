@@ -125,6 +125,13 @@ def update_category(txn_id: str, body: CategoryIn):
     return {"changed": changed}
 
 
+@app.delete("/api/transactions/{txn_id}")
+def delete_txn(txn_id: str):
+    if not store.delete_transaction(store.active_account_id(), txn_id):
+        raise HTTPException(404, "Only entries you added (not demo or bank rows) can be deleted here.")
+    return {"ok": True}
+
+
 class SettingsIn(BaseModel):
     current_balance: float | None = None
     savings_buffer: float | None = Field(None, ge=0)
@@ -135,7 +142,57 @@ class SettingsIn(BaseModel):
 
 @app.get("/api/settings")
 def get_settings():
-    return store.load_settings(store.active_account_id())
+    acc = store.active_account_id()
+    return {**store.load_settings(acc), "schedules": store.schedules(acc)}
+
+
+@app.delete("/api/schedules/{schedule_id}")
+def delete_schedule(schedule_id: str):
+    store.delete_schedule(store.active_account_id(), schedule_id)
+    return {"ok": True}
+
+
+class NewAccountIn(BaseModel):
+    name: str = Field("My money", max_length=40)
+
+
+@app.post("/api/accounts/new")
+def new_account(body: NewAccountIn):
+    """Start without a bank file: an empty account the setup chat fills in."""
+    acc = store.create_account(body.name or "My money")
+    store.set_active_account(acc)
+    return {"id": acc}
+
+
+class UndoIn(BaseModel):
+    batch_id: str
+
+
+@app.post("/api/undo")
+def undo(body: UndoIn):
+    n = store.undo_batch(store.active_account_id(), body.batch_id)
+    return {"removed": n}
+
+
+class CheckinIn(BaseModel):
+    kind: str = Field(..., pattern="^(spend|income)$")
+    amount: float | None = Field(None, ge=0, le=25000)
+
+
+@app.post("/api/checkin")
+def checkin(body: CheckinIn):
+    """One-tap check-in answers ("Nothing", "About $10"). Typed answers go through /api/chat instead."""
+    acc = store.active_account_id()
+    batch = None
+    if body.amount:
+        batch = store.new_id("chk-")
+        entry = {"date": store.today().isoformat(), "amount": body.amount if body.kind == "income" else -body.amount,
+                 "description": "Income (check-in)" if body.kind == "income" else "Everyday spending (check-in)",
+                 "category": "income" if body.kind == "income" else "other", "approx": True}
+        store.add_transactions(acc, [entry], source="checkin", batch_id=batch)
+    store.record_checkin(acc, body.kind, "nothing" if not body.amount else f"about {body.amount}")
+    snap = finance.snapshot(acc)
+    return {"batch_id": batch, "left_today": snap["left_today"], "safe_per_day": snap["safe_per_day"]}
 
 
 @app.patch("/api/settings")
@@ -183,6 +240,7 @@ class CommitIn(BaseModel):
     token: str
     name: str = Field("My bank account", max_length=40)
     balance: float
+    target: str = Field("new", pattern="^(new|active)$")
 
 
 @app.post("/api/import/commit")
@@ -204,7 +262,7 @@ async def import_commit(body: CommitIn):
             cat, how = cache[key], "memory"
         if cat is None:
             unknown.setdefault(key, t["description"])
-        labeled.append({"id": f"u{i:05d}", "date": t["date"].isoformat(), "description": t["description"],
+        labeled.append({"date": t["date"].isoformat(), "description": t["description"],
                         "amount": t["amount"], "category": cat, "_key": key, "_how": how})
     ai = await team.categorize(unknown) if unknown else {}
     if ai:
@@ -216,16 +274,24 @@ async def import_commit(body: CommitIn):
         stats[t["_how"]] += 1
         t.pop("_key")
         t.pop("_how")
-    account_id = store.create_uploaded_account(body.name, labeled, body.balance)
+    active = store.active_account_id()
+    if body.target == "active" and not store.is_demo(active):
+        account_id = active
+    else:
+        account_id = store.create_account(body.name, tagline="Your bank data")
+    merged = store.import_rows(account_id, labeled, body.balance, store.today().isoformat())
     store.set_active_account(account_id)
     return {"account": account_id, "transactions": len(labeled), "merchants_sent_to_ai": len(unknown),
-            "how_categorized": stats, "seconds": round(time.perf_counter() - t0, 1)}
+            "how_categorized": stats, "seconds": round(time.perf_counter() - t0, 1), **merged}
 
 
 # ------------------------------------------------------------------ chat and plans (streamed)
 class ChatIn(BaseModel):
     message: str = Field(..., min_length=1, max_length=1000)
     session_id: str | None = None
+    mode: str | None = Field(None, pattern="^log$")      # "log": send straight to the Bookkeeper
+    checkin: str | None = Field(None, pattern="^(spend|income)$")
+    context_hint: str | None = Field(None, max_length=200)  # e.g. the setup question being answered
 
 
 @app.post("/api/chat")
@@ -234,7 +300,7 @@ async def chat(body: ChatIn):
 
     async def events():
         yield {"type": "session", "session_id": sid}
-        async for ev in team.chat(body.message, sid):
+        async for ev in team.chat(body.message, sid, mode=body.mode, checkin=body.checkin, context_hint=body.context_hint):
             yield ev
     return sse(events())
 
