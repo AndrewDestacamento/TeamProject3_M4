@@ -47,7 +47,7 @@ from . import finance, knowledge, store
 from .categories import CATEGORIES, CATEGORY_IDS, FLEXIBLE, label
 
 ROOT = Path(__file__).resolve().parent.parent
-MODEL = os.getenv("BUDGETWISE_MODEL", "gpt-oss")  # fastest tool-calling model on NRP in our timing tests
+MODEL = os.getenv("BUDGETWISE_MODEL") or os.getenv("NRP_MODEL") or "gpt-oss"  # fastest tool-calling model on NRP in our timing tests
 CRITIC_MODEL = os.getenv("BUDGETWISE_CRITIC_MODEL", MODEL)
 TIMEOUT = float(os.getenv("BUDGETWISE_TIMEOUT", "45"))
 
@@ -275,11 +275,12 @@ class BudgetWiseTeam:
         self.ready = True
 
     async def stop(self) -> None:
-        for s in (self.analyst_server, self.planner_server):
+        # Close in reverse order of opening (the MCP client's task groups must unwind last-in, first-out).
+        for s in (self.planner_server, self.analyst_server):
             if s:
                 try:
                     await s.cleanup()
-                except Exception:  # noqa: BLE001
+                except (Exception, asyncio.CancelledError):  # noqa: BLE001
                     pass
 
     # agents are cheap objects: build them per request so the FACTS are always current

@@ -57,9 +57,11 @@ def test_exact_tool_numbers_are_grounded():
     assert find_ungrounded_amounts(answer, [TOOL_RESULT]) == []
 
 
-def test_rounded_or_invented_numbers_are_flagged():
-    answer = "You can spend about $39 per day, roughly $430 total, or $500 if you skip a bill."
-    assert find_ungrounded_amounts(answer, [TOOL_RESULT]) == ["$39", "$430", "$500"]
+def test_invented_numbers_are_flagged_but_whole_dollar_rounding_is_allowed():
+    # M4 change: "$39" for 39.11 is how people talk, so whole-dollar rounding is accepted.
+    # Wrong cents ("$39.50") and invented amounts ("$500") are still flagged.
+    answer = "You can spend about $39 per day, roughly $430 total, $39.50 tomorrow, or $500 if you skip a bill."
+    assert find_ungrounded_amounts(answer, [TOOL_RESULT]) == ["$39.50", "$500"]
 
 
 def test_amounts_from_the_users_question_are_allowed():
