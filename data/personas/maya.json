@@ -2,7 +2,7 @@
  "id": "maya",
  "name": "Maya",
  "emoji": "\u2615",
- "tagline": "Student \u00b7 part-time barista",
+ "tagline": "Student and part-time barista",
  "description": "College junior who works 15-25 hours a week at a coffee shop. Her paycheck changes with her hours, rent is split with a roommate, and dining out creeps up fast.",
  "settings": {
   "current_balance": 296.4,
@@ -128,7 +128,7 @@
    "days_ago": 8,
    "description": "SQ *GOLDEN BOBA TEA",
    "amount": -17.01,
-   "category": "other"
+   "category": "dining"
   },
   {
    "id": "maya-0015",
@@ -191,7 +191,7 @@
    "days_ago": 14,
    "description": "SQ *GOLDEN BOBA TEA",
    "amount": -12.4,
-   "category": "other"
+   "category": "dining"
   },
   {
    "id": "maya-0024",
@@ -226,7 +226,7 @@
    "days_ago": 18,
    "description": "SQ *GOLDEN BOBA TEA",
    "amount": -18.46,
-   "category": "other"
+   "category": "dining"
   },
   {
    "id": "maya-0029",
@@ -289,7 +289,7 @@
    "days_ago": 26,
    "description": "SQ *GOLDEN BOBA TEA",
    "amount": -14.77,
-   "category": "other"
+   "category": "dining"
   },
   {
    "id": "maya-0038",
@@ -345,7 +345,7 @@
    "days_ago": 33,
    "description": "SQ *GOLDEN BOBA TEA",
    "amount": -22.8,
-   "category": "other"
+   "category": "dining"
   },
   {
    "id": "maya-0046",
@@ -359,7 +359,7 @@
    "days_ago": 35,
    "description": "SQ *GOLDEN BOBA TEA",
    "amount": -14.01,
-   "category": "other"
+   "category": "dining"
   },
   {
    "id": "maya-0048",
@@ -506,7 +506,7 @@
    "days_ago": 49,
    "description": "SQ *GOLDEN BOBA TEA",
    "amount": -12.4,
-   "category": "other"
+   "category": "dining"
   },
   {
    "id": "maya-0069",
@@ -583,7 +583,7 @@
    "days_ago": 57,
    "description": "SQ *GOLDEN BOBA TEA",
    "amount": -17.34,
-   "category": "other"
+   "category": "dining"
   },
   {
    "id": "maya-0080",
@@ -709,7 +709,7 @@
    "days_ago": 71,
    "description": "SQ *GOLDEN BOBA TEA",
    "amount": -28.99,
-   "category": "other"
+   "category": "dining"
   },
   {
    "id": "maya-0098",
@@ -751,7 +751,7 @@
    "days_ago": 77,
    "description": "SQ *GOLDEN BOBA TEA",
    "amount": -29.64,
-   "category": "other"
+   "category": "dining"
   },
   {
    "id": "maya-0104",

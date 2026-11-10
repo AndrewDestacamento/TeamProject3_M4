@@ -385,8 +385,10 @@ def insights(snap: dict, txns, as_of: date) -> list[dict]:
                     "detail": f"Bills of ${nc['bills_total']:,.2f} are due soon after payday, more than the ${nc['expected_income']:,.2f} you're likely to earn by then."})
     for row in snap["month"]["categories"]:
         if row["category"] in FLEXIBLE and row["change"] >= 25 and (row["change_pct"] or 100) >= 25:
+            title = (f"{row['label']} is up {row['change_pct']}% this month" if row["change_pct"] is not None
+                     else f"{row['label']} is new this month")
             out.append({"id": f"up_{row['category']}", "severity": "medium", "icon": "trending-up",
-                        "title": f"{row['label']} is up {row['change_pct'] or 100}% this month",
+                        "title": title,
                         "detail": f"${row['this_month']:,.2f} so far vs ${row['last_month_same_days']:,.2f} by this point in {snap['month']['last_month_label']}.",
                         "category": row["category"]})
             break
@@ -394,7 +396,7 @@ def insights(snap: dict, txns, as_of: date) -> list[dict]:
     if soon:
         names = ", ".join(b["name"] for b in soon[:3])
         out.append({"id": "subs_soon", "severity": "low", "icon": "repeat",
-                    "title": f"{len(soon)} subscription{'s' if len(soon) > 1 else ''} renew this week",
+                    "title": f"{len(soon)} subscription{'s renew' if len(soon) > 1 else ' renews'} this week",
                     "detail": f"{names}: ${sum(b['amount'] for b in soon):,.2f} total."})
     if snap["subscriptions"]["count"] >= 3:
         out.append({"id": "subs_total", "severity": "low", "icon": "repeat",

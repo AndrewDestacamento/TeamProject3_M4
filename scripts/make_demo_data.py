@@ -20,6 +20,10 @@ sys.path.insert(0, str(ROOT))
 from budgetwise.categories import rule_category  # noqa: E402
 
 OUT = ROOT / "data" / "personas"
+# Small local shops no keyword rule knows. For an uploaded file the Categorizer agent labels these;
+# the demo ships with them already labeled so it loads instantly.
+DEMO_LABELS = {"SQ *GOLDEN BOBA TEA": "dining", "TST* HOPS N GRAIN": "dining", "SQ *BREW HAUS COFFEE": "dining",
+               "EVENTBRITE*ART WALK": "entertainment", "PARKMOBILE NAPLES": "transport", "AUTOZONE #4412": "transport"}
 DAYS = 120
 
 
@@ -29,7 +33,7 @@ class Builder:
 
     def add(self, days_ago: int, desc: str, amount: float, category: str | None = None):
         if 0 <= days_ago < DAYS:
-            cat = category or rule_category(desc, amount) or "other"
+            cat = category or rule_category(desc, amount) or DEMO_LABELS.get(desc, "other")
             self.rows.append({"days_ago": days_ago, "description": desc, "amount": round(amount, 2), "category": cat})
 
     def every(self, first_days_ago: int, step: int, desc, amount, jitter=0.0, category=None):
@@ -81,7 +85,7 @@ def maya() -> dict:
     b.add(3, "TICKETMASTER", -96.50)
     return b.done(
         id="maya", name="Maya", emoji="☕",
-        tagline="Student · part-time barista",
+        tagline="Student and part-time barista",
         description="College junior who works 15-25 hours a week at a coffee shop. Her paycheck changes with her hours, rent is split with a roommate, and dining out creeps up fast.",
         settings={"current_balance": 296.40, "savings_buffer": 75.0,
                   "goal": {"name": "Spring textbooks fund", "target": 400.0, "saved": 135.0, "deadline_days": 63}},

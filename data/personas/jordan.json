@@ -296,7 +296,7 @@
    "days_ago": 25,
    "description": "AUTOZONE #4412",
    "amount": -36.31,
-   "category": "other"
+   "category": "transport"
   },
   {
    "id": "jordan-0039",
@@ -443,7 +443,7 @@
    "days_ago": 40,
    "description": "AUTOZONE #4412",
    "amount": -89.97,
-   "category": "other"
+   "category": "transport"
   },
   {
    "id": "jordan-0060",
@@ -597,7 +597,7 @@
    "days_ago": 54,
    "description": "AUTOZONE #4412",
    "amount": -34.18,
-   "category": "other"
+   "category": "transport"
   },
   {
    "id": "jordan-0082",
@@ -898,7 +898,7 @@
    "days_ago": 82,
    "description": "AUTOZONE #4412",
    "amount": -84.97,
-   "category": "other"
+   "category": "transport"
   },
   {
    "id": "jordan-0125",
@@ -1045,7 +1045,7 @@
    "days_ago": 95,
    "description": "AUTOZONE #4412",
    "amount": -62.39,
-   "category": "other"
+   "category": "transport"
   },
   {
    "id": "jordan-0146",

@@ -92,17 +92,21 @@ def merchant_key(raw: str) -> str:
     and "STARBUCKS STORE 99" both become "STARBUCKS STORE")."""
     text = clean_description(raw)
     text = _PREFIXES.sub("", text)
-    text = re.sub(r"[#*]\s*\S*", " ", text)  # "#1234", "*TRIP AB12"
+    text = re.sub(r"#\s*\S*", " ", text)  # "#1234"
+    text = text.replace("*", " ")  # "UBER *EATS" -> "UBER EATS"
     text = re.sub(r"\S*\d\S*", " ", text)  # anything containing digits
     text = re.sub(r"\b(FL|GA|CA|NY|TX|USA|US|INC|LLC|CO|CORP|COM|THE)\b", " ", text)
     words = [w for w in re.split(r"[^A-Z&'+-]+", text) if len(w) > 1]
     return " ".join(words[:3]) or clean_description(raw)[:20]
 
 
+_NOISE = {"DIR", "DEP", "PPD", "ID", "PAYMENT", "PAYMENTS", "PMT", "AUTOPAY", "BILL", "STORE", "PENDING", "ONLINE", "WHSE", "SUPERCENTER"}
+
+
 def pretty_merchant(raw: str) -> str:
-    """Readable merchant name for the UI ("STARBUCKS STORE 1234" -> "Starbucks Store")."""
-    key = merchant_key(raw)
-    return " ".join(w if w in _ACRONYMS else w.capitalize() for w in key.split())
+    """Readable merchant name for the UI ("STARBUCKS STORE 1234" -> "Starbucks")."""
+    words = [w for w in merchant_key(raw).split() if w not in _NOISE] or merchant_key(raw).split()
+    return " ".join(w if w in _ACRONYMS else w.capitalize() for w in words)
 
 
 def rule_category(description: str, amount: float) -> str | None:

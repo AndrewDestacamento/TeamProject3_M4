@@ -79,7 +79,7 @@
    "days_ago": 4,
    "description": "TST* HOPS N GRAIN",
    "amount": -27.09,
-   "category": "other"
+   "category": "dining"
   },
   {
    "id": "priya-0008",
@@ -275,7 +275,7 @@
    "days_ago": 27,
    "description": "TST* HOPS N GRAIN",
    "amount": -28.42,
-   "category": "other"
+   "category": "dining"
   },
   {
    "id": "priya-0036",
@@ -471,7 +471,7 @@
    "days_ago": 49,
    "description": "TST* HOPS N GRAIN",
    "amount": -12.57,
-   "category": "other"
+   "category": "dining"
   },
   {
    "id": "priya-0064",
@@ -492,7 +492,7 @@
    "days_ago": 52,
    "description": "TST* HOPS N GRAIN",
    "amount": -26.25,
-   "category": "other"
+   "category": "dining"
   },
   {
    "id": "priya-0067",
@@ -541,7 +541,7 @@
    "days_ago": 58,
    "description": "TST* HOPS N GRAIN",
    "amount": -25.88,
-   "category": "other"
+   "category": "dining"
   },
   {
    "id": "priya-0074",
@@ -688,7 +688,7 @@
    "days_ago": 77,
    "description": "TST* HOPS N GRAIN",
    "amount": -46.84,
-   "category": "other"
+   "category": "dining"
   },
   {
    "id": "priya-0095",
@@ -1038,7 +1038,7 @@
    "days_ago": 118,
    "description": "TST* HOPS N GRAIN",
    "amount": -16.47,
-   "category": "other"
+   "category": "dining"
   }
  ],
  "order": 2
