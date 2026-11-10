@@ -157,6 +157,12 @@ def patch_settings(body: SettingsIn):
 PENDING_IMPORTS: dict[str, dict] = {}
 
 
+@app.get("/api/sample-csv")
+def sample_csv():
+    return FileResponse(ROOT / "data" / "samples" / "sample_chase_checking.csv", media_type="text/csv",
+                        filename="sample_chase_checking.csv")
+
+
 @app.post("/api/import/preview")
 async def import_preview(file: UploadFile = File(...)):
     raw = await file.read()
@@ -258,7 +264,9 @@ def plan_accept(body: AcceptIn):
     """Human-in-the-loop (Chapter 8): a plan is only saved when the user chooses to start it."""
     p = body.plan
     keep = ["week_start", "week_end", "daily_limit", "focus_category", "focus_label", "focus_category_cap",
-            "save_this_week", "weekly_spending_allowance", "headline", "why", "today_action", "critic"]
+            "focus_weekly_average", "cut_percent", "freed_up_by_cut", "weekly_safe_to_spend", "save_this_week",
+            "weekly_spending_allowance", "goal_name", "goal_needed_per_week", "on_track_for_goal",
+            "headline", "why", "today_action", "tip_source", "critic", "attempts"]
     plan = {k: p.get(k) for k in keep}
     if plan["focus_category"] not in FLEXIBLE or not isinstance(plan["daily_limit"], (int, float)):
         raise HTTPException(400, "That plan is incomplete.")

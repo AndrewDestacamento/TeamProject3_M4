@@ -359,7 +359,8 @@ class BudgetWiseTeam:
             yield {"type": "token", "text": prefix}
             user_input = (f"{message}\n\nAFFORDABILITY RESULT (computed by BudgetWise):\n{json.dumps(finance._friendly_dates(result))}\n"
                           f"The user has ALREADY been shown the verdict and the numbers, so do not restate the verdict. "
-                          f"Reply with ONE or TWO short sentences of practical advice that make this work for them (what to trim, when to buy, or a cheaper option). "
+                          f"Reply with ONE short sentence of practical advice that makes this work for them (what to trim, when to buy, or a cheaper option). "
+                          f"Never suggest using the savings cushion, skipping bills, or borrowing. "
                           f"Avoid repeating numbers; if you use one, copy it exactly. Do not call check_affordability.")
         else:
             prefix = ""
@@ -452,8 +453,8 @@ class BudgetWiseTeam:
         files = sorted({r["source_file"] for r in kb.get("results", [])})
         guidance = "GUIDANCE (from the budgeting guide library):\n" + "\n".join(
             f"[{r['source_file']}] {r['text']}" for r in kb.get("results", []))
-        yield {"type": "tool", "agent": "Knowledge", "name": "search_budget_knowledge", "status": "done",
-               "summary": ", ".join(files)[:70] or "no passages"}
+        yield {"type": "step", "agent": "Knowledge", "status": "done",
+               "detail": "Found guidance in " + (", ".join(f.replace(".md", "").replace("_", " ") for f in files) or "no guides")}
         for attempt in (1, 2):
             yield {"type": "step", "agent": "Planner", "status": "running",
                    "detail": "Choosing this week's strategy" if attempt == 1 else "Revising with the Critic's feedback"}
@@ -496,16 +497,22 @@ class BudgetWiseTeam:
             evidence = [json.dumps(finance.compact_snapshot(snap)), json.dumps(numbers)]
             ungrounded = guardrails.find_ungrounded_amounts(plan_text, evidence)
             if ungrounded:
-                draft = _template_text(draft, numbers, snap)
+                # Drop only the sentences with unverified amounts; fall back to plain wording if too much is lost.
+                ok = lambda t: not guardrails.find_ungrounded_amounts(t, evidence)  # noqa: E731
+                safe_why = [w for w in draft["why"] if ok(w)]
+                template = _template_text(dict(draft), numbers, snap)
+                draft["headline"] = draft["headline"] if ok(draft["headline"]) else template["headline"]
+                draft["today_action"] = draft["today_action"] if ok(draft["today_action"]) else template["today_action"]
+                draft["why"] = safe_why if len(safe_why) >= 2 else (safe_why + [w for w in template["why"] if w not in safe_why])[:3]
                 yield {"type": "check", "name": "Grounding", "status": "retry",
-                       "detail": f"Replaced unverified amounts ({', '.join(ungrounded[:3])}) with calculated ones"}
+                       "detail": f"Removed unverified amounts ({', '.join(ungrounded[:3])}); kept only calculated numbers"}
             else:
                 yield {"type": "check", "name": "Grounding", "status": "pass", "detail": "Every dollar amount matches the math"}
 
             yield {"type": "step", "agent": "Critic", "status": "running", "detail": "Reviewing the plan"}
             critique = await self._critique(snap, numbers, draft)
             yield {"type": "step", "agent": "Critic", "status": "done" if critique["verdict"] == "approve" else "revise",
-                   "detail": f"Score {critique['score']}/10 · " + ("approved" if critique["verdict"] == "approve" else "sent back")}
+                   "detail": f"Score {critique['score']}/10, " + ("approved" if critique["verdict"] == "approve" else "sent back for one revision")}
             plan = {**numbers, **{k: draft[k] for k in ("headline", "why", "today_action", "tip_source")},
                     "critic": critique, "attempts": attempt, "last_week": snap.get("last_plan"),
                     "status_before": snap["status"], "created_at": time.strftime("%Y-%m-%dT%H:%M:%S")}
