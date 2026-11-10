@@ -54,14 +54,19 @@ flowchart LR
 
 ## Setup and run (Windows PowerShell)
 1. Install **Python 3.11 or newer**. If `chromadb` won't install on the newest Python, use Python 3.12.
-2. From the repo folder, create a virtual environment and install the packages:
+2. Download the code and open the folder:
+   ```powershell
+   git clone https://github.com/erFig/TeamProject3_M4.git
+   cd TeamProject3_M4
+   ```
+3. Create a virtual environment and install the packages:
    ```powershell
    python -m venv venv
    venv\Scripts\activate
    python -m pip install -r requirements.txt
    ```
-3. Copy `.env.example` to `.env` and paste your NRP token. Never commit `.env`.
-4. Start the app and open **http://localhost:8000**:
+4. Copy `.env.example` to `.env` and paste your NRP token. Never commit `.env`.
+5. Start the app and open **http://localhost:8000**:
    ```powershell
    uvicorn app:app --port 8000
    ```
