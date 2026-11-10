@@ -2,10 +2,11 @@ import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import * as Dropdown from "@radix-ui/react-dropdown-menu";
 import { toast } from "sonner";
-import { Check, Search, X } from "lucide-react";
+import { Check, Search, Trash2, X } from "lucide-react";
 import { api, type Txn } from "@/lib/api";
 import { CAT, catInfo, CatIcon } from "@/lib/categories";
-import { Skeleton } from "@/components/Bits";
+import { Section, Skeleton } from "@/components/Bits";
+import { LogBox } from "@/components/Logging";
 import { cn, day, money } from "@/lib/format";
 
 const PERIODS = [
@@ -58,6 +59,21 @@ function CategoryPicker({ t }: { t: Txn }) {
   );
 }
 
+function DeleteEntry({ t }: { t: Txn }) {
+  const qc = useQueryClient();
+  if (!["chat", "checkin", "setup"].includes(t.source)) return null;
+  const del = async () => {
+    await api.deleteTxn(t.id);
+    toast.success("Entry deleted");
+    await qc.invalidateQueries();
+  };
+  return (
+    <button onClick={del} className="rounded-lg p-1.5 text-faint hover:bg-sunken hover:text-berry" aria-label={`Delete ${t.merchant}`}>
+      <Trash2 size={15} />
+    </button>
+  );
+}
+
 export default function Spending() {
   const { data, isLoading } = useQuery({ queryKey: ["transactions"], queryFn: api.transactions });
   const { data: snap } = useQuery({ queryKey: ["snapshot"], queryFn: api.snapshot });
@@ -87,7 +103,7 @@ export default function Spending() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-[2rem] font-bold leading-tight">Spending</h1>
-          <p className="mt-1 text-muted">Every transaction, sorted automatically. Change a category and BudgetWise remembers it for that store.</p>
+          <p className="mt-1 text-muted">Everything from your bank file plus everything you told BudgetWise, sorted automatically. Change a category and it remembers that store.</p>
         </div>
         <div className="flex rounded-xl bg-sunken p-1" role="tablist" aria-label="Time period">
           {PERIODS.map((p) => (
@@ -98,6 +114,10 @@ export default function Spending() {
           ))}
         </div>
       </div>
+
+      <Section title="Add something" aside="Type it the way you'd text a friend">
+        <LogBox placeholder="e.g. $12 lunch and $30 gas yesterday, or I made $300 in tips this week" />
+      </Section>
 
       {/* Summary: totals plus one bar made of every category */}
       <section className="panel p-5 sm:p-6">
@@ -145,10 +165,16 @@ export default function Spending() {
                   <li key={t.id} className="flex items-center gap-3 px-5 py-3">
                     <CatIcon id={t.category} size={16} />
                     <div className="min-w-0 flex-1">
-                      <p className="truncate font-medium leading-tight">{t.merchant}</p>
-                      <p className="truncate text-[0.78rem] text-faint">{t.description}</p>
+                      <p className="flex items-center gap-2 truncate font-medium leading-tight">
+                        <span className="truncate">{t.merchant}</span>
+                        {t.approx && <span className="chip shrink-0 bg-marigold-soft px-2 py-0.5 text-[0.7rem] text-marigold">estimate</span>}
+                      </p>
+                      <p className="truncate text-[0.78rem] text-faint">
+                        {t.source === "chat" ? "You told BudgetWise" : t.source === "checkin" ? "Daily check-in" : t.description}
+                      </p>
                     </div>
                     <div className="hidden sm:block"><CategoryPicker t={t} /></div>
+                    <DeleteEntry t={t} />
                     <p className={cn("num w-24 text-right font-semibold", t.amount > 0 && "text-forest")}>
                       {t.amount > 0 ? "+" : "−"}{money(Math.abs(t.amount))}
                     </p>

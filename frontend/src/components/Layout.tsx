@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import * as Dropdown from "@radix-ui/react-dropdown-menu";
-import { CalendarDays, ChevronsUpDown, Check, Moon, Sun, Upload, MessageCircle, ReceiptText, Sparkles, Wallet, Settings2 } from "lucide-react";
+import { CalendarDays, ChevronsUpDown, Check, Moon, Sun, Upload, MessageCircle, ReceiptText, Sparkles, Wallet, Settings2, PencilLine } from "lucide-react";
 import { api } from "@/lib/api";
 import { useChat } from "@/lib/chat";
 import { cn } from "@/lib/format";
@@ -63,7 +63,7 @@ function AccountSwitcher({ compact = false }: { compact?: boolean }) {
         {!compact && (
           <span className="min-w-0 flex-1">
             <span className="block truncate font-semibold leading-tight">{active?.name ?? "Loading"}</span>
-            <span className="block truncate text-[0.8rem] text-muted">{active?.kind === "demo" ? `Demo: ${active.tagline}` : active?.tagline}</span>
+            <span className="block truncate text-[0.8rem] text-muted">{active?.kind === "demo" ? `Demo: ${active.tagline}` : "Your account"}</span>
           </span>
         )}
         <ChevronsUpDown size={16} className="shrink-0 text-faint" />
@@ -83,10 +83,10 @@ function AccountSwitcher({ compact = false }: { compact?: boolean }) {
               {a.id === data.active && <Check size={16} className="text-forest" />}
             </Dropdown.Item>
           ))}
-          {data?.accounts.some((a) => a.kind === "uploaded") && (
-            <Dropdown.Label className="px-3 pb-1 pt-3 text-[0.8rem] text-muted">Your data</Dropdown.Label>
+          {data?.accounts.some((a) => a.kind === "personal") && (
+            <Dropdown.Label className="px-3 pb-1 pt-3 text-[0.8rem] text-muted">Your accounts</Dropdown.Label>
           )}
-          {data?.accounts.filter((a) => a.kind === "uploaded").map((a) => (
+          {data?.accounts.filter((a) => a.kind === "personal").map((a) => (
             <Dropdown.Item key={a.id} onSelect={() => pick(a.id)}
               className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 outline-none data-[highlighted]:bg-sunken">
               <span className="text-lg">{a.emoji}</span>
@@ -98,6 +98,10 @@ function AccountSwitcher({ compact = false }: { compact?: boolean }) {
           <Dropdown.Item onSelect={() => nav("/accounts#upload")}
             className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 font-medium text-forest outline-none data-[highlighted]:bg-sunken">
             <Upload size={18} /> Add your bank's CSV
+          </Dropdown.Item>
+          <Dropdown.Item onSelect={() => nav("/setup?new=1")}
+            className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 font-medium text-forest outline-none data-[highlighted]:bg-sunken">
+            <PencilLine size={18} /> Start without a file
           </Dropdown.Item>
         </Dropdown.Content>
       </Dropdown.Portal>
@@ -131,7 +135,7 @@ export default function Layout() {
         <div className="mt-auto space-y-3">
           <div className="rounded-2xl bg-sunken p-4 text-[0.85rem] text-muted">
             <Sparkles size={16} className="mb-1.5 text-marigold" />
-            Four AI agents and a money engine work together on every answer. Numbers are always calculated, never guessed.
+            Five AI agents and a money engine work together. Tell it what you spend in plain words; numbers are always calculated, never guessed.
           </div>
           <button onClick={toggle} className="btn-ghost w-full justify-start px-3">
             <ThemeIcon size={18} /> {dark ? "Light mode" : "Dark mode"}

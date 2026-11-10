@@ -1,10 +1,11 @@
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { CalendarDays, Info } from "lucide-react";
+import { ArrowRight, CalendarDays, Info, PencilLine, Upload } from "lucide-react";
 import { api } from "@/lib/api";
 import Runway from "@/components/Runway";
 import { ForecastChart, MonthBars } from "@/components/Charts";
 import { AskBox, BillList, GoalMeter, InsightList, Section, Skeleton, StatusChip } from "@/components/Bits";
+import { CheckIns, LogBox } from "@/components/Logging";
 import { cn, day, longDay, money, moneyParts } from "@/lib/format";
 
 function BigMoney({ value, tone }: { value: number; tone: string }) {
@@ -26,6 +27,27 @@ export default function Today() {
       <div className="space-y-6">
         <Skeleton className="h-6 w-56" /><Skeleton className="h-24 w-full max-w-xl" /><Skeleton className="h-36 w-full" />
         <div className="grid gap-6 lg:grid-cols-2"><Skeleton className="h-72" /><Skeleton className="h-72" /></div>
+      </div>
+    );
+  }
+
+  if (s.setup_needed) {
+    return (
+      <div className="mx-auto max-w-2xl space-y-6 pt-6">
+        <h1 className="text-[2.2rem] font-bold leading-tight">Let's set up {s.account.name}</h1>
+        <p className="text-[1.05rem] text-muted">BudgetWise needs a little information to work out what's safe to spend. Pick whichever is easier.</p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Link to="/setup" className="panel flex flex-col gap-2 p-5 hover:border-forest/40">
+            <PencilLine className="text-forest" /><span className="font-display text-[1.15rem] font-bold">Answer 5 quick questions</span>
+            <span className="text-[0.9rem] text-muted">Your balance, how you get paid, your bills. In your own words.</span>
+            <span className="mt-1 inline-flex items-center gap-1 font-semibold text-forest">Start <ArrowRight size={16} /></span>
+          </Link>
+          <Link to="/accounts#upload" className="panel flex flex-col gap-2 p-5 hover:border-forest/40">
+            <Upload className="text-forest" /><span className="font-display text-[1.15rem] font-bold">Upload a bank CSV</span>
+            <span className="text-[0.9rem] text-muted">Exact numbers from your bank's export. Bills and paydays are found for you.</span>
+            <span className="mt-1 inline-flex items-center gap-1 font-semibold text-forest">Upload <ArrowRight size={16} /></span>
+          </Link>
+        </div>
       </div>
     );
   }
@@ -64,6 +86,12 @@ export default function Today() {
             <span className="font-semibold text-ink">{day(s.next_payday)}</span>
             {s.spent_today > 0 ? <>. You've spent {money(s.spent_today)} so far today.</> : <>. Nothing spent yet today.</>}
           </p>
+          {s.estimates.count > 0 && (
+            <p className="num mt-2 text-[0.88rem] text-faint">
+              Includes {money(s.estimates.total)} of estimates you logged.{" "}
+              <Link to="/accounts#upload" className="font-medium text-forest hover:underline">Upload a bank file</Link> for exact numbers.
+            </p>
+          )}
         </div>
 
         <dl className="num grid grid-cols-2 gap-x-6 gap-y-4 rounded-2xl bg-sunken/70 p-5 text-[0.92rem]">
@@ -75,10 +103,15 @@ export default function Today() {
         </dl>
       </section>
 
+      <CheckIns s={s} />
+
       <Runway s={s} />
 
       <div className="grid gap-6 lg:grid-cols-[1.15fr_1fr]">
         <div className="space-y-6">
+          <Section title="Tell BudgetWise" aside="Spent or earned something? Say it how you'd text it">
+            <LogBox placeholder="e.g. spent about $20 on food, or got paid $612" />
+          </Section>
           <Section title="Ask BudgetWise" aside="Answers in seconds, using your real numbers">
             <AskBox />
           </Section>

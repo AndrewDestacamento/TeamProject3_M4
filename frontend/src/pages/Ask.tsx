@@ -7,7 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useChat, type ChatMessage } from "@/lib/chat";
 import AgentTimeline from "@/components/AgentTimeline";
-import { AffordCard, PlanCard } from "@/components/Cards";
+import { AffordCard, PlanCard, SavedCard } from "@/components/Cards";
 import { SUGGESTIONS } from "@/components/Bits";
 import { cn, money } from "@/lib/format";
 
@@ -17,6 +17,7 @@ function Assistant({ m }: { m: ChatMessage }) {
   return (
     <div className="max-w-[680px] space-y-3">
       {m.afford && <AffordCard a={m.afford} />}
+      {m.saved && <SavedCard s={m.saved} />}
       {m.plan && (
         <div className="space-y-2">
           <PlanCard p={m.plan} compact />
@@ -67,7 +68,7 @@ export default function Ask() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-[1.9rem] font-bold leading-tight">Ask BudgetWise</h1>
-          <p className="mt-1 text-muted">Questions about your spending, bills, paychecks and plans. Every number is checked against your data.</p>
+          <p className="mt-1 text-muted">Ask about your spending, bills and plans, or just tell me what you spent or earned and I'll save it. Every number is checked against your data.</p>
         </div>
         {messages.length > 0 && (
           <button onClick={reset} className="btn-ghost shrink-0 text-[0.9rem]"><RotateCcw size={16} /> New chat</button>
@@ -81,7 +82,7 @@ export default function Ask() {
               {s ? <>You have <span className="num text-forest">{money(s.safe_per_day)}</span> a day to spend until payday. What would you like to know?</> : "What would you like to know?"}
             </p>
             <div className="mt-5 grid gap-2 sm:grid-cols-2">
-              {[...SUGGESTIONS, "Make me a plan for this week", "How steady is my income?"].map((x) => (
+              {[...SUGGESTIONS, "Make me a plan for this week", "I spent about $20 on food today"].map((x) => (
                 <button key={x} onClick={() => submit(x)}
                   className="rounded-2xl border border-line bg-surface px-4 py-3 text-left text-[0.95rem] hover:border-forest/40">
                   {x}
@@ -110,7 +111,7 @@ export default function Ask() {
       <form onSubmit={(e) => { e.preventDefault(); submit(q); }}
         className="sticky bottom-20 z-10 rounded-2xl border border-line bg-surface p-2 shadow-lift lg:bottom-6">
         <div className="flex items-end gap-2">
-          <textarea value={q} onChange={(e) => setQ(e.target.value)} rows={1} placeholder="Ask about your money…"
+          <textarea value={q} onChange={(e) => setQ(e.target.value)} rows={1} placeholder="Ask a question, or tell me what you spent…"
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submit(q); } }}
             className="max-h-40 min-h-[44px] flex-1 resize-none bg-transparent px-3 py-2.5 text-[1rem] outline-none placeholder:text-faint"
             aria-label="Your question" />

@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { stream, api, type AgentEvent, type Afford, type Plan } from "./api";
+import { stream, api, type AgentEvent, type Afford, type Plan, type Saved } from "./api";
 
 // One line in the "how I got this" timeline under each answer.
 export interface TimelineItem {
@@ -18,6 +18,7 @@ export interface ChatMessage {
   timeline: TimelineItem[];
   afford?: Afford;
   plan?: Plan;
+  saved?: Saved;
   pending?: boolean;
   elapsed?: number;
   intent?: string;
@@ -31,6 +32,15 @@ const TOOL_LABELS: Record<string, string> = {
   get_income_details: "Looked at your paychecks",
   search_budget_knowledge: "Searched the budgeting guides",
   build_weekly_plan: "Calculated the weekly plan",
+  log_spending: "Saved spending",
+  log_income: "Saved income",
+  set_bill: "Saved a bill",
+  set_pay_schedule: "Saved your pay schedule",
+  set_balance: "Updated your balance",
+  set_savings_goal: "Saved your goal",
+  set_typical_weekly_spending: "Saved your usual weekly spending",
+  fix_last_entry: "Fixed the last entry",
+  undo_last: "Undid the last entry",
 };
 
 /** Fold one streamed event into a timeline (shared by chat and the plan page). */
@@ -95,6 +105,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         else if (ev.type === "token") update((m) => ({ ...m, text: m.text + ev.text }));
         else if (ev.type === "replace") update((m) => ({ ...m, text: ev.text }));
         else if (ev.type === "card" && ev.kind === "afford") update((m) => ({ ...m, afford: ev.data }));
+        else if (ev.type === "card" && ev.kind === "saved") update((m) => ({ ...m, saved: ev.data }));
         else if (ev.type === "card" && ev.kind === "plan") {
           update((m) => ({ ...m, plan: ev.data }));
           qc.setQueryData(["draftPlan"], ev.data);  // the Plan page picks it up so it can be started
@@ -108,7 +119,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     } finally {
       update((m) => ({ ...m, pending: false }));
       setBusy(false);
-      qc.invalidateQueries({ queryKey: ["plans"] });
+      qc.invalidateQueries();  // anything logged in chat changes the numbers everywhere
     }
   }, [busy, qc]);
 

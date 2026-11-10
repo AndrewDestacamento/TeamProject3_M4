@@ -2,16 +2,23 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Check, Download, FileSpreadsheet, Loader2, Lock, Trash2, UploadCloud } from "lucide-react";
+import { ArrowRight, Check, Download, FileSpreadsheet, Loader2, Lock, PencilLine, Trash2, UploadCloud, X } from "lucide-react";
+import { Link } from "react-router-dom";
 import { api } from "@/lib/api";
 import { useChat } from "@/lib/chat";
 import { Section } from "@/components/Bits";
+import { describeSchedule } from "@/components/Cards";
+import { CatIcon } from "@/lib/categories";
 import { cn, day, money } from "@/lib/format";
 
 type Preview = Awaited<ReturnType<typeof api.importPreview>>;
 
 function Uploader() {
   const qc = useQueryClient();
+  const { data: accts } = useQuery({ queryKey: ["accounts"], queryFn: api.accounts });
+  const activeAcc = accts?.accounts.find((a) => a.id === accts.active);
+  const canMerge = activeAcc?.kind === "personal";
+  const [target, setTarget] = useState<"new" | "active">("active");
   const nav = useNavigate();
   const { reset } = useChat();
   const input = useRef<HTMLInputElement>(null);
@@ -41,7 +48,7 @@ function Uploader() {
     if (!balance.trim() || Number.isNaN(bal)) { toast.error("Enter your current balance so BudgetWise can work out what's safe to spend."); return; }
     setStage("importing");
     try {
-      const r = await api.importCommit(preview.token, name.trim() || "My checking", bal);
+      const r = await api.importCommit(preview.token, name.trim() || "My checking", bal, canMerge ? target : "new");
       setResult(r);
       setStage("done");
       reset();
@@ -61,6 +68,8 @@ function Uploader() {
           <p className="font-display text-[1.2rem] font-bold">Imported {result.transactions} transactions in {result.seconds}s</p>
         </div>
         <ul className="num space-y-1 text-[0.93rem] text-muted">
+          {result.duplicates_skipped > 0 && <li><span className="font-semibold text-ink">{result.duplicates_skipped}</span> were already saved from an earlier file, so they were skipped</li>}
+          {result.estimates_replaced > 0 && <li><span className="font-semibold text-ink">{result.estimates_replaced}</span> estimates you logged were replaced by exact bank rows</li>}
           <li><span className="font-semibold text-ink">{h.rules}</span> sorted instantly by store-name rules</li>
           {h.memory > 0 && <li><span className="font-semibold text-ink">{h.memory}</span> sorted from stores you've corrected before</li>}
           <li><span className="font-semibold text-ink">{h.ai}</span> sorted by the Categorizer agent ({result.merchants_sent_to_ai} store names sent, nothing else)</li>
@@ -98,11 +107,23 @@ function Uploader() {
             </tbody>
           </table>
         </div>
+        {canMerge && (
+          <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Where to add this file">
+            {([["active", `Add to ${activeAcc?.name}`], ["new", "Make a new account"]] as const).map(([v, l]) => (
+              <button key={v} role="radio" aria-checked={target === v} onClick={() => setTarget(v)}
+                className={cn("chip border px-3.5 py-1.5 text-[0.9rem]", target === v ? "border-forest bg-forest-soft text-forest" : "border-line text-muted")}>
+                {target === v && <Check size={14} />}{l}
+              </button>
+            ))}
+          </div>
+        )}
         <div className="grid gap-4 sm:grid-cols-2">
-          <label className="block">
-            <span className="mb-1.5 block text-[0.9rem] font-medium">Name this account</span>
-            <input className="field" value={name} onChange={(e) => setName(e.target.value)} maxLength={40} />
-          </label>
+          {(!canMerge || target === "new") && (
+            <label className="block">
+              <span className="mb-1.5 block text-[0.9rem] font-medium">Name this account</span>
+              <input className="field" value={name} onChange={(e) => setName(e.target.value)} maxLength={40} />
+            </label>
+          )}
           <label className="block">
             <span className="mb-1.5 block text-[0.9rem] font-medium">Balance right now</span>
             <input className="field num" inputMode="decimal" value={balance} onChange={(e) => setBalance(e.target.value)} placeholder="e.g. 842.17" />
@@ -158,6 +179,11 @@ function SettingsForm() {
     });
   }, [settings]);
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement>) => setF((x) => ({ ...x, [k]: e.target.value }));
+  const removeSchedule = async (id: string) => {
+    await api.deleteSchedule(id);
+    await qc.invalidateQueries();
+    toast.success("Removed");
+  };
 
   const save = async () => {
     const body: Record<string, unknown> = { current_balance: Number(f.balance), savings_buffer: Number(f.buffer) };
@@ -174,8 +200,25 @@ function SettingsForm() {
     }
   };
 
+  const told = settings?.schedules ?? [];
   return (
     <div className="space-y-5">
+      {told.length > 0 && (
+        <div>
+          <p className="mb-2 font-medium">Bills and pay you told BudgetWise</p>
+          <ul className="divide-y divide-line rounded-2xl border border-line">
+            {told.map((x) => (
+              <li key={x.id} className="flex items-center gap-3 px-4 py-2.5">
+                <CatIcon id={x.kind === "income" ? "income" : x.category ?? "other"} size={14} />
+                <span className="num min-w-0 flex-1 text-[0.93rem]"><span className="font-medium">{x.kind === "income" ? "Pay schedule" : x.name}</span>
+                  <span className="text-muted">: {describeSchedule(x)}</span></span>
+                <button onClick={() => removeSchedule(x.id)} className="rounded-lg p-1.5 text-faint hover:bg-sunken hover:text-berry" aria-label={`Remove ${x.name}`}><X size={15} /></button>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-1.5 text-[0.82rem] text-muted">To change one, just tell BudgetWise, e.g. “rent is $750 now”.</p>
+        </div>
+      )}
       <div className="grid gap-4 sm:grid-cols-3">
         <label><span className="mb-1.5 block text-[0.9rem] font-medium">Current balance</span><input className="field num" inputMode="decimal" value={f.balance ?? ""} onChange={set("balance")} /></label>
         <label><span className="mb-1.5 block text-[0.9rem] font-medium">Cushion to keep</span><input className="field num" inputMode="decimal" value={f.buffer ?? ""} onChange={set("buffer")} />
@@ -215,7 +258,7 @@ export default function Accounts() {
     await api.deleteAccount(active.id);
     reset();
     await qc.invalidateQueries();
-    toast.success(active.kind === "demo" ? "Demo reset to its original data" : "Uploaded data deleted from this computer");
+    toast.success(active.kind === "demo" ? "Demo reset to its original data" : "Account deleted from this computer");
   };
 
   return (
@@ -246,10 +289,19 @@ export default function Accounts() {
         </div>
       </Section>
 
-      <div id="upload" className="scroll-mt-24">
-        <Section title="Use your own bank data">
-          <Uploader />
+      <div className="grid gap-6 lg:grid-cols-[1fr_1.6fr]">
+        <Section title="Start without a bank file">
+          <div className="flex h-full flex-col">
+            <PencilLine className="text-forest" />
+            <p className="mt-2 flex-1 text-[0.93rem] text-muted">Answer five quick questions in your own words (your balance, how you get paid, your bills). Then just tell BudgetWise what you spend as you go.</p>
+            <Link to="/setup?new=1" className="btn-primary mt-4 self-start">Start setup <ArrowRight size={17} /></Link>
+          </div>
         </Section>
+        <div id="upload" className="scroll-mt-24">
+          <Section title="Use your bank's CSV">
+            <Uploader />
+          </Section>
+        </div>
       </div>
 
       {active && (

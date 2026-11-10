@@ -1,7 +1,89 @@
-import { BadgeCheck, CalendarCheck2, PiggyBank, Target, Utensils } from "lucide-react";
-import type { Afford, Plan } from "@/lib/api";
+import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { BadgeCheck, CalendarCheck2, Check, Landmark, PiggyBank, Target, Undo2, Utensils, Wallet } from "lucide-react";
+import { api, type Afford, type Plan, type Saved, type Schedule } from "@/lib/api";
 import { catInfo, CatIcon } from "@/lib/categories";
 import { cn, day, money } from "@/lib/format";
+
+const EVERY: Record<string, string> = { monthly: "monthly", weekly: "every week", biweekly: "every 2 weeks", twice_monthly: "twice a month", once: "once" };
+const ordinal = (n: number) => `${n}${["th", "st", "nd", "rd"][((n % 100) - 20) % 10] || ["th", "st", "nd", "rd"][n % 100] || "th"}`;
+
+export function describeSchedule(s: Schedule) {
+  if (s.kind === "income") {
+    const amt = s.low && s.high ? `${money(s.low, true)} to ${money(s.high, true)}` : s.amount ? `about ${money(s.amount, true)}` : "amount not set";
+    return `Paid ${EVERY[s.every] ?? s.every}, ${amt}${s.varies ? " (it changes)" : ""}${s.next_date ? `, next on ${day(s.next_date)}` : ""}`;
+  }
+  const when = s.day_of_month ? `on the ${ordinal(s.day_of_month)}` : s.next_date ? `next on ${day(s.next_date)}` : "";
+  return `${money(s.amount ?? 0)} ${EVERY[s.every] ?? s.every} ${when}`.trim();
+}
+
+/** What the Bookkeeper just saved, with one-tap Undo (human in the loop). */
+export function SavedCard({ s, compact = false }: { s: Saved; compact?: boolean }) {
+  const qc = useQueryClient();
+  const [undone, setUndone] = useState(false);
+  const undo = async () => {
+    await api.undo(s.batch_id);
+    setUndone(true);
+    await qc.invalidateQueries();
+    toast.success("Undone. Nothing from that message is saved.");
+  };
+  const todayIso = new Date().toISOString().slice(0, 10);
+  return (
+    <div className={cn("rounded-2xl border bg-surface", undone ? "border-line opacity-60" : "border-forest/35")}>
+      <div className="flex items-center justify-between gap-3 px-4 pt-3">
+        <p className="flex items-center gap-2 font-semibold">
+          <span className={cn("grid h-6 w-6 place-items-center rounded-full", undone ? "bg-sunken text-muted" : "bg-forest text-white dark:text-canvas")}>
+            {undone ? <Undo2 size={13} /> : <Check size={14} strokeWidth={3} />}
+          </span>
+          {undone ? "Undone" : "Saved"}
+        </p>
+        {!undone && <button onClick={undo} className="btn-ghost px-2.5 py-1 text-[0.85rem]"><Undo2 size={15} /> Undo</button>}
+      </div>
+      <ul className={cn("num space-y-1.5 px-4 py-3 text-[0.92rem]", undone && "line-through")}>
+        {s.transactions.map((t) => (
+          <li key={t.id} className="flex items-center gap-2.5">
+            <CatIcon id={t.category} size={14} />
+            <span className="min-w-0 flex-1 truncate">{t.description}{t.date !== todayIso && <span className="text-muted">, {day(t.date)}</span>}</span>
+            {t.approx && <span className="chip bg-marigold-soft px-2 py-0.5 text-[0.72rem] text-marigold">estimate</span>}
+            <span className={cn("font-semibold", t.amount > 0 && "text-forest")}>{t.amount > 0 ? "+" : "−"}{money(Math.abs(t.amount))}</span>
+          </li>
+        ))}
+        {s.schedules.map((x) => (
+          <li key={x.id} className="flex items-center gap-2.5">
+            {x.kind === "income" ? <span className="grid h-[30px] w-[30px] place-items-center rounded-xl bg-forest-soft text-forest"><Wallet size={15} /></span>
+              : <CatIcon id={x.category ?? "other"} size={14} />}
+            <span className="min-w-0 flex-1"><span className="font-medium">{x.kind === "income" ? "Pay schedule" : x.name}</span>
+              <span className="text-muted">: {describeSchedule(x)}</span></span>
+          </li>
+        ))}
+        {s.balances.map((b, i) => (
+          <li key={i} className="flex items-center gap-2.5">
+            <span className="grid h-[30px] w-[30px] place-items-center rounded-xl bg-sunken text-muted"><Landmark size={15} /></span>
+            <span className="flex-1">Balance right now</span><span className="font-semibold">{money(b.balance)}</span>
+          </li>
+        ))}
+        {s.typical_weekly_spend ? (
+          <li className="flex items-center gap-2.5">
+            <span className="grid h-[30px] w-[30px] place-items-center rounded-xl bg-sunken text-muted"><Wallet size={15} /></span>
+            <span className="flex-1">Usual everyday spending</span><span className="font-semibold">{money(s.typical_weekly_spend)} a week</span>
+          </li>
+        ) : null}
+        {s.goal && (
+          <li className="flex items-center gap-2.5">
+            <span className="grid h-[30px] w-[30px] place-items-center rounded-xl bg-marigold-soft text-marigold"><Target size={15} /></span>
+            <span className="flex-1">Goal: {s.goal.name}, {money(s.goal.target, true)} by {day(s.goal.deadline)}</span>
+          </li>
+        )}
+      </ul>
+      {!compact && !undone && (
+        <p className="num border-t border-line px-4 py-2.5 text-[0.85rem] text-muted">
+          Safe to spend now: <span className="font-semibold text-ink">{money(s.safe_per_day)} a day</span> until payday ({day(s.next_payday)})
+        </p>
+      )}
+    </div>
+  );
+}
 
 const VERDICT = {
   yes: { label: "Fits your budget", cls: "border-forest/40 bg-forest-soft/50", text: "text-forest" },

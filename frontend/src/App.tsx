@@ -6,6 +6,7 @@ import Spending from "@/pages/Spending";
 import PlanPage from "@/pages/Plan";
 import Ask from "@/pages/Ask";
 import Accounts from "@/pages/Accounts";
+import Setup from "@/pages/Setup";
 
 export default function App() {
   return (
@@ -17,6 +18,7 @@ export default function App() {
           <Route path="plan" element={<PlanPage />} />
           <Route path="ask" element={<Ask />} />
           <Route path="accounts" element={<Accounts />} />
+          <Route path="setup" element={<Setup />} />
           <Route path="*" element={<Today />} />
         </Route>
       </Routes>

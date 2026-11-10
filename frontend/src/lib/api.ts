@@ -21,7 +21,12 @@ export interface LastPlan {
   stuck_to_focus_cap: boolean; summary: string;
 }
 export interface Snapshot {
-  account: { id: string; name: string; kind: "demo" | "uploaded" };
+  account: { id: string; name: string; kind: "demo" | "personal" };
+  setup_needed: boolean;
+  balance_info: { as_of: string | null; source: string | null };
+  estimates: { count: number; total: number };
+  told: Schedule[];
+  checkins: { spend_today: boolean; income_week: boolean };
   as_of: string; data_is_old: boolean; balance: number; savings_buffer: number;
   next_payday: string; days_until_payday: number; expected_next_paycheck: number | null;
   bills_before_payday: Bill[]; bills_before_payday_total: number;
@@ -45,8 +50,17 @@ export interface Snapshot {
   last_plan: LastPlan | null;
   insights: Insight[];
 }
-export interface Txn { id: string; date: string; description: string; merchant: string; amount: number; category: string }
-export interface Account { id: string; name: string; kind: "demo" | "uploaded"; tagline: string; emoji: string }
+export interface Txn { id: string; date: string; description: string; merchant: string; amount: number; category: string;
+  source: "csv" | "chat" | "checkin" | "setup" | "demo"; approx: boolean; batch_id: string | null }
+export interface Account { id: string; name: string; kind: "demo" | "personal"; tagline: string; emoji: string }
+export interface Schedule { id: string; kind: "bill" | "income"; name: string; amount: number | null; low: number | null; high: number | null;
+  every: string; day_of_month: number | null; next_date: string | null; category: string | null; varies: boolean }
+export interface Saved {
+  batch_id: string; count: number; goal: { name: string; target: number; saved: number; deadline: string } | null;
+  transactions: { id: string; date: string; description: string; amount: number; category: string; approx: boolean }[];
+  schedules: Schedule[]; balances: { balance: number; as_of: string }[]; typical_weekly_spend: number | null;
+  safe_per_day: number; left_today: number; balance: number; next_payday: string;
+}
 export interface Persona { id: string; name: string; tagline: string; description: string; emoji: string }
 export interface Category { id: string; label: string; kind: string }
 
@@ -75,8 +89,9 @@ export type AgentEvent =
   | { type: "replace"; text: string }
   | { type: "card"; kind: "plan"; data: Plan }
   | { type: "card"; kind: "afford"; data: Afford }
+  | { type: "card"; kind: "saved"; data: Saved }
   | { type: "plan"; plan: Plan }
-  | { type: "done"; answer?: string; intent?: string; elapsed: number }
+  | { type: "done"; answer?: string; intent?: string; elapsed: number; batch_id?: string | null }
   | { type: "error"; message: string };
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -98,7 +113,13 @@ export const api = {
   categories: () => request<Category[]>("/api/categories"),
   setCategory: (id: string, category: string, apply_to_merchant = true) =>
     request<{ changed: number }>(`/api/transactions/${id}`, json("PATCH", { category, apply_to_merchant })),
-  settings: () => request<Record<string, unknown>>("/api/settings"),
+  settings: () => request<Record<string, unknown> & { schedules: Schedule[] }>("/api/settings"),
+  deleteSchedule: (id: string) => request(`/api/schedules/${id}`, { method: "DELETE" }),
+  deleteTxn: (id: string) => request(`/api/transactions/${id}`, { method: "DELETE" }),
+  undo: (batch_id: string) => request<{ removed: number }>("/api/undo", json("POST", { batch_id })),
+  checkin: (kind: "spend" | "income", amount: number | null) =>
+    request<{ batch_id: string | null; left_today: number; safe_per_day: number }>("/api/checkin", json("POST", { kind, amount })),
+  newAccount: (name: string) => request<{ id: string }>("/api/accounts/new", json("POST", { name })),
   saveSettings: (data: Record<string, unknown>) => request("/api/settings", json("PATCH", data)),
   plans: () => request<{ current: (Plan & { accepted_at?: string }) | null; progress: { days_in: number; flexible_spent: number; allowance_so_far: number; focus_spent: number; focus_cap: number } | null; last_week: LastPlan | null; history: (Plan & { accepted_at?: string })[] }>("/api/plans"),
   acceptPlan: (plan: Plan) => request("/api/plan/accept", json("POST", { plan })),
@@ -109,9 +130,10 @@ export const api = {
     return request<{ token: string; detected: Record<string, string | number | boolean | null>; balance: number | null; sample: { date: string; description: string; amount: number }[] }>(
       "/api/import/preview", { method: "POST", body: fd });
   },
-  importCommit: (token: string, name: string, balance: number) =>
-    request<{ account: string; transactions: number; merchants_sent_to_ai: number; how_categorized: Record<string, number>; seconds: number }>(
-      "/api/import/commit", json("POST", { token, name, balance })),
+  importCommit: (token: string, name: string, balance: number, target: "new" | "active") =>
+    request<{ account: string; transactions: number; merchants_sent_to_ai: number; how_categorized: Record<string, number>; seconds: number;
+              added: number; duplicates_skipped: number; estimates_replaced: number; first_date: string; last_date: string }>(
+      "/api/import/commit", json("POST", { token, name, balance, target })),
 };
 
 /** POST and read a Server-Sent Events stream, calling onEvent for each event. */
