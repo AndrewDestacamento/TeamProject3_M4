@@ -43,7 +43,7 @@ from openai import AsyncOpenAI
 from openai.types.shared import Reasoning
 
 import guardrails
-from . import finance, knowledge, store
+from . import bookkeeper, finance, knowledge, store
 from .categories import CATEGORIES, CATEGORY_IDS, FLEXIBLE, label
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -155,7 +155,24 @@ _AFFORD = re.compile(r"\b(afford|can i (buy|spend|get|go|do)|could i (buy|spend|
 _AMOUNT = re.compile(r"\$\s?(\d{1,3}(?:,\d{3})+|\d+)(?:\.(\d{1,2}))?|\b(\d{1,5})(?:\.(\d{1,2}))?\s?(dollars|bucks)\b", re.I)
 
 
-def route(message: str) -> tuple[str, dict]:
+_QUESTION = re.compile(r"^\s*(how|what|where|when|why|which|who|can|could|should|would|will|do|does|did|is|are|am|was|were|have|has)\b", re.I)
+_ASK_TO_LOG = re.compile(r"^\s*(can|could|would|will) you (please )?(add|log|record|track|put|save|note|enter)\b", re.I)
+_LOG = re.compile(
+    r"\b(spent|spend|paid|bought|grabbed|dropped|blew|ordered|picked up|got (some|a|an)|"            # spending
+    r"made|earned|got paid|received|deposited|tips?|payout|paycheck|"                                 # income
+    r"get paid|paid every|payday|"                                                                    # pay schedule
+    r"rent is|rent's|bill is|bills? (are|is)|due on|is due|every month|each month|monthly|subscription|"  # bills
+    r"i have|i've got|i got \$|my balance|balance is|in my account|in checking|"                     # balance
+    r"saving for|save up for|my goal|goal is|"                                                         # goals
+    r"usually spend|spend about|"                                                                      # baseline
+    r"add|log|record|track|undo|delete that|remove that|that was|it was|actually|oops|wrong)\b", re.I)
+
+
+def route(message: str, mode: str | None = None) -> tuple[str, dict]:
+    if mode == "log":
+        return "log", {}
+    if _ASK_TO_LOG.search(message):
+        return "log", {}
     if _GREETING.match(message) or _HELP.search(message):
         return "greeting", {}
     if _PLAN.search(message):
@@ -166,10 +183,13 @@ def route(message: str) -> tuple[str, dict]:
             whole = (m.group(1) or m.group(3)).replace(",", "")
             cents = m.group(2) or m.group(4) or "0"
             return "afford", {"amount": float(f"{whole}.{cents}")}
+    if _LOG.search(message) and not _QUESTION.search(message) and not message.rstrip().endswith("?"):
+        return "log", {}
     return "analyst", {}
 
 
-ROUTE_LABELS = {"greeting": "Quick help", "plan": "Weekly plan", "afford": "Can I afford it?", "analyst": "Money question"}
+ROUTE_LABELS = {"greeting": "Quick help", "plan": "Weekly plan", "afford": "Can I afford it?", "analyst": "Money question",
+                "log": "Saving what you told me"}
 
 
 def _parse_json(text: str) -> dict | None:
@@ -305,8 +325,10 @@ class BudgetWiseTeam:
                      model_settings=ModelSettings(temperature=0.0, reasoning=Reasoning(effort="low")))
 
     # -------------------------------------------------------------- chat
-    async def chat(self, message: str, session_id: str) -> AsyncIterator[dict]:
-        """Answer one chat message, yielding events for the browser (steps, tokens, cards, done)."""
+    async def chat(self, message: str, session_id: str, mode: str | None = None, checkin: str | None = None,
+                   context_hint: str | None = None) -> AsyncIterator[dict]:
+        """Answer one chat message, yielding events for the browser (steps, tokens, cards, done).
+        mode="log" sends it straight to the Bookkeeper (check-ins, setup answers, the Log box)."""
         t0 = time.perf_counter()
         message = (message or "").strip()[:1000]
 
@@ -318,8 +340,12 @@ class BudgetWiseTeam:
             yield {"type": "done", "answer": check.message, "intent": "blocked", "elapsed": round(time.perf_counter() - t0, 2)}
             return
 
-        intent, extra = route(message)
+        intent, extra = route(message, mode)
         yield {"type": "step", "agent": "Router", "status": "done", "detail": ROUTE_LABELS[intent]}
+        if intent == "log":
+            async for ev in self.bookkeep(message, session_id, checkin=checkin, context_hint=context_hint, t0=t0):
+                yield ev
+            return
         snap = finance.snapshot()
 
         if intent == "greeting":
@@ -444,6 +470,69 @@ class BudgetWiseTeam:
             yield {"type": "check", "name": "Grounding", "status": "pass", "detail": "Fixed on retry: all amounts verified"}
         yield {"type": "replace", "text": prefix + final2}
         yield {"type": "final", "text": prefix + final2}
+
+    # -------------------------------------------------------------- Bookkeeper: save what the user tells us
+    async def bookkeep(self, message: str, session_id: str, checkin: str | None = None,
+                       context_hint: str | None = None, t0: float | None = None) -> AsyncIterator[dict]:
+        t0 = t0 or time.perf_counter()
+        account = store.active_account_id()
+        batch = store.new_id("chat-")
+        ctx = bookkeeper.BookContext(account_id=account, batch_id=batch, today=store.today())
+        agent = bookkeeper.build_agent(MODEL, ctx.today)
+        user_input = message if not context_hint else f"({context_hint})\n{message}"
+        yield {"type": "step", "agent": "Bookkeeper", "status": "running", "detail": "Reading what you told me"}
+        text, outputs, pending = "", [], {}
+        try:
+            result = Runner.run_streamed(agent, self.memory.history(session_id) + [{"role": "user", "content": user_input}],
+                                         context=ctx, max_turns=5)
+            async with asyncio.timeout(TIMEOUT):
+                async for ev in result.stream_events():
+                    if ev.type == "raw_response_event" and getattr(ev.data, "type", "") == "response.output_text.delta":
+                        text += ev.data.delta
+                        yield {"type": "token", "text": ev.data.delta}
+                    elif ev.type == "run_item_stream_event" and ev.name == "tool_called":
+                        raw = ev.item.raw_item
+                        name = getattr(raw, "name", "tool")
+                        try:
+                            args = json.loads(getattr(raw, "arguments", "") or "{}")
+                        except json.JSONDecodeError:
+                            args = {}
+                        pending[getattr(raw, "call_id", name)] = name
+                        yield {"type": "tool", "agent": "Bookkeeper", "name": name, "args": _short_args(args), "status": "running"}
+                    elif ev.type == "run_item_stream_event" and ev.name == "tool_output":
+                        out = str(ev.item.output)
+                        outputs.append(out)
+                        yield {"type": "tool", "agent": "Bookkeeper", "name": "tool", "status": "done", "summary": out[:90]}
+            final = str(result.final_output or text).strip()
+        except Exception as e:  # noqa: BLE001  (timeout or model error)
+            final = ""
+            yield {"type": "step", "agent": "Bookkeeper", "status": "error", "detail": f"Model problem ({e.__class__.__name__})"}
+
+        summary = store.batch_summary(account, batch)
+        snap = finance.snapshot(account)
+        yield {"type": "step", "agent": "Bookkeeper", "status": "done",
+               "detail": f"Saved {summary['count']} item{'s' if summary['count'] != 1 else ''}" if summary["count"] else "Nothing saved yet"}
+        if summary["count"]:
+            yield {"type": "card", "kind": "saved", "data": {**summary, "safe_per_day": snap["safe_per_day"],
+                                                              "left_today": snap["left_today"], "balance": snap["balance"],
+                                                              "next_payday": snap["next_payday"]}}
+        # Grounding: amounts in the reply must come from the message, what was saved, or the new numbers.
+        evidence = [message, json.dumps(summary), json.dumps(finance.compact_snapshot(snap))] + outputs
+        if not final or guardrails.find_ungrounded_amounts(final, evidence):
+            fixed = _saved_text(summary) if summary["count"] else (
+                final if final and not guardrails.find_ungrounded_amounts(final, evidence) else
+                "I couldn't save that. Try something like: \"spent $12 on lunch today\" or \"rent is $725 on the 1st\".")
+            yield {"type": "check", "name": "Grounding", "status": "retry" if final else "pass",
+                   "detail": "Replaced the reply with the saved amounts" if final else "Used the saved amounts"}
+            final = fixed
+            yield {"type": "replace", "text": final}
+        else:
+            yield {"type": "check", "name": "Grounding", "status": "pass", "detail": "Every dollar amount matches what was saved"}
+        if checkin:
+            store.record_checkin(account, checkin, message)
+        self.memory.add(session_id, message, final)
+        yield {"type": "done", "answer": final, "intent": "log", "batch_id": batch if summary["count"] else None,
+               "elapsed": round(time.perf_counter() - t0, 2)}
 
     # -------------------------------------------------------------- weekly plan: Planner -> Critic loop
     async def make_plan(self, snap: dict | None = None) -> AsyncIterator[dict]:
@@ -641,11 +730,39 @@ def _nice_iso(iso: str) -> str:
     return finance._nice(iso)
 
 
+def _short_args(args: dict) -> dict:
+    """Compact tool arguments for the timeline (log_spending's item list becomes '2 items')."""
+    out = {}
+    for k, v in args.items():
+        out[k] = f"{len(v)} item{'s' if len(v) != 1 else ''}" if isinstance(v, list) else v
+    return out
+
+
+def _saved_text(summary: dict) -> str:
+    """A plain confirmation built only from what was actually saved."""
+    parts = []
+    tx = summary["transactions"]
+    spent = [t for t in tx if t["amount"] < 0]
+    got = [t for t in tx if t["amount"] > 0]
+    if spent:
+        parts.append(f"logged ${-sum(t['amount'] for t in spent):,.2f} of spending")
+    if got:
+        parts.append(f"logged ${sum(t['amount'] for t in got):,.2f} of income")
+    for s in summary["schedules"]:
+        parts.append(f"saved your pay schedule ({s['every']})" if s["kind"] == "income" else f"saved {s['name']} (${s['amount']:,.2f})")
+    for b in summary["balances"]:
+        parts.append(f"set your balance to ${b['balance']:,.2f}")
+    if summary.get("goal"):
+        parts.append(f"saved your goal: {summary['goal']['name']}")
+    return ("Got it: I " + ", ".join(parts) + ".") if parts else "Got it."
+
+
 def _greeting(snap: dict) -> str:
     return (f"Hi! I'm BudgetWise. Right now you have **${snap['safe_per_day']:,.2f} a day** safe to spend until payday "
             f"({snap['days_until_payday']} days). Ask me things like:\n"
             "- *Can I afford a $60 dinner Friday?*\n- *Where did my money go this month?*\n"
-            "- *Will I run short before payday?*\n- *Make me a plan for this week*")
+            "- *Make me a plan for this week*\n\nYou can also just tell me things: *spent about $20 on food*, "
+            "*I made $300 this week*, or *rent is $725 on the 1st*.")
 
 
 def _fallback_answer(evidence: list[str]) -> str:
