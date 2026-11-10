@@ -2,15 +2,17 @@
 
 **Problem:** People with irregular income (students, part-time and gig workers, freelancers) can see their balance, but they can't tell how much they can safely spend today, whether they'll run short before payday, or what to change this week.
 
-**What BudgetWise does:** It reads your bank transactions and answers those questions in seconds. A team of AI agents explains the numbers and builds a weekly plan, and Python calculates every dollar.
+**What BudgetWise does:** You tell it about your money, either by uploading your bank's CSV or just by typing ("spent about $20 on food", "I get paid every 2 weeks but it changes"). It keeps an organized record and answers those questions in seconds. A team of AI agents explains the numbers, saves what you tell it and builds a weekly plan, and Python calculates every dollar.
 
 ![BudgetWise home screen](docs/screenshots/today.png)
 
 ## What you can do
+- **Tell it in plain words.** For example: "spent like $40 the last couple days on gas", "I made $300 in tips this week", "rent is $725 on the 1st", "I have $410 right now" or "that was groceries actually". The Bookkeeper agent saves and organizes it, shows exactly what it saved, and **Undo** removes it with one tap.
+- **Start without a bank file.** Five quick questions (balance, how you get paid, bills, a normal week, a goal) are enough to start. Each day the home screen asks "What did you spend today?" with one-tap answers.
 - **See what's safe to spend today.** BudgetWise subtracts bills due before payday, money held for bills right after payday, and your cushion. The "runway" shows every day until payday, with bills and paychecks marked.
 - **Ask anything.** For example: "Can I afford a $60 dinner on Friday?", "Where did my money go this month?", or "Will I run short before payday?". Each answer shows which agent did what and confirms that every number was checked.
 - **Get a weekly plan.** It sets a daily limit, a cap on one category and an amount to save. The Critic agent reviews the plan, and nothing is saved until you click **Start this plan**. Next week, BudgetWise checks how it went.
-- **Upload your own bank CSV.** It reads exports from Chase, Bank of America, Capital One, Wells Fargo and most others. Transactions are sorted automatically, and recurring bills and paydays are detected. Your file stays on your computer.
+- **Upload your bank's CSV for exact numbers.** It reads exports from Chase, Bank of America, Capital One, Wells Fargo and most others. Upload a new file each week into the same account: rows it already has are skipped, and your estimates for those dates are replaced by the exact bank rows. Bills and paydays are detected, and anything you told BudgetWise takes priority. Your data stays on your computer.
 - **Try demo people.** **Maya** (student barista), **Jordan** (rideshare driver) and **Priya** (freelance designer) each have a different kind of irregular income.
 
 ## How it works
@@ -24,9 +26,10 @@ flowchart LR
   R -- "money question" --> AN[Analyst agent<br/>ReAct]
   R -- "can I afford $X" --> ME[Money engine] --> AN
   R -- "weekly plan" --> PL[Planner agent<br/>chain of thought] --> CR[Critic agent<br/>score 1-10]
+  R -- "I spent / I made / rent is..." --> BK[Bookkeeper agent<br/>saves to the ledger] --> DB[(SQLite ledger)]
   CR -- "score below 7: revise once" --> PL
   AN & PL <-- MCP stdio --> T[MCP tool server<br/>mcp_server.py]
-  T --> ME2[(Money engine<br/>budgetwise/finance.py)]
+  T --> ME2[(Money engine<br/>budgetwise/finance.py)] --> DB
   T --> KB[(ChromaDB guides)]
   AN --> GR{{Grounding check<br/>every $ must match data}}
   UP[CSV upload] --> RU[Keyword rules] --> CA[Categorizer agent<br/>unknown stores only]
@@ -37,6 +40,7 @@ flowchart LR
 | **Analyst** | Answers money questions using the facts and MCP tools | ReAct (Ch 5) |
 | **Planner** | Chooses this week's strategy; the `build_weekly_plan` tool does the math | Chain of thought (Ch 5) |
 | **Critic** | Scores each plan for grounding, realism and clear actions, and sends weak plans back once | Critic agent (Ch 7) |
+| **Bookkeeper** | Turns plain words into saved records: spending, income, bills, pay schedule, balance, goals, corrections | Tool use with function tools (Ch 2), human in the loop with Undo (Ch 8) |
 | **Categorizer** | Labels bank descriptions that no keyword rule matches, in one batch | Typed JSON output (Ch 2) |
 
 ### How BudgetWise follows the course
@@ -47,10 +51,10 @@ flowchart LR
 | Multi-agent orchestration, deterministic decision points (Ch 4) | `budgetwise/agents.py`: the router is code, so it adds no model call and always behaves the same way |
 | Guardrails and the cost ladder (Ch 4) | `guardrails.py`: free checks first (scope, privacy, prompt injection, grounding). The Critic is the only LLM check |
 | ReAct and chain of thought (Ch 5) | Analyst and Planner instructions |
-| RAG and memory (Ch 6) | ChromaDB guides (`knowledge/`), short-term chat memory, saved weekly plans |
+| RAG and memory (Ch 6) | ChromaDB guides (`knowledge/`), short-term chat memory, and long-term memory in SQLite (what you told it, saved plans) |
 | Grounding and critic evaluation (Ch 7) | Every dollar amount is verified, and plans get a 1-10 critic score |
 | Hosting agents behind an API, streamed with SSE (Ch 8) | `app.py`, following the `chapter_08/01z` pattern |
-| Human in the loop, allowlists, secrets (Ch 8) | Plans are saved only when you click Start. Each agent sees only its own tools. The API key stays on the server |
+| Human in the loop, allowlists, identity, secrets (Ch 8) | Plans are saved only when you click Start, and every Bookkeeper save can be undone. Each agent sees only its own tools. The Bookkeeper's tools get the account from the app, never from the model. The API key stays on the server |
 
 ## Setup and run (Windows PowerShell)
 1. Install **Python 3.11 or newer**. If `chromadb` won't install on the newest Python, use Python 3.12.
@@ -88,10 +92,11 @@ guardrails.py           Input, grounding and sanitizing checks (no model needed)
 budgetwise/
   finance.py            Money engine: safe-to-spend, bills, paydays, forecast, insights, plans
   agents.py             Router, Analyst, Planner, Critic, Categorizer, streaming
+  bookkeeper.py         Bookkeeper agent and its save/fix/undo tools
   importer.py           Reads any bank's CSV export
   categories.py         Categories and keyword rules
   knowledge.py          ChromaDB search over knowledge/*.md
-  store.py              Local JSON storage in data/workspace/ (git-ignored)
+  store.py              SQLite ledger in data/workspace/budgetwise.db (git-ignored)
 frontend/               React + Vite + Tailwind + Recharts (built copy in frontend/dist)
 data/personas/          Demo people (fake data, dates relative to today)
 data/samples/           Sample bank CSV for trying the upload
@@ -101,7 +106,7 @@ docs/m3/                M3 architecture and evaluation, kept for reference
 ```
 
 ## Tests
-- `python -m pytest` runs **35 checks with no model calls**: the money math, the CSV importer, the categorizer rules, the router, the guardrails, and the MCP server over the real protocol.
+- `python -m pytest` runs **41 checks with no model calls**: the money math, the CSV importer, the categorizer rules, the router, the guardrails, the ledger (logging, balance, undo, CSV merge), the Bookkeeper's tools, and the MCP server over the real protocol.
 
 ## CHANGES (since M3)
 | Change | Why | Effect |
@@ -111,6 +116,9 @@ docs/m3/                M3 architecture and evaluation, kept for reference
 | **Pre-computed snapshot** handed to the agents, and **routing done in code** instead of a handoff | In M3 a plan question took about 11 model calls and 22,000 tokens | Simple questions now take about 2 to 5 s with 0 or 1 tool calls. Plans take about 11 to 15 s |
 | **Streaming answers** and a live agent timeline (SSE) | The M3 demo showed a long blank wait | You see progress right away |
 | **Real data**: CSV import for most banks, plus automatic detection of recurring bills, paydays and income swings | M3 used one fixed sample file with a frozen date | Works on a real bank export. Demo dates now follow today |
+| **Bookkeeper agent: tell it in plain words** ("spent about $40 the last couple days", "I get paid every 2 weeks but it changes"), with a confirmation card and Undo | Most students and gig workers won't download a bank file every day, but they will type a sentence | The app stays current between uploads, and it works with no bank file at all |
+| **SQLite ledger** replaces JSON files: every entry records where it came from (bank, chat, check-in) and whether it's an estimate | Many small saves need to be safe and undoable | Exact bank rows replace estimates for the same dates, and re-uploading a file never double-counts |
+| **Setup without a bank file** (5 questions) and a **daily check-in** ("What did you spend today?") | New users need value in minutes, and the daily number needs fresh input | Works from day one, and one tap keeps today's number accurate |
 | **Smarter safe-to-spend**: holds back money for bills due right after payday when the next paycheck won't cover them | Irregular-income users were told they had money that was really needed for rent | Jordan's demo holds $1,148 for rent that's due the day after a small payout |
 | **Critic agent** (1-10 score; code approves at 7 or higher, otherwise one revision) | M3 planned this for M4 (Ch 7) | Each plan arrives with a score |
 | **Categorizer agent** with keyword rules first and a cache | Ch 4 cost ladder: the cheapest check first | Most rows are sorted by rules, and only unknown store names go to the model |
@@ -121,6 +129,7 @@ docs/m3/                M3 architecture and evaluation, kept for reference
 ## Known limitations
 1. **NRP response times vary.** Most answers take 2 to 5 seconds, but the same plan sometimes takes 25 seconds or more when the model is busy. After 45 seconds an agent shows the calculated numbers instead.
 2. **Recurring-bill detection needs history.** It needs at least two payments on a regular schedule (weekly, every 2 weeks or monthly), so upload two or three months of transactions.
-3. **One person, one computer.** Data is stored in local JSON files, with no login or bank connection (the CSV export is the bridge).
+3. **One person, one computer.** Data is stored in a local SQLite file, with no login or live bank connection (a weekly CSV upload is the bridge; a bank connection such as Plaid would be the next step).
+6. **Estimates are only as good as the guess.** "About $40" is saved as $40.00 and marked as an estimate until a bank file replaces it.
 4. **The input guardrail uses keywords**, so it can block a harmless question like "sales tax" and miss reworded ones.
 5. **The model's advice text can still be generic.** The numbers are verified, but the wording of a tip isn't.
