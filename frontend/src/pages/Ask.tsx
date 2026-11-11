@@ -68,7 +68,8 @@ export default function Ask() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-[1.9rem] font-bold leading-tight">Ask BudgetWise</h1>
-          <p className="mt-1 text-muted">Ask about your spending, bills and plans, or just tell me what you spent or earned and I'll save it. Every number is checked against your data.</p>
+          <p className="mt-1 text-muted">Tell me your goal, spending, income or bills in your own words. I'll organize what you share, ask one useful question at a time, and verify every calculated amount.</p>
+          <p className="mt-2 text-[0.82rem] text-faint">Share only what you're comfortable sharing. Every question is optional, estimates are fine, and saved information can be corrected or undone.</p>
         </div>
         {messages.length > 0 && (
           <button onClick={reset} className="btn-ghost shrink-0 text-[0.9rem]"><RotateCcw size={16} /> New chat</button>

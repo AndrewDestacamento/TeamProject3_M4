@@ -13,7 +13,9 @@ export interface ForecastPoint { date: string; balance: number; bill: number | n
 export interface MonthRow { category: string; label: string; this_month: number; last_month_same_days: number; change: number; change_pct: number | null }
 export interface Goal {
   name: string; target: number; saved: number; remaining: number; percent: number; deadline: string;
-  weeks_left: number; needed_per_week: number; weekly_safe_to_spend: number; fits: boolean;
+  weeks_left: number; needed_per_day: number; needed_per_week: number; needed_per_month: number;
+  weekly_safe_to_spend: number; fits: boolean | null; plan_level: "starter" | "estimated" | "personalized";
+  missing: string[]; next_question: string | null;
 }
 export interface LastPlan {
   week_start: string; daily_limit: number; actual_daily_average: number; focus_category: string;
@@ -61,6 +63,7 @@ export interface Saved {
   transactions: { id: string; date: string; description: string; amount: number; category: string; approx: boolean }[];
   schedules: Schedule[]; balances: { balance: number; as_of: string }[]; typical_weekly_spend: number | null;
   safe_per_day: number; left_today: number; balance: number; next_payday: string;
+  has_balance: boolean;
 }
 export interface Persona { id: string; name: string; tagline: string; description: string; emoji: string }
 export interface Category { id: string; label: string; kind: string }

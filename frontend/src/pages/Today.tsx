@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowRight, CalendarDays, CheckCircle2, CircleDollarSign, ClipboardCheck, Info, Lightbulb, PlusCircle, Sparkles, Upload, WalletCards } from "lucide-react";
-import { api } from "@/lib/api";
+import { api, type Plan, type Snapshot } from "@/lib/api";
 import { AskBox, BillList, GoalMeter, InsightList, Section, Skeleton } from "@/components/Bits";
 import { CheckIns } from "@/components/Logging";
 import Runway from "@/components/Runway";
@@ -60,7 +60,7 @@ function EmptyHome({ name, useCase }: { name: string; useCase: string | null }) 
       <p className="mt-3 max-w-2xl text-[1.05rem] text-muted">No forms are required, {name}. Tell BudgetWise one thing now and add the rest whenever you want. Estimates are okay, and you can correct or undo anything later.</p>
       {useCase && useCase !== "Flexible money help" && <p className="mt-4 inline-flex rounded-full bg-marigold-soft px-3 py-1.5 text-[0.85rem] font-medium">Your focus: {useCase}</p>}
       <div className="home-command mt-7"><Sparkles className="shrink-0 text-forest" size={23} /><div className="min-w-0 flex-1"><AskBox placeholder="Try: ‘I have about $500’ or ‘Yesterday I spent $40 on gas and groceries’" suggestions={[]} /></div></div>
-      <p className="mt-2 text-[0.82rem] text-muted">You can add spending, income, bills, balances, goals, or simply ask a question.</p>
+      <p className="mt-2 text-[0.82rem] text-muted">Share only what you're comfortable sharing. Estimates are fine, every question is optional, and you can correct or undo anything later.</p>
       <div className="mt-7 grid gap-3 sm:grid-cols-3">
         <Link to="/setup" className="panel p-5 transition hover:border-forest/40"><ClipboardCheck className="text-forest" /><h2 className="mt-3 font-bold">Answer a few prompts</h2><p className="mt-1 text-[0.88rem] text-muted">Optional questions, and every one can be skipped.</p></Link>
         <Link to="/accounts#upload" className="panel p-5 transition hover:border-forest/40"><Upload className="text-forest" /><h2 className="mt-3 font-bold">Import a bank CSV</h2><p className="mt-1 text-[0.88rem] text-muted">Use exact transactions when you're ready.</p></Link>
@@ -70,15 +70,63 @@ function EmptyHome({ name, useCase }: { name: string; useCase: string | null }) 
   );
 }
 
+function GoalHome({ s, plan }: { s: Snapshot; plan: Plan | null | undefined }) {
+  const g = s.goal!;
+  const incomeText = s.income.pay_every_days ? `About every ${s.income.pay_every_days} days` : s.income.sources.length ? "Income history found" : "Not added yet";
+  const billText = s.upcoming_bills.length ? `${s.upcoming_bills.length} upcoming` : "Not added yet";
+  const historyText = s.spending_last_30_days.length ? `${s.spending_last_30_days.length} categories tracked` : "Keep logging or import a CSV";
+  return (
+    <div className="mx-auto max-w-[1180px] space-y-5">
+      <header className="flex flex-wrap items-end justify-between gap-4 pt-1">
+        <div><span className="chip bg-forest-soft text-forest"><Sparkles size={14} /> {g.plan_level === "starter" ? "Starter target" : g.plan_level === "estimated" ? "Estimated plan" : "Personalized plan"}</span><h1 className="mt-3 text-[2.15rem] font-extrabold leading-tight sm:text-[2.8rem]">{g.name}</h1><p className="mt-1 text-muted">Your active savings goal · due {day(g.deadline)}</p></div>
+        <Link to="/accounts#goals" className="btn-quiet">Edit goal</Link>
+      </header>
+
+      <section className="panel overflow-hidden p-5 sm:p-7">
+        <div className="grid gap-6 lg:grid-cols-[1.35fr_1fr] lg:divide-x lg:divide-line">
+          <div className="lg:pr-7">
+            <div className="flex items-end justify-between gap-4"><div><p className="text-[0.85rem] text-muted">Saved so far</p><p className="num font-display text-[2.7rem] font-extrabold leading-none text-forest">{money(g.saved, true)} <span className="text-[1rem] font-semibold text-muted">of {money(g.target, true)}</span></p></div><p className="num text-[0.9rem] font-semibold">{g.percent}%</p></div>
+            <div className="mt-4 h-3 overflow-hidden rounded-full bg-sunken" role="progressbar" aria-valuenow={g.percent} aria-valuemin={0} aria-valuemax={100}><div className="h-full rounded-full bg-forest" style={{ width: `${Math.min(g.percent, 100)}%` }} /></div>
+            <p className="mt-3 text-[0.88rem] text-muted">{money(g.remaining)} remaining · {g.weeks_left} weeks left</p>
+          </div>
+          <div className="grid grid-cols-3 gap-3 lg:pl-7">
+            <Pace label="Each day" value={money(g.needed_per_day)} />
+            <Pace label="Each week" value={money(g.needed_per_week)} />
+            <Pace label="Each month" value={money(g.needed_per_month)} />
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-marigold/30 bg-marigold-soft/45 p-5 sm:p-6">
+        <div className="flex items-start gap-3"><Lightbulb className="mt-0.5 shrink-0 text-marigold" /><div className="min-w-0 flex-1"><p className="font-display text-[1.15rem] font-bold">Your next useful step</p><p className="mt-1 text-[1rem]">{g.next_question || "I have enough information to help you build this week's plan."}</p><p className="mt-2 text-[0.84rem] text-muted">Answer below, import transactions, or skip it and add information later.</p></div></div>
+      </section>
+
+      <div className="home-command"><Sparkles className="shrink-0 text-forest" size={23} /><div className="min-w-0 flex-1"><AskBox placeholder={g.next_question || "Tell BudgetWise what changed…"} suggestions={[]} /></div></div>
+      <p className="-mt-3 text-[0.8rem] text-muted">Share only what you're comfortable sharing. Estimates are fine, and every saved change can be corrected or undone.</p>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <section className="panel p-5 sm:p-6"><h2 className="text-[1.1rem] font-bold">What BudgetWise knows</h2><dl className="mt-4 divide-y divide-line text-[0.9rem]"><Known label="Current balance" value={s.balance_info.as_of ? money(s.balance) : "Not added yet"} /><Known label="Income" value={incomeText} /><Known label="Bills" value={billText} /><Known label="Spending history" value={historyText} /></dl><div className="mt-4 flex flex-wrap gap-2"><Link to="/setup" className="btn-quiet text-[0.85rem]">Add details</Link><Link to="/accounts#upload" className="btn-ghost text-[0.85rem]"><Upload size={16} /> Import CSV</Link></div></section>
+        <section className="panel p-5 sm:p-6"><h2 className="text-[1.1rem] font-bold">This week's direction</h2>{plan ? <div className="mt-3"><p className="font-semibold">{plan.headline}</p><p className="mt-2 text-[0.9rem] text-muted">{plan.today_action}</p><Link to="/plan" className="btn-primary mt-4 text-[0.85rem]">Open your plan</Link></div> : s.balance_info.as_of && (s.income.sources.length || s.income.pay_every_days) ? <div className="mt-3"><p className="text-[0.9rem] text-muted">BudgetWise can now turn your goal into a weekly spending and saving plan.</p><Link to="/plan?new=1" className="btn-primary mt-4 text-[0.85rem]"><CalendarDays size={17} /> Build my plan</Link></div> : <div className="mt-3"><p className="text-[0.9rem] text-muted">Your {money(g.needed_per_week)} weekly target is a starting pace. Add your balance and income before BudgetWise recommends spending limits.</p><Link to="/setup" className="btn-quiet mt-4 text-[0.85rem]">Personalize this target</Link></div>}</section>
+      </div>
+
+      {s.insights.length > 0 && <Section title="Opportunities from your data"><InsightList items={s.insights.slice(0, 3)} /></Section>}
+    </div>
+  );
+}
+
+function Pace({ label, value }: { label: string; value: string }) { return <div className="rounded-xl bg-sunken/65 p-3 text-center"><p className="text-[0.75rem] text-muted">{label}</p><p className="num mt-1 font-display text-[1.15rem] font-bold">{value}</p></div>; }
+function Known({ label, value }: { label: string; value: string }) { return <div className="flex items-center justify-between gap-4 py-2.5"><dt className="text-muted">{label}</dt><dd className="text-right font-medium">{value}</dd></div>; }
+
 export default function Today() {
   const { data: s, isLoading, error } = useQuery({ queryKey: ["snapshot"], queryFn: api.snapshot });
   const { data: plans } = useQuery({ queryKey: ["plans"], queryFn: api.plans });
   if (error) return <p className="panel p-6 text-berry">Couldn't load your numbers: {(error as Error).message}. Is the server running?</p>;
   if (isLoading || !s) return <div className="space-y-6"><Skeleton className="h-24" /><Skeleton className="h-28" /><Skeleton className="h-44" /></div>;
   if (s.setup_needed) return <FirstWelcome name={s.account.name} />;
-  if (s.account.kind === "personal" && !s.balance_info.as_of && !s.told.length && s.estimates.count === 0) return <EmptyHome name={s.account.name} useCase={s.use_case} />;
+  if (s.account.kind === "personal" && !s.goal && !s.balance_info.as_of && !s.told.length && s.estimates.count === 0) return <EmptyHome name={s.account.name} useCase={s.use_case} />;
 
   const plan = plans?.current;
+  if (s.goal) return <GoalHome s={s} plan={plan} />;
   const safeToday = Math.max(s.left_today, 0);
   const insight = s.insights[0]?.detail || `You can spend about ${money(safeToday, true)} today and still keep your upcoming bills and cushion covered.`;
   const hour = new Date().getHours();

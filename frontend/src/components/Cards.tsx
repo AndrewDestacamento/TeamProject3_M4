@@ -76,7 +76,7 @@ export function SavedCard({ s, compact = false }: { s: Saved; compact?: boolean 
           </li>
         )}
       </ul>
-      {!compact && !undone && (
+      {!compact && !undone && s.has_balance && (
         <p className="num border-t border-line px-4 py-2.5 text-[0.85rem] text-muted">
           Safe to spend now: <span className="font-semibold text-ink">{money(s.safe_per_day)} a day</span> until payday ({day(s.next_payday)})
         </p>
