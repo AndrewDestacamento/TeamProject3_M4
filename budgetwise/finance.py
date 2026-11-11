@@ -371,7 +371,11 @@ def snapshot(account_id: str | None = None) -> dict:
     month = month_comparison(txns, as_of)
     last30 = spending_by_category(txns, as_of - timedelta(days=29), as_of)
     subs = [b for b in bills if b["category"] == "subscriptions"]
-    goal = goal_progress(settings, as_of, safe_total, days_left)
+    balance_known = store.balance_note(account_id)["as_of"] is not None
+    income_known = any(s["kind"] == "income" for s in told) or any(t["category"] == "income" for t in txns)
+    bills_known = any(s["kind"] == "bill" for s in told) or bool(bills)
+    spending_known = any(t["amount"] < 0 and t["category"] in FLEXIBLE for t in txns)
+    goal = goal_progress(settings, as_of, safe_total, days_left, balance_known, income_known, bills_known, spending_known)
     last_plan = check_last_plan(account_id, txns=txns, as_of=as_of)
 
     recent_est = [t for t in txns if t["approx"] and t["date"] > as_of - timedelta(days=30)]
@@ -450,7 +454,9 @@ def balance_forecast(balance, bills, as_of: date, payday: date, end: date, daily
             "assumes_daily_spending": daily_spend}
 
 
-def goal_progress(settings: dict, as_of: date, safe_total: float, days_left: int) -> dict | None:
+def goal_progress(settings: dict, as_of: date, safe_total: float, days_left: int,
+                  balance_known: bool = True, income_known: bool = True,
+                  bills_known: bool = True, spending_known: bool = True) -> dict | None:
     g = settings.get("goal")
     if not g:
         return None
@@ -458,14 +464,47 @@ def goal_progress(settings: dict, as_of: date, safe_total: float, days_left: int
     days_to_deadline = max((deadline - as_of).days, 1)
     remaining = _r(max(g["target"] - g.get("saved", 0.0), 0.0))
     per_week = _r(remaining * 7 / days_to_deadline)
+    per_day = _r(remaining / days_to_deadline)
+    per_month = _r(remaining * 30.4375 / days_to_deadline)
     weekly_safe = _r(safe_total * 7 / days_left)
+    missing = []
+    if not g.get("saved_known", False):
+        missing.append("saved_so_far")
+    if not balance_known:
+        missing.append("balance")
+    if not income_known:
+        missing.append("income")
+    if not bills_known:
+        missing.append("bills")
+    if not spending_known:
+        missing.append("spending_history")
+    questions = {
+        "saved_so_far": "How much have you already saved toward this goal?",
+        "balance": "About how much is in your checking account right now?",
+        "income": "How and when do you usually get paid? An estimate is fine.",
+        "bills": "What important bills should I plan around?",
+        "spending_history": "Keep logging purchases or import a bank CSV so I can find realistic places to save.",
+    }
+    plan_level = "starter" if not balance_known or not income_known else "estimated" if not bills_known or not spending_known else "personalized"
     return {
         "name": g["name"], "target": _r(g["target"]), "saved": _r(g.get("saved", 0.0)), "remaining": remaining,
         "percent": round(100 * g.get("saved", 0.0) / g["target"]) if g["target"] else 0,
         "deadline": g["deadline"], "weeks_left": round(days_to_deadline / 7, 1),
-        "needed_per_week": per_week, "weekly_safe_to_spend": weekly_safe,
-        "fits": per_week <= max(weekly_safe, 0),
+        "needed_per_day": per_day, "needed_per_week": per_week, "needed_per_month": per_month,
+        "weekly_safe_to_spend": weekly_safe, "fits": (per_week <= max(weekly_safe, 0)) if balance_known and income_known else None,
+        "plan_level": plan_level, "missing": missing, "next_question": questions[missing[0]] if missing else None,
     }
+
+
+def goal_coach_text(snap: dict) -> str:
+    """Immediate, deterministic guidance after a goal is saved."""
+    g = snap.get("goal")
+    if not g:
+        return "Tell me what you're working toward and when you'd like to reach it."
+    pace = f"Your starter pace is **${g['needed_per_week']:,.2f} a week**, about **${g['needed_per_day']:,.2f} a day**."
+    if g.get("next_question"):
+        return pace + " I’ll make this more realistic as you add information.\n\n**Next question:** " + g["next_question"] + " You can answer, import a CSV, or skip it for now."
+    return pace + " I have enough information to build a personalized weekly plan."
 
 
 # ------------------------------------------------------------------ insights (no model needed)
@@ -506,11 +545,21 @@ def insights(snap: dict, txns, as_of: date) -> list[dict]:
                     "title": f"Subscriptions cost about ${snap['subscriptions']['monthly_total']:,.2f} a month",
                     "detail": f"{snap['subscriptions']['count']} recurring services. Cancelling one you rarely use is the easiest saving."})
     g = snap["goal"]
-    if g and not g["fits"] and g["remaining"] > 0:
+    if g and g["remaining"] > 0:
+        optional = [r for r in snap["spending_last_30_days"] if r["category"] in {"dining", "entertainment", "shopping", "subscriptions", "personal"} and r["amount"] >= 20]
+        if optional:
+            top = max(optional, key=lambda r: r["amount"])
+            weekly_cut = _r(top["amount"] * 0.20 * 7 / 30)
+            share = round(100 * weekly_cut / g["needed_per_week"]) if g["needed_per_week"] else 0
+            out.append({"id": "goal_opportunity", "severity": "good", "icon": "target",
+                        "title": f"{top['label']} could help fund {g['name']}",
+                        "detail": f"You spent ${top['amount']:,.2f} there in the last 30 days. Cutting about 20% would free roughly ${weekly_cut:,.2f} a week—about {share}% of your weekly goal pace. Only choose this if it feels realistic.",
+                        "category": top["category"]})
+    if g and g["fits"] is False and g["remaining"] > 0:
         out.append({"id": "goal_pace", "severity": "medium", "icon": "target",
                     "title": f"{g['name']} needs ${g['needed_per_week']:,.2f} a week",
                     "detail": f"That is more than this week's safe-to-spend of ${max(g['weekly_safe_to_spend'], 0):,.2f}. A weekly plan can help you get closer."})
-    elif g and g["remaining"] > 0:
+    elif g and g["fits"] is True and g["remaining"] > 0:
         out.append({"id": "goal_ok", "severity": "good", "icon": "target",
                     "title": f"{g['name']} is within reach",
                     "detail": f"Saving ${g['needed_per_week']:,.2f} a week gets you there by {_nice(g['deadline'])}."})

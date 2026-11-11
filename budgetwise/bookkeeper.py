@@ -226,7 +226,7 @@ def set_balance(ctx: RunContextWrapper[BookContext], amount: float) -> str:
 
 @function_tool(strict_mode=False, failure_error_function=_tool_error)
 def set_savings_goal(ctx: RunContextWrapper[BookContext], name: str, target: float, deadline: str,
-                     saved_so_far: float = 0.0) -> str:
+                     saved_so_far: float | None = None) -> str:
     """Save a savings goal (what it's for, the target amount, the date to reach it YYYY-MM-DD, saved so far)."""
     c = ctx.context
     t = _check_amount(target)
@@ -240,6 +240,7 @@ def set_savings_goal(ctx: RunContextWrapper[BookContext], name: str, target: flo
         return "Not saved: the deadline must be in the future"
     prev = store.load_settings(c.account_id).get("goal")
     store.save_settings(c.account_id, {"goal": {"name": name.strip()[:40].capitalize(), "target": t, "saved": round(float(saved_so_far or 0), 2),
+                                                "saved_known": saved_so_far is not None,
                                                 "deadline": dl.isoformat(), "batch_id": c.batch_id},
                                        "previous_goal": prev})
     return f"Saved goal: {name} ${t:,.2f} by {dl.isoformat()}."
@@ -323,7 +324,8 @@ What to save:
 - A bill that repeats or is coming up (rent, phone, insurance, a subscription) -> set_bill.
 - How they get paid ("every 2 weeks", "every Friday", "on the 1st and 15th", "it changes") -> set_pay_schedule.
 - "I have $X" / "my balance is $X" -> set_balance.
-- Something they're saving for -> set_savings_goal.
+- Something they're saving for -> set_savings_goal. If they did not say how much is already saved, omit saved_so_far;
+  never assume that they explicitly have $0 saved.
 - "I usually spend about $X a week" -> set_typical_weekly_spending.
 - A correction of what they just told you -> fix_last_entry. "Undo that" -> undo_last.
 

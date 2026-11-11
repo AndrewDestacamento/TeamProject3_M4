@@ -163,7 +163,7 @@ _LOG = re.compile(
     r"get paid|paid every|payday|"                                                                    # pay schedule
     r"rent is|rent's|bill is|bills? (are|is)|due on|is due|every month|each month|monthly|subscription|"  # bills
     r"i have|i've got|i got \$|my balance|balance is|in my account|in checking|"                     # balance
-    r"saving for|save up for|my goal|goal is|"                                                         # goals
+    r"saving for|save up for|want to save|need to save|trying to save|my goal|goal is|"                 # goals
     r"usually spend|spend about|"                                                                      # baseline
     r"add|log|record|track|undo|delete that|remove that|that was|it was|actually|oops|wrong)\b", re.I)
 
@@ -515,7 +515,8 @@ class BudgetWiseTeam:
         if summary["count"]:
             yield {"type": "card", "kind": "saved", "data": {**summary, "safe_per_day": snap["safe_per_day"],
                                                               "left_today": snap["left_today"], "balance": snap["balance"],
-                                                              "next_payday": snap["next_payday"]}}
+                                                              "next_payday": snap["next_payday"],
+                                                              "has_balance": bool(snap["balance_info"]["as_of"])}}
         # Grounding: amounts in the reply must come from the message, what was saved, or the new numbers.
         evidence = [message, json.dumps(summary), json.dumps(finance.compact_snapshot(snap))] + outputs
         if not final or guardrails.find_ungrounded_amounts(final, evidence):
@@ -528,6 +529,10 @@ class BudgetWiseTeam:
             yield {"type": "replace", "text": final}
         else:
             yield {"type": "check", "name": "Grounding", "status": "pass", "detail": "Every dollar amount matches what was saved"}
+        if summary.get("goal"):
+            coaching = finance.goal_coach_text(snap)
+            final = f"{_saved_text(summary)}\n\n{coaching}"
+            yield {"type": "replace", "text": final}
         if checkin:
             store.record_checkin(account, checkin, message)
         self.memory.add(session_id, message, final)

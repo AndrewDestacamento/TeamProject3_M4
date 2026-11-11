@@ -258,6 +258,7 @@ def test_csv_import_merges_skips_duplicates_and_replaces_estimates():
 
 def test_router_sends_statements_to_the_bookkeeper():
     for msg in ["I spent about $20 on food", "I made $300 this week", "rent is $725 on the 1st",
+                "I want to save $300 by December 10",
                 "I get paid every 2 weeks but it changes", "that was groceries actually", "undo that"]:
         assert route(msg)[0] == "log", msg
     for msg in ["How much did I spend on food?", "Where did my money go this month?"]:
@@ -285,6 +286,22 @@ def test_bookkeeper_tools_spread_validate_and_fix():
     ctx2 = bk.BookContext(acc, "b-chat-2", date(2026, 11, 10))
     assert "Updated 2" in _tool(bk.fix_last_entry, ctx2, {"category": "groceries"})
     assert {t["category"] for t in store.batch_summary(acc, "b-chat-1")["transactions"]} == {"groceries"}
+
+
+def test_goal_starts_with_verified_pace_and_one_next_question():
+    from datetime import date
+    from budgetwise import bookkeeper as bk
+    acc = _new_account()
+    ctx = bk.BookContext(acc, "b-goal", date(2026, 11, 10))
+    assert "Saved goal" in _tool(bk.set_savings_goal, ctx, {"name": "Trip", "target": 300, "deadline": "2026-12-10"})
+    goal = finance.snapshot(acc)["goal"]
+    assert goal["needed_per_day"] == 10.0
+    assert goal["needed_per_week"] == 70.0
+    assert goal["plan_level"] == "starter"
+    assert goal["fits"] is None
+    assert goal["missing"][0] == "saved_so_far"
+    assert "already saved" in goal["next_question"]
+    assert "$70.00 a week" in finance.goal_coach_text(finance.snapshot(acc))
 
 
 def test_todays_spending_is_counted_once():
