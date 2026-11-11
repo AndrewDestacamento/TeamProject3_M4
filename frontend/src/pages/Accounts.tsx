@@ -176,6 +176,7 @@ function SettingsForm() {
       buffer: settings.savings_buffer != null ? Number(settings.savings_buffer).toFixed(2) : "",
       payday: String(settings.next_payday ?? ""), goalName: String(g.name ?? ""), goalTarget: String(g.target ?? ""),
       goalSaved: String(g.saved ?? ""), goalDeadline: String(g.deadline ?? ""),
+      useCase: String(settings.use_case ?? ""),
     });
   }, [settings]);
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement>) => setF((x) => ({ ...x, [k]: e.target.value }));
@@ -186,7 +187,9 @@ function SettingsForm() {
   };
 
   const save = async () => {
-    const body: Record<string, unknown> = { current_balance: Number(f.balance), savings_buffer: Number(f.buffer) };
+    const body: Record<string, unknown> = { use_case: f.useCase.trim() };
+    if (f.balance.trim()) body.current_balance = Number(f.balance);
+    if (f.buffer.trim()) body.savings_buffer = Number(f.buffer);
     if (f.payday) body.next_payday = f.payday; else body.clear_payday = true;
     if (f.goalName && f.goalTarget && f.goalDeadline) {
       body.goal = { name: f.goalName, target: Number(f.goalTarget), saved: Number(f.goalSaved || 0), deadline: f.goalDeadline };
@@ -203,6 +206,7 @@ function SettingsForm() {
   const told = settings?.schedules ?? [];
   return (
     <div className="space-y-5">
+      <label className="block"><span className="mb-1.5 block text-[0.9rem] font-medium">What should BudgetWise help you with?</span><input className="field" value={f.useCase ?? ""} onChange={set("useCase")} placeholder="For example: help me cut back on eating out" /><span className="mt-1 block text-[0.8rem] text-muted">Optional. You can change this as your priorities change.</span></label>
       {told.length > 0 && (
         <div>
           <p className="mb-2 font-medium">Bills and pay you told BudgetWise</p>
@@ -245,6 +249,7 @@ export default function Accounts() {
 
   useEffect(() => {
     if (window.location.hash === "#upload") document.getElementById("upload")?.scrollIntoView({ behavior: "smooth" });
+    if (window.location.hash === "#examples") document.getElementById("examples")?.scrollIntoView({ behavior: "smooth" });
   }, []);
 
   const use = async (id: string) => {
@@ -265,10 +270,12 @@ export default function Accounts() {
     <div className="space-y-8">
       <div>
         <h1 className="text-[2rem] font-bold leading-tight">Accounts & data</h1>
-        <p className="mt-1 max-w-2xl text-muted">Try BudgetWise with a demo person, or bring your own bank export. You can switch any time from the menu.</p>
+        <p className="mt-1 max-w-2xl text-muted">Your personal workspace stays separate from the optional examples below.</p>
       </div>
 
-      <Section title="Demo people" aside="Fake data, real situations">
+      <Section title="Example profiles" aside="Sample data only" className="scroll-mt-6" >
+        <div id="examples" className="-mt-24 h-24 pointer-events-none" aria-hidden />
+        <p className="mb-4 text-[0.9rem] text-muted">Open an example to see what BudgetWise looks like after consistent use. A clear banner will keep it separate from your information.</p>
         <div className="grid gap-3 md:grid-cols-3">
           {data?.personas.map((p) => {
             const id = `demo-${p.id}`;
@@ -281,7 +288,7 @@ export default function Accounts() {
                 </div>
                 <p className="mt-3 flex-1 text-[0.9rem] text-muted">{p.description}</p>
                 <button onClick={() => use(id)} disabled={on} className={cn("mt-4", on ? "btn-quiet" : "btn-primary")}>
-                  {on ? <><Check size={17} /> In use</> : `Use ${p.name}'s data`}
+                  {on ? <><Check size={17} /> Viewing example</> : `View ${p.name}'s example`}
                 </button>
               </div>
             );
@@ -293,8 +300,8 @@ export default function Accounts() {
         <Section title="Start without a bank file">
           <div className="flex h-full flex-col">
             <PencilLine className="text-forest" />
-            <p className="mt-2 flex-1 text-[0.93rem] text-muted">Answer five quick questions in your own words (your balance, how you get paid, your bills). Then just tell BudgetWise what you spend as you go.</p>
-            <Link to="/setup?new=1" className="btn-primary mt-4 self-start">Start setup <ArrowRight size={17} /></Link>
+            <p className="mt-2 flex-1 text-[0.93rem] text-muted">Answer a few optional questions in your own words. Skip anything and add it later whenever you want.</p>
+            <Link to="/setup" className="btn-primary mt-4 self-start">Add some details <ArrowRight size={17} /></Link>
           </div>
         </Section>
         <div id="upload" className="scroll-mt-24">

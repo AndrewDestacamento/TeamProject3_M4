@@ -9,7 +9,7 @@ import { SavedCard } from "@/components/Cards";
 import { Logo } from "@/components/Layout";
 import { cn } from "@/lib/format";
 
-// Setup without a bank file: five plain questions, answered in your own words.
+// Optional setup without a bank file: five plain questions, answered in your own words.
 // Each answer goes to the Bookkeeper agent, which saves it (and asks back if something is missing).
 const STEPS = [
   { q: "How much money is in your checking account right now?", ex: "About $410",
@@ -70,7 +70,7 @@ export default function Setup() {
         <Logo />
         <div>
           <h1 className="text-[2rem] font-bold leading-tight">Start without a bank file</h1>
-          <p className="mt-2 text-muted">Answer five quick questions in your own words. You can add a bank CSV later for exact numbers, and anything you tell BudgetWise is kept.</p>
+          <p className="mt-2 text-muted">Answer a few optional questions in your own words. Skip anything, add it later, or use a bank CSV whenever you're ready.</p>
         </div>
         <label className="block">
           <span className="mb-1.5 block font-medium">What should we call this account?</span>
@@ -109,8 +109,8 @@ export default function Setup() {
           </div>
         ) : (
           <div className="rounded-3xl border border-forest/30 bg-forest-soft/40 p-6 animate-rise">
-            <p className="flex items-center gap-2 font-display text-[1.3rem] font-bold"><Check className="text-forest" /> You're set up</p>
-            <p className="mt-2 text-muted">From here, just tell BudgetWise what you spend and earn, like “spent $12 on lunch”. It will also ask you each day.</p>
+            <p className="flex items-center gap-2 font-display text-[1.3rem] font-bold"><Check className="text-forest" /> You're ready</p>
+            <p className="mt-2 text-muted">Keep adding things whenever they happen—or later. For example: “Yesterday I spent about $40 on gas and groceries.”</p>
             <button onClick={() => nav("/")} className="btn-primary mt-4">See what's safe to spend <ArrowRight size={18} /></button>
           </div>
         )}

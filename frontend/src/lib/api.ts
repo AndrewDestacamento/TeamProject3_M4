@@ -23,6 +23,7 @@ export interface LastPlan {
 export interface Snapshot {
   account: { id: string; name: string; kind: "demo" | "personal" };
   setup_needed: boolean;
+  use_case: string | null;
   balance_info: { as_of: string | null; source: string | null };
   estimates: { count: number; total: number };
   told: Schedule[];

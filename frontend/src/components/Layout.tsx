@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import * as Dropdown from "@radix-ui/react-dropdown-menu";
-import { CalendarDays, ChevronsUpDown, Check, Moon, Sun, Upload, MessageCircle, ReceiptText, House, Settings2, PencilLine, Target } from "lucide-react";
+import { CalendarDays, ChevronsUpDown, Check, Moon, Sun, Upload, MessageCircle, ReceiptText, House, Settings2, PencilLine, Target, Sparkles } from "lucide-react";
 import { api } from "@/lib/api";
 import { useChat } from "@/lib/chat";
 import { cn } from "@/lib/format";
@@ -71,21 +71,7 @@ function AccountSwitcher({ compact = false }: { compact?: boolean }) {
       <Dropdown.Portal>
         <Dropdown.Content sideOffset={8} align="start"
           className="z-50 w-72 rounded-2xl border border-line bg-surface p-1.5 shadow-lift animate-rise">
-          <Dropdown.Label className="px-3 pb-1 pt-2 text-[0.8rem] text-muted">Demo people</Dropdown.Label>
-          {data?.accounts.filter((a) => a.kind === "demo").map((a) => (
-            <Dropdown.Item key={a.id} onSelect={() => pick(a.id)}
-              className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 outline-none data-[highlighted]:bg-sunken">
-              <span className="text-lg">{a.emoji}</span>
-              <span className="min-w-0 flex-1">
-                <span className="block font-medium leading-tight">{a.name}</span>
-                <span className="block truncate text-[0.8rem] text-muted">{a.tagline}</span>
-              </span>
-              {a.id === data.active && <Check size={16} className="text-forest" />}
-            </Dropdown.Item>
-          ))}
-          {data?.accounts.some((a) => a.kind === "personal") && (
-            <Dropdown.Label className="px-3 pb-1 pt-3 text-[0.8rem] text-muted">Your accounts</Dropdown.Label>
-          )}
+          <Dropdown.Label className="px-3 pb-1 pt-2 text-[0.8rem] text-muted">Your workspace</Dropdown.Label>
           {data?.accounts.filter((a) => a.kind === "personal").map((a) => (
             <Dropdown.Item key={a.id} onSelect={() => pick(a.id)}
               className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 outline-none data-[highlighted]:bg-sunken">
@@ -95,6 +81,10 @@ function AccountSwitcher({ compact = false }: { compact?: boolean }) {
             </Dropdown.Item>
           ))}
           <Dropdown.Separator className="my-1.5 h-px bg-line" />
+          <Dropdown.Item onSelect={() => nav("/accounts#examples")}
+            className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 font-medium outline-none data-[highlighted]:bg-sunken">
+            <Sparkles size={18} className="text-marigold" /> View example profiles
+          </Dropdown.Item>
           <Dropdown.Item onSelect={() => nav("/accounts")}
             className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 font-medium outline-none data-[highlighted]:bg-sunken">
             <Settings2 size={18} /> Settings and accounts
@@ -111,6 +101,21 @@ function AccountSwitcher({ compact = false }: { compact?: boolean }) {
       </Dropdown.Portal>
     </Dropdown.Root>
   );
+}
+
+function DemoNotice() {
+  const qc = useQueryClient();
+  const { reset } = useChat();
+  const { data } = useQuery({ queryKey: ["accounts"], queryFn: api.accounts });
+  const active = data?.accounts.find((a) => a.id === data.active);
+  const mine = data?.accounts.find((a) => a.kind === "personal");
+  if (active?.kind !== "demo" || !mine) return null;
+  const leave = async () => {
+    await api.setActive(mine.id);
+    reset();
+    await qc.invalidateQueries();
+  };
+  return <div className="sticky top-3 z-20 mb-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-marigold/35 bg-marigold-soft px-4 py-3 text-[0.9rem] shadow-sm"><span><strong>Example mode:</strong> You're viewing {active.name}'s sample data. Nothing here is part of your personal workspace.</span><button onClick={() => void leave()} className="btn bg-surface px-3 py-1.5 text-[0.85rem] text-ink hover:bg-sunken">Return to my workspace</button></div>;
 }
 
 export default function Layout() {
@@ -154,6 +159,7 @@ export default function Layout() {
 
       <main className="min-w-0 px-4 pb-28 pt-5 sm:px-6 lg:px-9 lg:pb-12 lg:pt-7">
         <div className="mx-auto max-w-[1280px]">
+          <DemoNotice />
           <Outlet />
         </div>
       </main>

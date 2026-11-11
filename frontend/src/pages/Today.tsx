@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowRight, CalendarDays, CheckCircle2, CircleDollarSign, ClipboardCheck, Info, Lightbulb, PlusCircle, Sparkles, Upload, WalletCards } from "lucide-react";
 import { api } from "@/lib/api";
 import { AskBox, BillList, GoalMeter, InsightList, Section, Skeleton } from "@/components/Bits";
@@ -13,11 +14,69 @@ const ACTIONS = [
   { to: "/ask", icon: Sparkles, title: "Ask for advice", text: "Get personalized guidance for your situation." },
 ];
 
+const PURPOSES = [
+  "Know what I can safely spend",
+  "Track everyday spending",
+  "Cut back on extra spending",
+  "Plan around changing income",
+  "Save toward a goal",
+  "Track everything",
+];
+
+function FirstWelcome({ name }: { name: string }) {
+  const qc = useQueryClient();
+  const [custom, setCustom] = useState("");
+  const [busy, setBusy] = useState(false);
+  const finish = async (use_case: string) => {
+    if (busy) return;
+    setBusy(true);
+    await api.saveSettings({ onboarding_complete: true, use_case: use_case || "Flexible money help" });
+    await qc.invalidateQueries();
+    setBusy(false);
+  };
+  return (
+    <div className="mx-auto max-w-3xl py-6 sm:py-12">
+      <span className="chip bg-forest-soft text-forest"><Sparkles size={14} /> Welcome to BudgetWise</span>
+      <h1 className="mt-5 text-[2.25rem] font-extrabold leading-tight sm:text-[3rem]">What would you like help with?</h1>
+      <p className="mt-3 max-w-2xl text-[1.05rem] text-muted">Choose one if it helps, or skip it. You can tell BudgetWise anything about your money whenever you want and change this later.</p>
+      <div className="mt-7 grid gap-3 sm:grid-cols-2">
+        {PURPOSES.map((purpose) => <button key={purpose} disabled={busy} onClick={() => void finish(purpose)} className="panel flex items-center justify-between p-4 text-left font-semibold transition hover:border-forest/40 hover:bg-forest-soft/20">{purpose}<ArrowRight size={17} className="text-forest" /></button>)}
+      </div>
+      <form onSubmit={(e) => { e.preventDefault(); void finish(custom.trim()); }} className="mt-3 flex gap-2">
+        <input className="field h-12" value={custom} onChange={(e) => setCustom(e.target.value)} placeholder="Or describe it in your own words…" aria-label="What you want help with" />
+        <button disabled={busy || !custom.trim()} className="btn-primary shrink-0">Continue</button>
+      </form>
+      <button disabled={busy} onClick={() => void finish("")} className="btn-ghost mt-4">Skip for now</button>
+      <p className="mt-8 text-[0.85rem] text-faint">This starts a blank personal workspace for {name}. Example profiles are available separately.</p>
+    </div>
+  );
+}
+
+function EmptyHome({ name, useCase }: { name: string; useCase: string | null }) {
+  return (
+    <div className="mx-auto max-w-4xl py-4 sm:py-8">
+      <span className="chip bg-forest-soft text-forest"><Sparkles size={14} /> Your personal workspace</span>
+      <h1 className="mt-5 text-[2.35rem] font-extrabold leading-tight sm:text-[3.25rem]">Start with anything you know.</h1>
+      <p className="mt-3 max-w-2xl text-[1.05rem] text-muted">No forms are required, {name}. Tell BudgetWise one thing now and add the rest whenever you want. Estimates are okay, and you can correct or undo anything later.</p>
+      {useCase && useCase !== "Flexible money help" && <p className="mt-4 inline-flex rounded-full bg-marigold-soft px-3 py-1.5 text-[0.85rem] font-medium">Your focus: {useCase}</p>}
+      <div className="home-command mt-7"><Sparkles className="shrink-0 text-forest" size={23} /><div className="min-w-0 flex-1"><AskBox placeholder="Try: ‘I have about $500’ or ‘Yesterday I spent $40 on gas and groceries’" suggestions={[]} /></div></div>
+      <p className="mt-2 text-[0.82rem] text-muted">You can add spending, income, bills, balances, goals, or simply ask a question.</p>
+      <div className="mt-7 grid gap-3 sm:grid-cols-3">
+        <Link to="/setup" className="panel p-5 transition hover:border-forest/40"><ClipboardCheck className="text-forest" /><h2 className="mt-3 font-bold">Answer a few prompts</h2><p className="mt-1 text-[0.88rem] text-muted">Optional questions, and every one can be skipped.</p></Link>
+        <Link to="/accounts#upload" className="panel p-5 transition hover:border-forest/40"><Upload className="text-forest" /><h2 className="mt-3 font-bold">Import a bank CSV</h2><p className="mt-1 text-[0.88rem] text-muted">Use exact transactions when you're ready.</p></Link>
+        <Link to="/accounts#examples" className="panel p-5 transition hover:border-forest/40"><Sparkles className="text-marigold" /><h2 className="mt-3 font-bold">View an example</h2><p className="mt-1 text-[0.88rem] text-muted">See a filled-in BudgetWise without mixing its data with yours.</p></Link>
+      </div>
+    </div>
+  );
+}
+
 export default function Today() {
   const { data: s, isLoading, error } = useQuery({ queryKey: ["snapshot"], queryFn: api.snapshot });
   const { data: plans } = useQuery({ queryKey: ["plans"], queryFn: api.plans });
   if (error) return <p className="panel p-6 text-berry">Couldn't load your numbers: {(error as Error).message}. Is the server running?</p>;
   if (isLoading || !s) return <div className="space-y-6"><Skeleton className="h-24" /><Skeleton className="h-28" /><Skeleton className="h-44" /></div>;
+  if (s.setup_needed) return <FirstWelcome name={s.account.name} />;
+  if (s.account.kind === "personal" && !s.balance_info.as_of && !s.told.length && s.estimates.count === 0) return <EmptyHome name={s.account.name} useCase={s.use_case} />;
 
   const plan = plans?.current;
   const safeToday = Math.max(s.left_today, 0);
