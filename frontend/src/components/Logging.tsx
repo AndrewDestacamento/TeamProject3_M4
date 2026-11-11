@@ -61,7 +61,15 @@ export function CheckIns({ s }: { s: Snapshot }) {
   const [done, setDone] = useState<{ kind: string; text: string; batch: string | null } | null>(null);
   const [typing, setTyping] = useState<"spend" | "income" | null>(null);
 
-  if (!s.checkins.spend_today && !s.checkins.income_week && !done) return null;
+  // Nothing to ask today: the same card becomes a simple "add spending or income" box.
+  if (!s.checkins.spend_today && !s.checkins.income_week && !done) {
+    return (
+      <section className="rounded-2xl border border-line bg-surface p-5">
+        <p className="mb-3 font-display text-[1.15rem] font-bold">Spent or earned something?</p>
+        <LogBox placeholder="e.g. $40 on groceries and gas, or got paid $612" />
+      </section>
+    );
+  }
 
   const tap = async (kind: "spend" | "income", amount: number | null) => {
     const r = await api.checkin(kind, amount);
@@ -99,7 +107,7 @@ export function CheckIns({ s }: { s: Snapshot }) {
             <div className="mt-3">
               <LogBox autoFocus checkin={kind} compactCard
                 placeholder={kind === "spend" ? "e.g. $12 lunch and $30 gas" : "e.g. $320 from Uber and $45 in tips"}
-                onDone={(r) => { if (r.saved) { setTyping(null); setDone({ kind, batch: null, text: r.text || "Saved." }); } }} />
+                onDone={(r) => { if (r.saved) { setTyping(null); setDone({ kind, batch: r.batchId, text: (r.text || "Saved.").replace(/\*\*/g, "") }); } }} />
             </div>
           ) : (
             <div className="mt-3 flex flex-wrap gap-2">

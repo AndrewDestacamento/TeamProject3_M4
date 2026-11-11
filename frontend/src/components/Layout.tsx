@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import * as Dropdown from "@radix-ui/react-dropdown-menu";
-import { CalendarDays, ChevronsUpDown, Check, Moon, Sun, Upload, MessageCircle, ReceiptText, Sparkles, Wallet, Settings2, PencilLine } from "lucide-react";
+import { CalendarDays, ChevronsUpDown, Check, Moon, Sun, Upload, MessageCircle, ReceiptText, Wallet, Settings2, PencilLine } from "lucide-react";
 import { api } from "@/lib/api";
 import { useChat } from "@/lib/chat";
 import { cn } from "@/lib/format";
@@ -12,7 +12,6 @@ const NAV = [
   { to: "/spending", label: "Spending", icon: ReceiptText },
   { to: "/plan", label: "Weekly plan", icon: CalendarDays },
   { to: "/ask", label: "Ask BudgetWise", short: "Ask", icon: MessageCircle },
-  { to: "/accounts", label: "Accounts & data", short: "Data", icon: Settings2 },
 ];
 
 export function Logo({ className = "" }: { className?: string }) {
@@ -95,6 +94,10 @@ function AccountSwitcher({ compact = false }: { compact?: boolean }) {
             </Dropdown.Item>
           ))}
           <Dropdown.Separator className="my-1.5 h-px bg-line" />
+          <Dropdown.Item onSelect={() => nav("/accounts")}
+            className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 font-medium outline-none data-[highlighted]:bg-sunken">
+            <Settings2 size={18} /> Settings and accounts
+          </Dropdown.Item>
           <Dropdown.Item onSelect={() => nav("/accounts#upload")}
             className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 font-medium text-forest outline-none data-[highlighted]:bg-sunken">
             <Upload size={18} /> Add your bank's CSV
@@ -133,10 +136,6 @@ export default function Layout() {
           ))}
         </nav>
         <div className="mt-auto space-y-3">
-          <div className="rounded-2xl bg-sunken p-4 text-[0.85rem] text-muted">
-            <Sparkles size={16} className="mb-1.5 text-marigold" />
-            Five AI agents and a money engine work together. Tell it what you spend in plain words; numbers are always calculated, never guessed.
-          </div>
           <button onClick={toggle} className="btn-ghost w-full justify-start px-3">
             <ThemeIcon size={18} /> {dark ? "Light mode" : "Dark mode"}
           </button>
@@ -159,7 +158,7 @@ export default function Layout() {
       </main>
 
       {/* Mobile tab bar */}
-      <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden" aria-label="Main">
+      <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-4 border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden" aria-label="Main">
         {NAV.map(({ to, label, short, icon: Icon, end }) => (
           <NavLink key={to} to={to} end={end}
             className={({ isActive }) => cn("flex flex-col items-center gap-0.5 py-2.5 text-[0.72rem] font-medium text-muted", isActive && "text-forest")}>

@@ -32,7 +32,7 @@ export interface Snapshot {
   bills_before_payday: Bill[]; bills_before_payday_total: number;
   next_cycle: { ends: string; bills: Bill[]; bills_total: number; expected_income: number; held_back: number };
   held_back_for_next_cycle: number;
-  safe_to_spend_total: number; safe_per_day: number; spent_today: number; left_today: number;
+  safe_to_spend_total: number; safe_per_day: number; per_day_after_today: number; spent_today: number; left_today: number;
   typical_daily_spending: number; status: Status;
   income: {
     sources: { source: string; count: number; average: number; lowest: number; highest: number; every_days: number | null; last_date: string }[];

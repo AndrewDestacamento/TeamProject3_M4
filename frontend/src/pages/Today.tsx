@@ -4,8 +4,8 @@ import { ArrowRight, CalendarDays, Info, PencilLine, Upload } from "lucide-react
 import { api } from "@/lib/api";
 import Runway from "@/components/Runway";
 import { ForecastChart, MonthBars } from "@/components/Charts";
-import { AskBox, BillList, GoalMeter, InsightList, Section, Skeleton, StatusChip } from "@/components/Bits";
-import { CheckIns, LogBox } from "@/components/Logging";
+import { BillList, GoalMeter, InsightList, Section, Skeleton, StatusChip } from "@/components/Bits";
+import { CheckIns } from "@/components/Logging";
 import { cn, day, longDay, money, moneyParts } from "@/lib/format";
 
 function BigMoney({ value, tone }: { value: number; tone: string }) {
@@ -53,13 +53,16 @@ export default function Today() {
   }
 
   const over = s.left_today < 0;
-  const tone = s.status === "red" || over ? "text-berry" : s.status === "amber" ? "text-marigold" : "text-forest";
+  const noMoney = s.safe_to_spend_total <= 0 && s.left_today <= 0;
+  const tone = noMoney || over ? "text-berry" : s.status === "amber" ? "text-marigold" : "text-forest";
   const plan = plans?.current;
   const FIXED = new Set(["housing", "utilities", "insurance", "debt_payment", "education", "subscriptions", "transfer", "income"]);
   const flexRows = s.month.categories.filter((r) => !FIXED.has(r.category));
+  const daysAfter = Math.max(s.days_until_payday - 1, 0);
+  const heldBack = s.held_back_for_next_cycle + s.savings_buffer;
 
   return (
-    <div className="space-y-8">
+    <div className="mx-auto max-w-4xl space-y-8">
       {s.data_is_old && (
         <div className="flex items-start gap-3 rounded-2xl bg-marigold-soft px-4 py-3 text-[0.92rem]">
           <Info size={18} className="mt-0.5 shrink-0 text-marigold" />
@@ -67,105 +70,109 @@ export default function Today() {
         </div>
       )}
 
-      {/* Hero: the one question everyone asks */}
-      <section className="grid gap-8 lg:grid-cols-[1fr_320px] lg:items-end">
-        <div>
-          <div className="flex flex-wrap items-center gap-3 text-muted">
-            <span className="font-medium">{longDay(s.as_of)}</span>
-            <StatusChip status={over ? "red" : s.status} />
-          </div>
-          <h1 className="mt-3 text-[2rem] font-bold leading-[1.1] sm:text-[2.6rem]">
-            {over ? "You're over today's amount by" : "You can spend"}
-          </h1>
-          <div className="mt-1 text-[4.2rem] leading-none sm:text-[5.6rem]">
-            <BigMoney value={Math.abs(s.left_today)} tone={tone} />
-            <span className="ml-3 align-middle font-display text-[1.5rem] font-semibold text-muted sm:text-[1.9rem]">{over ? "" : "more today"}</span>
-          </div>
-          <p className="num mt-4 max-w-xl text-[1.05rem] text-muted">
-            That's from <span className="font-semibold text-ink">{money(s.safe_per_day)} a day</span> until payday on{" "}
-            <span className="font-semibold text-ink">{day(s.next_payday)}</span>
-            {s.spent_today > 0 ? <>. You've spent {money(s.spent_today)} so far today.</> : <>. Nothing spent yet today.</>}
-          </p>
-          {s.estimates.count > 0 && (
-            <p className="num mt-2 text-[0.88rem] text-faint">
-              Includes {money(s.estimates.total)} of estimates you logged.{" "}
-              <Link to="/accounts#upload" className="font-medium text-forest hover:underline">Upload a bank file</Link> for exact numbers.
-            </p>
-          )}
+      {/* 1. The one number that matters */}
+      <section>
+        <div className="flex flex-wrap items-center gap-3 text-muted">
+          <span className="font-medium">{longDay(s.as_of)}</span>
+          <StatusChip status={noMoney || over ? "red" : s.status} />
         </div>
+        <h1 className="mt-3 text-[2rem] font-bold leading-[1.1] sm:text-[2.4rem]">
+          {noMoney ? "Nothing left to spend until payday" : over ? "You're over today by" : "You can spend"}
+        </h1>
+        {!noMoney && (
+          <div className="mt-1 text-[4rem] leading-none sm:text-[5.2rem]">
+            <BigMoney value={Math.abs(s.left_today)} tone={tone} />
+            {!over && <span className="ml-3 align-middle font-display text-[1.5rem] font-semibold text-muted sm:text-[1.8rem]">today</span>}
+          </div>
+        )}
+        <p className="num mt-4 max-w-2xl text-[1.1rem] text-muted">
+          {daysAfter === 0 ? (
+            <>Payday is <span className="font-semibold text-ink">tomorrow</span>{s.expected_next_paycheck ? <> (about {money(s.expected_next_paycheck, true)})</> : null}.</>
+          ) : noMoney ? (
+            <>Your bills and cushion need what's in your account until payday on <span className="font-semibold text-ink">{day(s.next_payday)}</span>. Try to skip extra spending.</>
+          ) : over ? (
+            <>That's okay. To stay on track, spend about <span className="font-semibold text-ink">{money(s.per_day_after_today)} a day</span> for the next {daysAfter} {daysAfter === 1 ? "day" : "days"} until payday on <span className="font-semibold text-ink">{day(s.next_payday)}</span>.</>
+          ) : (
+            <>Then about <span className="font-semibold text-ink">{money(s.per_day_after_today)} a day</span> for the next {daysAfter} {daysAfter === 1 ? "day" : "days"} until payday on <span className="font-semibold text-ink">{day(s.next_payday)}</span>.</>
+          )}
+          {s.spent_today > 0 && <> You've spent {money(s.spent_today)} today.</>}
+        </p>
 
-        <dl className="num grid grid-cols-2 gap-x-6 gap-y-4 rounded-2xl bg-sunken/70 p-5 text-[0.92rem]">
-          <div><dt className="text-muted">In your account</dt><dd className="font-display text-[1.25rem] font-bold">{money(s.balance)}</dd></div>
-          <div><dt className="text-muted">Safe until payday</dt><dd className="font-display text-[1.25rem] font-bold">{money(s.safe_to_spend_total)}</dd></div>
-          <div><dt className="text-muted">Bills before payday</dt><dd className="font-semibold">{money(s.bills_before_payday_total)}</dd></div>
-          <div><dt className="text-muted">{s.held_back_for_next_cycle > 0 ? "Held for bills + cushion" : "Cushion kept aside"}</dt>
-            <dd className="font-semibold">{money(s.held_back_for_next_cycle > 0 ? s.held_back_for_next_cycle + s.savings_buffer : s.savings_buffer)}</dd></div>
-        </dl>
+        <details className="group mt-3 max-w-md">
+          <summary className="cursor-pointer list-none text-[0.92rem] font-medium text-forest hover:underline">How is this worked out?</summary>
+          <dl className="num mt-3 space-y-1.5 rounded-2xl bg-sunken/70 p-4 text-[0.92rem]">
+            <div className="flex justify-between"><dt className="text-muted">In your account</dt><dd>{money(s.balance)}</dd></div>
+            <div className="flex justify-between"><dt className="text-muted">Bills before payday</dt><dd>&minus; {money(s.bills_before_payday_total)}</dd></div>
+            <div className="flex justify-between"><dt className="text-muted">{s.held_back_for_next_cycle > 0 ? "Kept for later bills + cushion" : "Cushion kept aside"}</dt><dd>&minus; {money(heldBack)}</dd></div>
+            <div className="flex justify-between border-t border-line pt-1.5 font-semibold"><dt>Safe to spend until payday</dt><dd>{money(s.safe_to_spend_total)}</dd></div>
+            <p className="pt-2 text-[0.85rem] text-muted">
+              Today started with {money(s.safe_per_day)} to spend ({money(s.safe_to_spend_total + s.spent_today)} spread over {s.days_until_payday} {s.days_until_payday === 1 ? "day" : "days"}).
+              {daysAfter > 0 && <> The rest is split evenly over the next {daysAfter} {daysAfter === 1 ? "day" : "days"}.</>}
+            </p>
+          </dl>
+        </details>
+        {s.estimates.count > 0 && (
+          <p className="num mt-2 text-[0.85rem] text-faint">
+            Includes {money(s.estimates.total)} of estimates you logged.{" "}
+            <Link to="/accounts#upload" className="font-medium text-forest hover:underline">Upload a bank file</Link> for exact numbers.
+          </p>
+        )}
       </section>
 
+      {/* 2. Tell it what you spent */}
       <CheckIns s={s} />
 
+      {/* 3. The days until payday */}
       <Runway s={s} />
 
-      <div className="grid gap-6 lg:grid-cols-[1.15fr_1fr]">
-        <div className="space-y-6">
-          <Section title="Tell BudgetWise" aside="Spent or earned something? Say it how you'd text it">
-            <LogBox placeholder="e.g. spent about $20 on food, or got paid $612" />
-          </Section>
-          <Section title="Ask BudgetWise" aside="Answers in seconds, using your real numbers">
-            <AskBox />
-          </Section>
-          <Section title="Worth knowing">
-            <InsightList items={s.insights} />
-          </Section>
-        </div>
-        <div className="space-y-6">
-          <Section title="This week's plan">
-            {plan ? (
-              <div className="space-y-3">
-                <p className="num text-[1.05rem]">
-                  Spend up to <span className="font-display text-[1.3rem] font-bold text-forest">{money(plan.daily_limit)}</span> a day, keep{" "}
-                  {plan.focus_label?.toLowerCase()} under <span className="font-semibold">{money(plan.focus_category_cap)}</span>
-                  {plan.save_this_week > 0 && <>, and save <span className="font-semibold">{money(plan.save_this_week)}</span></>}.
-                </p>
-                <Link to="/plan" className="btn-quiet">See how you're doing</Link>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <p className="text-muted">
-                  {s.last_plan
-                    ? `Last week: ${s.last_plan.stuck_to_plan ? "you stuck to your plan." : "the plan slipped a little."} Ready for a fresh one?`
-                    : "Get a daily limit, one category to cap, and a savings amount for the next 7 days."}
-                </p>
-                <Link to="/plan?new=1" className="btn-primary"><CalendarDays size={18} /> Make this week's plan</Link>
-              </div>
-            )}
-          </Section>
-          {s.goal && (
-            <Section title="Savings goal">
-              <GoalMeter g={s.goal} />
-            </Section>
+      {/* 4. What's coming */}
+      <div className="grid gap-6 md:grid-cols-2">
+        <Section title="Coming up" aside={s.subscriptions.count ? `Subscriptions: ${money(s.subscriptions.monthly_total)}/mo` : undefined}>
+          <BillList bills={s.upcoming_bills} limit={4} />
+        </Section>
+        <Section title="This week's plan">
+          {plan ? (
+            <div className="space-y-3">
+              <p className="num text-[1.02rem]">
+                Spend up to <span className="font-display text-[1.25rem] font-bold text-forest">{money(plan.daily_limit)}</span> a day, keep{" "}
+                {plan.focus_label?.toLowerCase()} under <span className="font-semibold">{money(plan.focus_category_cap)}</span>
+                {plan.save_this_week > 0 && <>, and save <span className="font-semibold">{money(plan.save_this_week)}</span></>}.
+              </p>
+              <Link to="/plan" className="btn-quiet">See how you're doing</Link>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <p className="text-muted">
+                {s.last_plan
+                  ? `Last week: ${s.last_plan.stuck_to_plan ? "you stuck to your plan." : "the plan slipped a little."} Ready for a fresh one?`
+                  : "Get a daily limit and a savings amount for the next 7 days."}
+              </p>
+              <Link to="/plan?new=1" className="btn-primary"><CalendarDays size={18} /> Make a plan</Link>
+            </div>
           )}
-          <Section title="Coming up" aside={s.subscriptions.count ? `Subscriptions: ${money(s.subscriptions.monthly_total)}/mo` : undefined}>
-            <BillList bills={s.upcoming_bills} limit={5} />
-          </Section>
-        </div>
+        </Section>
       </div>
 
-      <div className="grid items-start gap-6 lg:grid-cols-[1.3fr_1fr]">
-        <Section title="Where your balance is heading"
-          aside={<span className="num">Lowest: {money(s.forecast.lowest)} on {day(s.forecast.lowest_date)}</span>}>
-          <ForecastChart s={s} />
-          <p className="num mt-3 text-[0.85rem] text-muted">
-            Assumes your usual {money(s.forecast.assumes_daily_spending)} a day, every predicted bill, and conservative paychecks.
-          </p>
-        </Section>
-        <Section title={`Everyday spending in ${s.month.this_month_label}`}
-          aside={<span className="num">{money(flexRows.reduce((a, r) => a + r.this_month, 0))} so far</span>}>
-          <MonthBars rows={flexRows} lastLabel={s.month.last_month_label} />
-          <p className="mt-4 text-[0.82rem] text-muted">The dark tick shows where you were by this date last month. Rent and bills are left out.</p>
-        </Section>
-      </div>
+      {/* 5. Everything else, out of the way */}
+      <details className="panel group p-5 sm:p-6">
+        <summary className="cursor-pointer list-none font-display text-[1.1rem] font-bold">
+          More: tips, trends and your balance ahead <span className="text-muted group-open:hidden">+</span>
+        </summary>
+        <div className="mt-5 space-y-6">
+          {s.insights.length > 0 && (<div><h3 className="mb-3 font-bold">Worth knowing</h3><InsightList items={s.insights} /></div>)}
+          {s.goal && (<div><h3 className="mb-3 font-bold">Savings goal</h3><GoalMeter g={s.goal} /></div>)}
+          <div>
+            <h3 className="mb-1 font-bold">Where your balance is heading</h3>
+            <p className="num mb-3 text-[0.85rem] text-muted">Lowest: {money(s.forecast.lowest)} on {day(s.forecast.lowest_date)}. Assumes your usual {money(s.forecast.assumes_daily_spending)} a day.</p>
+            <ForecastChart s={s} />
+          </div>
+          <div>
+            <h3 className="mb-1 font-bold">Everyday spending in {s.month.this_month_label}</h3>
+            <p className="num mb-3 text-[0.85rem] text-muted">{money(flexRows.reduce((a, r) => a + r.this_month, 0))} so far. The dark tick is where you were by this date last month.</p>
+            <MonthBars rows={flexRows} lastLabel={s.month.last_month_label} />
+          </div>
+        </div>
+      </details>
     </div>
   );
 }

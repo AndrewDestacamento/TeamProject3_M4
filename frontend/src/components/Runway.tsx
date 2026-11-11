@@ -47,7 +47,7 @@ export default function Runway({ s }: { s: Snapshot }) {
                 ) : (
                   <div className="mt-2 flex-1">
                     <div className={cn("num font-display text-[1.05rem] font-bold", isToday && over ? "text-berry" : "text-ink")}>
-                      {isToday ? money(s.left_today) : money(s.safe_per_day)}
+                      {isToday ? money(s.left_today) : money(s.per_day_after_today)}
                     </div>
                     <div className="text-[0.78rem] text-muted">{isToday ? (over ? "over today" : "left today") : "to spend"}</div>
                     {isToday && (

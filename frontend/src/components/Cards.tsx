@@ -102,11 +102,11 @@ export function AffordCard({ a }: { a: Afford }) {
       </div>
       <div className="num mt-3 grid grid-cols-2 gap-3 text-[0.88rem]">
         <div className="rounded-xl bg-surface/80 p-3">
-          <p className="text-muted">Per day now</p>
+          <p className="text-muted">Daily amount now</p>
           <p className="font-display text-[1.2rem] font-bold">{money(a.per_day_before)}</p>
         </div>
         <div className="rounded-xl bg-surface/80 p-3">
-          <p className="text-muted">Per day after</p>
+          <p className="text-muted">If you buy it</p>
           <p className={cn("font-display text-[1.2rem] font-bold", v.text)}>{money(a.per_day_after)}</p>
         </div>
       </div>
