@@ -717,7 +717,8 @@ def _template_text(draft: dict, numbers: dict | None, snap: dict) -> dict:
 def _afford_text(r: dict) -> str:
     """The verdict in plain words, straight from the affordability math (instant and always correct)."""
     item, amt = r["item"], f"${r['amount']:,.2f}"
-    after = f"**${r['safe_to_spend_after']:,.2f}** left to spend over the next {r['days_until_payday']} days (**${r['per_day_after']:,.2f} a day**, down from ${r['per_day_before']:,.2f})"
+    after = (f"**${r['safe_to_spend_after']:,.2f}** left until payday, about **${r['per_day_after']:,.2f} a day** "
+             f"after today (down from ${r['per_day_before']:,.2f})")
     if r["verdict"] == "yes":
         return f"✅ **Yes, {amt} for {item} fits.** You'd still have {after}."
     if r["verdict"] == "tight":

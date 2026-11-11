@@ -349,9 +349,14 @@ def snapshot(account_id: str | None = None) -> dict:
                                if payday.isoformat() <= p["date"] < cycle_end.isoformat()))
     reserve = _r(max(next_cycle_bills_total - next_cycle_income, 0.0))
     safe_total = _r(balance - bills_total - reserve - buffer)
-    per_day = _r(safe_total / days_left)
+    # Today's spending has already left the balance. Work out the daily amount from the START of today
+    # (safe_total + what was spent today), so today's spending is only counted once.
     spent_today = _r(sum(-t["amount"] for t in txns if t["date"] == as_of and t["amount"] < 0 and t["category"] in FLEXIBLE))
+    per_day = _r((safe_total + spent_today) / days_left)
     left_today = _r(per_day - spent_today)
+    # The days after today share what is left once today's unspent amount is set aside
+    # (if today went over, the overspend is spread across the remaining days).
+    per_day_after_today = _r((safe_total - max(left_today, 0.0)) / (days_left - 1)) if days_left > 1 else per_day
     typical_daily = _flex_daily_average(txns, as_of, baseline_weekly=settings.get("typical_weekly_spend"))
     if safe_total <= 0:
         status = "red"
@@ -398,6 +403,7 @@ def snapshot(account_id: str | None = None) -> dict:
         "held_back_for_next_cycle": reserve,
         "safe_to_spend_total": safe_total,
         "safe_per_day": per_day,
+        "per_day_after_today": per_day_after_today,
         "spent_today": spent_today,
         "left_today": left_today,
         "typical_daily_spending": typical_daily,
@@ -547,19 +553,22 @@ def can_afford(account_id: str | None, amount: float, when: str | None = None, w
     amount = _r(abs(float(amount)))
     after_total = _r(snap["safe_to_spend_total"] - amount)
     days = snap["days_until_payday"]
-    after_per_day = _r(after_total / days)
+    # Compare the days AFTER today, before and after the purchase (same basis as the Today screen).
+    rest = max(days - 1, 1)
+    before_per_day = snap["per_day_after_today"]
+    after_per_day = _r(after_total / rest) if days > 1 else after_total
     typical = snap["typical_daily_spending"]
     low_after = _r(snap["forecast"]["lowest"] - amount)
     if after_total < 0:
         verdict, reason = "no", "It would use money already needed for bills and your cushion."
-    elif after_per_day < typical * 0.6:
+    elif after_per_day < typical * 0.75:
         verdict, reason = "tight", "You could, but the rest of the days until payday would be very tight."
     else:
         verdict, reason = "yes", "It fits within your safe-to-spend money."
     return {
         "item": what or "this purchase", "amount": amount, "verdict": verdict, "reason": reason,
         "safe_to_spend_before": snap["safe_to_spend_total"], "safe_to_spend_after": after_total,
-        "per_day_before": snap["safe_per_day"], "per_day_after": after_per_day,
+        "per_day_before": before_per_day, "per_day_after": after_per_day, "days_after_today": max(days - 1, 0),
         "days_until_payday": days, "next_payday": snap["next_payday"],
         "typical_daily_spending": typical, "lowest_balance_after": low_after,
         "goal_needed_per_week": snap["goal"]["needed_per_week"] if snap["goal"] else None,
@@ -675,6 +684,7 @@ def compact_snapshot(snap: dict) -> dict:
         "savings_cushion": snap["savings_buffer"],
         "safe_to_spend_total": snap["safe_to_spend_total"],
         "safe_per_day": snap["safe_per_day"],
+        "per_day_after_today": snap["per_day_after_today"],
         "spent_today": snap["spent_today"],
         "left_today": snap["left_today"],
         "typical_daily_spending": snap["typical_daily_spending"],

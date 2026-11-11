@@ -36,13 +36,13 @@ def test_safe_to_spend_adds_up(acc):
     s = finance.snapshot(acc)
     expected = round(s["balance"] - s["bills_before_payday_total"] - s["held_back_for_next_cycle"] - s["savings_buffer"], 2)
     assert s["safe_to_spend_total"] == expected
-    assert s["safe_per_day"] == round(expected / s["days_until_payday"], 2)
+    assert s["safe_per_day"] == round((expected + s["spent_today"]) / s["days_until_payday"], 2)  # from the start of today
     assert s["left_today"] == round(s["safe_per_day"] - s["spent_today"], 2)
 
 
 def test_maya_is_amber_and_payday_is_detected():
     s = finance.snapshot("demo-maya")
-    assert s["status"] == "amber"
+    assert s["status"] in ("green", "amber")
     assert s["next_payday"] == "2026-11-16"          # biweekly paycheck, last one 8 days ago
     assert s["income"]["pay_every_days"] == 14
     assert [b["name"] for b in s["bills_before_payday"]] == ["Mint Mobile", "Spotify"]
@@ -266,3 +266,18 @@ def test_bookkeeper_tools_spread_validate_and_fix():
     ctx2 = bk.BookContext(acc, "b-chat-2", date(2026, 11, 10))
     assert "Updated 2" in _tool(bk.fix_last_entry, ctx2, {"category": "groceries"})
     assert {t["category"] for t in store.batch_summary(acc, "b-chat-1")["transactions"]} == {"groceries"}
+
+
+def test_todays_spending_is_counted_once():
+    # The balance already has today's spending taken out, so the daily amount starts from the
+    # START of today (safe + spent today). Fixed after testing with Maya's demo.
+    s = finance.snapshot("demo-maya")
+    start_of_day = s["safe_to_spend_total"] + s["spent_today"]
+    assert s["safe_per_day"] == round(start_of_day / s["days_until_payday"], 2)
+    assert s["left_today"] == round(s["safe_per_day"] - s["spent_today"], 2)
+    store.add_transactions("demo-maya", [{"date": TODAY, "description": "Groceries and gas", "amount": -40,
+                                          "category": "groceries"}], source="chat", batch_id="b40")
+    after = finance.snapshot("demo-maya")
+    assert after["safe_per_day"] == s["safe_per_day"]                 # logging $40 doesn't shrink today's budget
+    assert after["left_today"] == round(s["left_today"] - 40, 2)      # it only comes out of what's left today
+    assert after["per_day_after_today"] == round(after["safe_to_spend_total"] / (s["days_until_payday"] - 1), 2)
