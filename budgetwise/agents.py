@@ -777,6 +777,9 @@ def _fallback_answer(evidence: list[str]) -> str:
         f = json.loads(evidence[0])
     except (json.JSONDecodeError, IndexError):
         return "Sorry, I couldn't answer that right now. Please try again."
+    if not f.get("balance_known"):
+        return ("I saved what you've shared, but I still need your current balance before I can calculate safe spending or affordability. "
+                "You can add an estimate, import a CSV, or skip this for now.")
     return (f"Here are your verified numbers: **${f['safe_per_day']:,.2f} a day** is safe to spend for the next "
             f"{f['days_until_payday']} days (${f['safe_to_spend_total']:,.2f} total), after "
             f"${f['bills_before_payday_total']:,.2f} in bills before payday. Please try your question again in a moment.")

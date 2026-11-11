@@ -225,8 +225,8 @@ def set_balance(ctx: RunContextWrapper[BookContext], amount: float) -> str:
 
 
 @function_tool(strict_mode=False, failure_error_function=_tool_error)
-def set_savings_goal(ctx: RunContextWrapper[BookContext], name: str, target: float, deadline: str,
-                     saved_so_far: float | None = None) -> str:
+def set_savings_goal(ctx: RunContextWrapper[BookContext], target: float, deadline: str,
+                     name: str = "Savings goal", saved_so_far: float | None = None) -> str:
     """Save a savings goal (what it's for, the target amount, the date to reach it YYYY-MM-DD, saved so far)."""
     c = ctx.context
     t = _check_amount(target)
@@ -244,6 +244,41 @@ def set_savings_goal(ctx: RunContextWrapper[BookContext], name: str, target: flo
                                                 "deadline": dl.isoformat(), "batch_id": c.batch_id},
                                        "previous_goal": prev})
     return f"Saved goal: {name} ${t:,.2f} by {dl.isoformat()}."
+
+
+@function_tool(strict_mode=False, failure_error_function=_tool_error)
+def update_savings_goal(ctx: RunContextWrapper[BookContext], name: str | None = None,
+                        target: float | None = None, deadline: str | None = None,
+                        saved_so_far: float | None = None) -> str:
+    """Change one or more fields of the current savings goal while keeping everything else."""
+    c = ctx.context
+    current = store.load_settings(c.account_id).get("goal")
+    if not current:
+        return "Not saved: there is no active goal to update"
+    updated = dict(current)
+    if name is not None:
+        updated["name"] = name.strip()[:40].capitalize() or current["name"]
+    if target is not None:
+        checked = _check_amount(target)
+        if isinstance(checked, str):
+            return f"Not saved: {checked}"
+        updated["target"] = checked
+    if deadline is not None:
+        try:
+            dl = date.fromisoformat(deadline)
+        except ValueError:
+            return "Not saved: deadline must be YYYY-MM-DD"
+        if dl <= c.today:
+            return "Not saved: the deadline must be in the future"
+        updated["deadline"] = dl.isoformat()
+    if saved_so_far is not None:
+        checked = _check_amount(saved_so_far) if float(saved_so_far) != 0 else 0.0
+        if isinstance(checked, str):
+            return f"Not saved: {checked}"
+        updated["saved"], updated["saved_known"] = checked, True
+    updated["batch_id"] = c.batch_id
+    store.save_settings(c.account_id, {"goal": updated, "previous_goal": current})
+    return f"Updated goal: {updated['name']} ${updated['target']:,.2f} by {updated['deadline']}."
 
 
 @function_tool(strict_mode=False, failure_error_function=_tool_error)
@@ -304,7 +339,7 @@ def undo_last(ctx: RunContextWrapper[BookContext]) -> str:
     return f"Removed {n} saved item{'s' if n != 1 else ''}."
 
 
-TOOLS = [log_spending, log_income, set_bill, set_pay_schedule, set_balance, set_savings_goal,
+TOOLS = [log_spending, log_income, set_bill, set_pay_schedule, set_balance, set_savings_goal, update_savings_goal,
          set_typical_weekly_spending, fix_last_entry, undo_last]
 
 
@@ -325,7 +360,9 @@ What to save:
 - How they get paid ("every 2 weeks", "every Friday", "on the 1st and 15th", "it changes") -> set_pay_schedule.
 - "I have $X" / "my balance is $X" -> set_balance.
 - Something they're saving for -> set_savings_goal. If they did not say how much is already saved, omit saved_so_far;
-  never assume that they explicitly have $0 saved.
+  never assume that they explicitly have $0 saved. If they give an amount and deadline but no name, save it immediately
+  as "Savings goal". Do NOT delay saving to ask for a name; they can rename it later.
+- A change to the active goal (rename it, change target/deadline, update amount saved) -> update_savings_goal.
 - "I usually spend about $X a week" -> set_typical_weekly_spending.
 - A correction of what they just told you -> fix_last_entry. "Undo that" -> undo_last.
 

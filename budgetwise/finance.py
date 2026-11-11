@@ -726,6 +726,7 @@ def compact_snapshot(snap: dict) -> dict:
     m = snap["month"]
     return _friendly_dates({
         "today": snap["as_of"],
+        "balance_known": bool(snap["balance_info"]["as_of"]),
         "what_the_user_wants_help_with": snap.get("use_case"),
         "balance": snap["balance"],
         "next_payday": snap["next_payday"],

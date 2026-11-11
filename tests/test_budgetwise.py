@@ -302,6 +302,13 @@ def test_goal_starts_with_verified_pace_and_one_next_question():
     assert goal["missing"][0] == "saved_so_far"
     assert "already saved" in goal["next_question"]
     assert "$70.00 a week" in finance.goal_coach_text(finance.snapshot(acc))
+    ctx2 = bk.BookContext(acc, "b-goal-2", date(2026, 11, 10))
+    assert "Updated goal" in _tool(bk.update_savings_goal, ctx2, {"name": "Orlando trip"})
+    renamed = finance.snapshot(acc)["goal"]
+    assert renamed["name"] == "Orlando trip"
+    assert renamed["target"] == 300.0 and renamed["deadline"] == "2026-12-10"
+    empty = store.create_account("No balance yet")
+    assert finance.compact_snapshot(finance.snapshot(empty))["balance_known"] is False
 
 
 def test_todays_spending_is_counted_once():
