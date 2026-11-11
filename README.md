@@ -6,6 +6,8 @@
 
 ![BudgetWise home screen](docs/screenshots/today.png)
 
+> Working on the code (teammates or AI coding assistants)? Start with [AGENTS.md](AGENTS.md) for the project history, architecture, money rules and open tasks, and [docs/PROJECT_GUIDE.md](docs/PROJECT_GUIDE.md) for the course requirements.
+
 ## What you can do
 - **Tell it in plain words.** For example: "spent like $40 the last couple days on gas", "I made $300 in tips this week", "rent is $725 on the 1st", "I have $410 right now" or "that was groceries actually". The Bookkeeper agent saves and organizes it, shows exactly what it saved, and **Undo** removes it with one tap.
 - **Start without a bank file.** Five quick questions (balance, how you get paid, bills, a normal week, a goal) are enough to start. Each day the home screen asks "What did you spend today?" with one-tap answers.
@@ -106,7 +108,7 @@ docs/m3/                M3 architecture and evaluation, kept for reference
 ```
 
 ## Tests
-- `python -m pytest` runs **41 checks with no model calls**: the money math, the CSV importer, the categorizer rules, the router, the guardrails, the ledger (logging, balance, undo, CSV merge), the Bookkeeper's tools, and the MCP server over the real protocol.
+- `python -m pytest` runs **42 checks with no model calls**: the money math, the CSV importer, the categorizer rules, the router, the guardrails, the ledger (logging, balance, undo, CSV merge), the Bookkeeper's tools, and the MCP server over the real protocol.
 
 ## CHANGES (since M3)
 | Change | Why | Effect |
