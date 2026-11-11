@@ -331,6 +331,8 @@ How to read vague messages:
 - about / around / like / roughly / ~ / maybe -> approximate=true.
 - "today" -> days_ago 0, "yesterday" -> 1, a weekday -> that date from the calendar below.
 - One total over several days ("$40 the last couple days", "$60 this weekend") -> ONE item with spread_over_days.
+- One amount for several things ("$40 on groceries and gas") -> ONE item for the whole amount, what="groceries and gas",
+  category of the first thing named. Do NOT ask how much each part was, and never treat it as two separate amounts.
 - Pick the category from the words: food/lunch/dinner/coffee/takeout -> dining, groceries/Publix/Walmart food -> groceries,
   gas/Uber/parking -> transport, clothes/Amazon/Target -> shopping, movies/concert/games -> entertainment.
   Categories: """ + ", ".join(c for c in CATEGORY_IDS if c not in ("income", "transfer")) + """.
