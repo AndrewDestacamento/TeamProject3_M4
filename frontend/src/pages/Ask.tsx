@@ -55,6 +55,7 @@ export default function Ask() {
   const [q, setQ] = useState("");
   const end = useRef<HTMLDivElement>(null);
   const { data: s } = useQuery({ queryKey: ["snapshot"], queryFn: api.snapshot });
+  const readyForMoneyAnswers = Boolean(s?.balance_info.as_of);
   useEffect(() => { end.current?.scrollIntoView({ behavior: "smooth", block: "end" }); }, [messages]);
 
   const submit = (text: string) => {
@@ -80,10 +81,13 @@ export default function Ask() {
         {messages.length === 0 && (
           <div className="rounded-3xl border border-dashed border-line p-6 sm:p-8">
             <p className="font-display text-[1.25rem] font-bold">
-              {s ? <>You have <span className="num text-forest">{money(s.safe_per_day)}</span> a day to spend until payday. What would you like to know?</> : "What would you like to know?"}
+              {readyForMoneyAnswers && s ? <>You have <span className="num text-forest">{money(Math.max(s.safe_per_day, 0))}</span> a day to spend until payday. What would you like to know?</> : "What would you like BudgetWise to help you do?"}
             </p>
+            {!readyForMoneyAnswers && <p className="mt-2 text-[0.9rem] text-muted">Your updates are saved, but I need a current balance before I can calculate safe spending or affordability. You can still set a goal or add any information now.</p>}
             <div className="mt-5 grid gap-2 sm:grid-cols-2">
-              {[...SUGGESTIONS, "Make me a plan for this week", "I spent about $20 on food today"].map((x) => (
+              {(readyForMoneyAnswers ? [...SUGGESTIONS, "Make me a plan for this week", "I spent about $20 on food today"] : [
+                "I want to save $500 in two months", "I have about $500 in checking", "Rent is $1,000 on the 1st", "I get paid every two weeks", "I spent about $20 on food today", "What information do you need from me?",
+              ]).map((x) => (
                 <button key={x} onClick={() => submit(x)}
                   className="rounded-2xl border border-line bg-surface px-4 py-3 text-left text-[0.95rem] hover:border-forest/40">
                   {x}

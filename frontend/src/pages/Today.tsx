@@ -52,20 +52,23 @@ function FirstWelcome({ name }: { name: string }) {
   );
 }
 
-function EmptyHome({ name, useCase }: { name: string; useCase: string | null }) {
+function EmptyHome({ s }: { s: Snapshot }) {
+  const tracked = s.spending_last_30_days.reduce((sum, row) => sum + row.amount, 0);
+  const started = tracked > 0 || s.told.length > 0;
   return (
     <div className="mx-auto max-w-4xl py-4 sm:py-8">
       <span className="chip bg-forest-soft text-forest"><Sparkles size={14} /> Your personal workspace</span>
-      <h1 className="mt-5 text-[2.35rem] font-extrabold leading-tight sm:text-[3.25rem]">Start with anything you know.</h1>
-      <p className="mt-3 max-w-2xl text-[1.05rem] text-muted">No forms are required, {name}. Tell BudgetWise one thing now and add the rest whenever you want. Estimates are okay, and you can correct or undo anything later.</p>
-      {useCase && useCase !== "Flexible money help" && <p className="mt-4 inline-flex rounded-full bg-marigold-soft px-3 py-1.5 text-[0.85rem] font-medium">Your focus: {useCase}</p>}
-      <div className="home-command mt-7"><Sparkles className="shrink-0 text-forest" size={23} /><div className="min-w-0 flex-1"><AskBox placeholder="Try: ‘I have about $500’ or ‘Yesterday I spent $40 on gas and groceries’" suggestions={[]} /></div></div>
+      <h1 className="mt-5 text-[2.35rem] font-extrabold leading-tight sm:text-[3.25rem]">{started ? "Your update is saved. Add context when you're ready." : "Start with anything you know."}</h1>
+      <p className="mt-3 max-w-2xl text-[1.05rem] text-muted">{started ? <>BudgetWise is tracking what you share{s.spending_last_30_days.length ? <>—including {money(tracked)} of recent spending</> : null}. To calculate what is safe to spend, it needs your current balance next.</> : <>No forms are required, {s.account.name}. Tell BudgetWise one thing now and add the rest whenever you want.</>}</p>
+      {s.use_case && s.use_case !== "Flexible money help" && <p className="mt-4 inline-flex rounded-full bg-marigold-soft px-3 py-1.5 text-[0.85rem] font-medium">Your focus: {s.use_case}</p>}
+      <div className="home-command mt-7"><Sparkles className="shrink-0 text-forest" size={23} /><div className="min-w-0 flex-1"><AskBox placeholder={started ? "Try: ‘I have about $500 in checking’" : "Try: ‘I want to save $500 for a trip in two months’"} suggestions={[]} /></div></div>
       <p className="mt-2 text-[0.82rem] text-muted">Share only what you're comfortable sharing. Estimates are fine, every question is optional, and you can correct or undo anything later.</p>
       <div className="mt-7 grid gap-3 sm:grid-cols-3">
-        <Link to="/setup" className="panel p-5 transition hover:border-forest/40"><ClipboardCheck className="text-forest" /><h2 className="mt-3 font-bold">Answer a few prompts</h2><p className="mt-1 text-[0.88rem] text-muted">Optional questions, and every one can be skipped.</p></Link>
+        <Link to="/ask" className="panel p-5 transition hover:border-forest/40"><CircleDollarSign className="text-forest" /><h2 className="mt-3 font-bold">Add current balance</h2><p className="mt-1 text-[0.88rem] text-muted">An estimate is enough to start useful calculations.</p></Link>
         <Link to="/accounts#upload" className="panel p-5 transition hover:border-forest/40"><Upload className="text-forest" /><h2 className="mt-3 font-bold">Import a bank CSV</h2><p className="mt-1 text-[0.88rem] text-muted">Use exact transactions when you're ready.</p></Link>
-        <Link to="/accounts#examples" className="panel p-5 transition hover:border-forest/40"><Sparkles className="text-marigold" /><h2 className="mt-3 font-bold">View an example</h2><p className="mt-1 text-[0.88rem] text-muted">See a filled-in BudgetWise without mixing its data with yours.</p></Link>
+        <Link to="/ask" className="panel p-5 transition hover:border-forest/40"><Sparkles className="text-marigold" /><h2 className="mt-3 font-bold">Set a savings goal</h2><p className="mt-1 text-[0.88rem] text-muted">Get a starter daily and weekly target immediately.</p></Link>
       </div>
+      <div className="mt-4 flex flex-wrap gap-3 text-[0.85rem]"><Link to="/setup" className="text-forest hover:underline">Answer optional prompts</Link><span className="text-line">·</span><Link to="/accounts#examples" className="text-forest hover:underline">View a separate example</Link></div>
     </div>
   );
 }
@@ -123,7 +126,7 @@ export default function Today() {
   if (error) return <p className="panel p-6 text-berry">Couldn't load your numbers: {(error as Error).message}. Is the server running?</p>;
   if (isLoading || !s) return <div className="space-y-6"><Skeleton className="h-24" /><Skeleton className="h-28" /><Skeleton className="h-44" /></div>;
   if (s.setup_needed) return <FirstWelcome name={s.account.name} />;
-  if (s.account.kind === "personal" && !s.goal && !s.balance_info.as_of && !s.told.length && s.estimates.count === 0) return <EmptyHome name={s.account.name} useCase={s.use_case} />;
+  if (s.account.kind === "personal" && !s.goal && !s.balance_info.as_of) return <EmptyHome s={s} />;
 
   const plan = plans?.current;
   if (s.goal) return <GoalHome s={s} plan={plan} />;
