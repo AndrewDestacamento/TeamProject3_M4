@@ -106,14 +106,14 @@ export const SUGGESTIONS = [
   "How much do I spend on subscriptions?",
 ];
 
-export function AskBox({ placeholder = "Ask anything about your money", suggestions = SUGGESTIONS, autoFocus = false }:
-  { placeholder?: string; suggestions?: string[]; autoFocus?: boolean }) {
+export function AskBox({ placeholder = "Ask anything about your money", suggestions = SUGGESTIONS, autoFocus = false, stay = false }:
+  { placeholder?: string; suggestions?: string[]; autoFocus?: boolean; stay?: boolean }) {
   const [q, setQ] = useState("");
   const nav = useNavigate();
   const { send, busy } = useChat();
   const go = (text: string) => {
     if (!text.trim()) return;
-    nav("/ask");
+    if (!stay) nav("/ask");
     void send(text);
     setQ("");
   };

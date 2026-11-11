@@ -3,9 +3,10 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowRight, CalendarDays, CheckCircle2, CircleDollarSign, ClipboardCheck, Info, Lightbulb, PlusCircle, Sparkles, Upload, WalletCards } from "lucide-react";
 import { api, type Plan, type Snapshot } from "@/lib/api";
-import { AskBox, BillList, GoalMeter, InsightList, Section, Skeleton } from "@/components/Bits";
+import { BillList, GoalMeter, InsightList, Section, Skeleton } from "@/components/Bits";
 import { CheckIns } from "@/components/Logging";
 import Runway from "@/components/Runway";
+import InlineChat from "@/components/InlineChat";
 import { day, longDay, money } from "@/lib/format";
 
 const ACTIONS = [
@@ -61,7 +62,7 @@ function EmptyHome({ s }: { s: Snapshot }) {
       <h1 className="mt-5 text-[2.35rem] font-extrabold leading-tight sm:text-[3.25rem]">{started ? "Your update is saved. Add context when you're ready." : "Start with anything you know."}</h1>
       <p className="mt-3 max-w-2xl text-[1.05rem] text-muted">{started ? <>BudgetWise is tracking what you share{s.spending_last_30_days.length ? <>—including {money(tracked)} of recent spending</> : null}. To calculate what is safe to spend, it needs your current balance next.</> : <>No forms are required, {s.account.name}. Tell BudgetWise one thing now and add the rest whenever you want.</>}</p>
       {s.use_case && s.use_case !== "Flexible money help" && <p className="mt-4 inline-flex rounded-full bg-marigold-soft px-3 py-1.5 text-[0.85rem] font-medium">Your focus: {s.use_case}</p>}
-      <div className="home-command mt-7"><Sparkles className="shrink-0 text-forest" size={23} /><div className="min-w-0 flex-1"><AskBox placeholder={started ? "Try: ‘I have about $500 in checking’" : "Try: ‘I want to save $500 for a trip in two months’"} suggestions={[]} /></div></div>
+      <div className="mt-7"><InlineChat placeholder={started ? "Try: ‘I have about $500 in checking’" : "Try: ‘I want to save $500 for a trip in two months’"} /></div>
       <p className="mt-2 text-[0.82rem] text-muted">Share only what you're comfortable sharing. Estimates are fine, every question is optional, and you can correct or undo anything later.</p>
       <div className="mt-7 grid gap-3 sm:grid-cols-3">
         <Link to="/ask" className="panel p-5 transition hover:border-forest/40"><CircleDollarSign className="text-forest" /><h2 className="mt-3 font-bold">Add current balance</h2><p className="mt-1 text-[0.88rem] text-muted">An estimate is enough to start useful calculations.</p></Link>
@@ -75,6 +76,7 @@ function EmptyHome({ s }: { s: Snapshot }) {
 
 function GoalHome({ s, plan }: { s: Snapshot; plan: Plan | null | undefined }) {
   const g = s.goal!;
+  const insights = s.balance_info.as_of ? s.insights : s.insights.filter((i) => !["short", "low_balance", "held_back", "goal_pace", "goal_ok"].includes(i.id));
   const incomeText = s.income.pay_every_days ? `About every ${s.income.pay_every_days} days` : s.income.sources.length ? "Income history found" : "Not added yet";
   const billText = s.upcoming_bills.length ? `${s.upcoming_bills.length} upcoming` : "Not added yet";
   const historyText = s.spending_last_30_days.length ? `${s.spending_last_30_days.length} categories tracked` : "Keep logging or import a CSV";
@@ -82,7 +84,7 @@ function GoalHome({ s, plan }: { s: Snapshot; plan: Plan | null | undefined }) {
     <div className="mx-auto max-w-[1180px] space-y-5">
       <header className="flex flex-wrap items-end justify-between gap-4 pt-1">
         <div><span className="chip bg-forest-soft text-forest"><Sparkles size={14} /> {g.plan_level === "starter" ? "Starter target" : g.plan_level === "estimated" ? "Estimated plan" : "Personalized plan"}</span><h1 className="mt-3 text-[2.15rem] font-extrabold leading-tight sm:text-[2.8rem]">{g.name}</h1><p className="mt-1 text-muted">Your active savings goal · due {day(g.deadline)}</p></div>
-        <Link to="/accounts#goals" className="btn-quiet">Edit goal</Link>
+        <Link to="/goals" className="btn-quiet">Edit goal</Link>
       </header>
 
       <section className="panel overflow-hidden p-5 sm:p-7">
@@ -104,7 +106,7 @@ function GoalHome({ s, plan }: { s: Snapshot; plan: Plan | null | undefined }) {
         <div className="flex items-start gap-3"><Lightbulb className="mt-0.5 shrink-0 text-marigold" /><div className="min-w-0 flex-1"><p className="font-display text-[1.15rem] font-bold">Your next useful step</p><p className="mt-1 text-[1rem]">{g.next_question || "I have enough information to help you build this week's plan."}</p><p className="mt-2 text-[0.84rem] text-muted">Answer below, import transactions, or skip it and add information later.</p></div></div>
       </section>
 
-      <div className="home-command"><Sparkles className="shrink-0 text-forest" size={23} /><div className="min-w-0 flex-1"><AskBox placeholder={g.next_question || "Tell BudgetWise what changed…"} suggestions={[]} /></div></div>
+      <InlineChat placeholder={g.next_question || "Tell BudgetWise what changed…"} />
       <p className="-mt-3 text-[0.8rem] text-muted">Share only what you're comfortable sharing. Estimates are fine, and every saved change can be corrected or undone.</p>
 
       <div className="grid gap-4 md:grid-cols-2">
@@ -112,7 +114,7 @@ function GoalHome({ s, plan }: { s: Snapshot; plan: Plan | null | undefined }) {
         <section className="panel p-5 sm:p-6"><h2 className="text-[1.1rem] font-bold">This week's direction</h2>{plan ? <div className="mt-3"><p className="font-semibold">{plan.headline}</p><p className="mt-2 text-[0.9rem] text-muted">{plan.today_action}</p><Link to="/plan" className="btn-primary mt-4 text-[0.85rem]">Open your plan</Link></div> : s.balance_info.as_of && (s.income.sources.length || s.income.pay_every_days) ? <div className="mt-3"><p className="text-[0.9rem] text-muted">BudgetWise can now turn your goal into a weekly spending and saving plan.</p><Link to="/plan?new=1" className="btn-primary mt-4 text-[0.85rem]"><CalendarDays size={17} /> Build my plan</Link></div> : <div className="mt-3"><p className="text-[0.9rem] text-muted">Your {money(g.needed_per_week)} weekly target is a starting pace. Add your balance and income before BudgetWise recommends spending limits.</p><Link to="/setup" className="btn-quiet mt-4 text-[0.85rem]">Personalize this target</Link></div>}</section>
       </div>
 
-      {s.insights.length > 0 && <Section title="Opportunities from your data"><InsightList items={s.insights.slice(0, 3)} /></Section>}
+      {insights.length > 0 && <Section title="Opportunities from your data"><InsightList items={insights.slice(0, 3)} /></Section>}
     </div>
   );
 }
@@ -144,7 +146,7 @@ export default function Today() {
         <h1 className="mt-2 text-[2.25rem] font-extrabold leading-[1.05] tracking-[-0.035em] sm:text-[3.15rem]">Let's make your money feel simpler<span className="text-marigold">.</span></h1>
       </header>
 
-      <div className="home-command"><Sparkles className="shrink-0 text-forest" size={23} /><div className="min-w-0 flex-1"><AskBox placeholder="Tell me anything — ‘I spent about $40 on groceries’" suggestions={[]} /></div></div>
+      <InlineChat placeholder="Tell me anything — ‘I spent about $40 on groceries’" />
 
       <div className="grid gap-3 md:grid-cols-3">
         {ACTIONS.map(({ to, icon: Icon, title, text }) => <Link key={title} to={to} className="group panel flex min-h-[108px] items-start gap-4 p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-forest/35 hover:shadow-lift"><Icon size={27} className="mt-0.5 shrink-0 text-forest" /><div className="min-w-0 flex-1"><h2 className="text-[1.05rem] font-bold">{title}</h2><p className="mt-1 text-[0.9rem] leading-snug text-muted">{text}</p></div><ArrowRight size={18} className="mt-2 text-faint transition group-hover:translate-x-0.5 group-hover:text-forest" /></Link>)}

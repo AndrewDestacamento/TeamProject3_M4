@@ -38,6 +38,7 @@ const TOOL_LABELS: Record<string, string> = {
   set_pay_schedule: "Saved your pay schedule",
   set_balance: "Updated your balance",
   set_savings_goal: "Saved your goal",
+  update_savings_goal: "Updated your goal",
   set_typical_weekly_spending: "Saved your usual weekly spending",
   fix_last_entry: "Fixed the last entry",
   undo_last: "Undid the last entry",

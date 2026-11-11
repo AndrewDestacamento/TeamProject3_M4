@@ -11,7 +11,7 @@ const NAV = [
   { to: "/", label: "Home", icon: House, end: true },
   { to: "/spending", label: "Activity", icon: ReceiptText },
   { to: "/plan", label: "Plan", icon: CalendarDays },
-  { to: "/accounts#goals", label: "Goals", icon: Target },
+  { to: "/goals", label: "Goals", icon: Target },
   { to: "/ask", label: "Ask BudgetWise", short: "Ask", icon: MessageCircle },
 ];
 
