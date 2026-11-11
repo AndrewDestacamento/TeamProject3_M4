@@ -31,6 +31,25 @@ def isolated(tmp_path, monkeypatch):
 
 
 # ---------------------------------------------------------------- the snapshot math
+def test_first_run_creates_blank_personal_workspace_and_examples_stay_opt_in():
+    account_id = store.ensure_default_personal()
+    assert not store.is_demo(account_id)
+    assert store.active_account_id() == account_id
+    assert store.load_transactions(account_id) == []
+    assert finance.snapshot(account_id)["setup_needed"] is True
+
+    store.set_active_account("demo-maya")
+    assert store.ensure_default_personal() == "demo-maya"  # migration runs only once
+
+
+def test_optional_onboarding_purpose_can_be_saved_without_money_details():
+    account_id = store.ensure_default_personal()
+    store.save_settings(account_id, {"onboarding_complete": True, "use_case": "Track everyday spending"})
+    snapshot = finance.snapshot(account_id)
+    assert snapshot["setup_needed"] is False
+    assert snapshot["use_case"] == "Track everyday spending"
+
+
 @pytest.mark.parametrize("acc", ["demo-maya", "demo-jordan", "demo-priya"])
 def test_safe_to_spend_adds_up(acc):
     s = finance.snapshot(acc)

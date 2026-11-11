@@ -380,7 +380,9 @@ def snapshot(account_id: str | None = None) -> dict:
     income_last_week = any(t["category"] == "income" and t["date"] > as_of - timedelta(days=7) for t in txns)
     snap = {
         "account": {"id": account_id, "name": settings.get("name"), "kind": "demo" if store.is_demo(account_id) else "personal"},
-        "setup_needed": not store.is_demo(account_id) and not txns and not told and store.balance_note(account_id)["as_of"] is None,
+        "setup_needed": not store.is_demo(account_id) and not settings.get("onboarding_complete")
+                        and not txns and not told and store.balance_note(account_id)["as_of"] is None,
+        "use_case": settings.get("use_case"),
         "balance_info": store.balance_note(account_id),
         "estimates": {"count": len(recent_est), "total": _r(sum(-t["amount"] for t in recent_est if t["amount"] < 0))},
         "told": told,
@@ -675,6 +677,7 @@ def compact_snapshot(snap: dict) -> dict:
     m = snap["month"]
     return _friendly_dates({
         "today": snap["as_of"],
+        "what_the_user_wants_help_with": snap.get("use_case"),
         "balance": snap["balance"],
         "next_payday": snap["next_payday"],
         "days_until_payday": snap["days_until_payday"],

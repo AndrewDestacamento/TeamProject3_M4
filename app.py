@@ -40,6 +40,7 @@ team = BudgetWiseTeam()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     t0 = time.perf_counter()
+    store.ensure_default_personal()
     kb = await asyncio.to_thread(knowledge.warm_up)  # load the embedding model before the first question
     await team.start()
     print(f"[BudgetWise] ready in {time.perf_counter() - t0:.1f}s · model={MODEL} · knowledge={kb}")
@@ -88,9 +89,12 @@ def set_active(body: ActiveIn):
 
 @app.delete("/api/accounts/{account_id}")
 def delete_account(account_id: str):
+    was_active = store.active_account_id() == account_id
     store.delete_account(account_id)
-    if store.active_account_id() == account_id:
-        store.set_active_account(store.list_accounts()[0]["id"])
+    if was_active:
+        personal = next((a for a in store.list_accounts() if a["kind"] == "personal"), None)
+        replacement = personal["id"] if personal else store.create_account("My Budget")
+        store.set_active_account(replacement)
     return {"ok": True, "active": store.active_account_id()}
 
 
@@ -138,6 +142,8 @@ class SettingsIn(BaseModel):
     next_payday: str | None = None
     goal: dict | None = None
     clear_payday: bool = False
+    use_case: str | None = Field(None, max_length=80)
+    onboarding_complete: bool | None = None
 
 
 @app.get("/api/settings")

@@ -176,6 +176,22 @@ def active_account_id() -> str:
     return f"demo-{personas[0]['id']}" if personas else "demo-maya"
 
 
+def ensure_default_personal() -> str:
+    """Create/select one real workspace once, keeping examples opt-in.
+
+    The marker makes this a one-time migration: after it runs, choosing a demo stays
+    chosen until the user explicitly returns to their own account.
+    """
+    marker = _q("SELECT value FROM state WHERE key='personal_default_v1'")
+    if marker:
+        return active_account_id()
+    personal = _q("SELECT id FROM accounts WHERE kind='personal' ORDER BY created_at LIMIT 1")
+    account_id = personal[0]["id"] if personal else create_account("My Budget")
+    set_active_account(account_id)
+    _x("INSERT INTO state(key, value) VALUES('personal_default_v1', 'done')")
+    return account_id
+
+
 def set_active_account(account_id: str) -> None:
     if not account_exists(account_id):
         raise ValueError(f"unknown account {account_id}")
