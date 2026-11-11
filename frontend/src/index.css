@@ -8,7 +8,7 @@
 /* Design tokens (RGB triplets so Tailwind can add opacity).
    Forest green = money that's safe, marigold = careful, berry = stop. */
 :root {
-  --canvas: 244 246 241;      /* cool, slightly green off-white */
+  --canvas: 249 249 246;      /* warm, calm off-white */
   --surface: 255 255 255;
   --sunken: 234 238 231;
   --line: 218 225 215;
@@ -25,6 +25,45 @@
   --shadow: 22 36 29;
   color-scheme: light;
 }
+
+.sidebar-dark {
+  --ink: 247 250 247;
+  --muted: 208 224 216;
+  --faint: 157 190 173;
+  --surface: 9 67 49;
+  --sunken: 23 92 69;
+  --line: 38 107 83;
+  --forest: 235 247 240;
+  --forest-soft: 35 116 87;
+  background: #074533;
+  color: rgb(var(--ink));
+}
+
+.home-command {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border: 1.5px solid rgb(var(--forest));
+  border-radius: 16px;
+  background: rgb(var(--surface));
+  padding: 0.35rem 0.45rem 0.35rem 1rem;
+  box-shadow: 0 8px 30px -24px rgb(var(--shadow) / 0.45);
+}
+.home-command form input { border: 0; background: transparent; box-shadow: none; padding-left: 0; }
+.home-command form input:focus { box-shadow: none; }
+.home-command form button { background: rgb(var(--marigold)); color: rgb(var(--ink)); }
+.setup-banner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1.25rem;
+  border: 1px solid rgb(var(--marigold) / 0.28);
+  border-radius: 18px;
+  background: rgb(var(--marigold-soft) / 0.45);
+  padding: 1rem 1.15rem;
+}
+@media (min-width: 1280px) { .setup-banner { grid-template-columns: minmax(0, 1.25fr) auto auto; } }
+@media (max-width: 640px) { .setup-banner { grid-template-columns: 1fr; } }
 
 .dark {
   --canvas: 13 20 17;

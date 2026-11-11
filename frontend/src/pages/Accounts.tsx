@@ -226,7 +226,7 @@ function SettingsForm() {
         <label><span className="mb-1.5 block text-[0.9rem] font-medium">Next payday</span><input className="field" type="date" value={f.payday ?? ""} onChange={set("payday")} />
           <span className="mt-1 block text-[0.8rem] text-muted">{snap ? `Leave empty to use the detected date (${day(snap.income.next_payday)})` : " "}</span></label>
       </div>
-      <div className="grid gap-4 sm:grid-cols-4">
+      <div id="goals" className="grid scroll-mt-6 gap-4 sm:grid-cols-4">
         <label className="sm:col-span-1"><span className="mb-1.5 block text-[0.9rem] font-medium">Savings goal</span><input className="field" value={f.goalName ?? ""} onChange={set("goalName")} placeholder="Emergency fund" /></label>
         <label><span className="mb-1.5 block text-[0.9rem] font-medium">Target</span><input className="field num" inputMode="decimal" value={f.goalTarget ?? ""} onChange={set("goalTarget")} /></label>
         <label><span className="mb-1.5 block text-[0.9rem] font-medium">Saved so far</span><input className="field num" inputMode="decimal" value={f.goalSaved ?? ""} onChange={set("goalSaved")} /></label>

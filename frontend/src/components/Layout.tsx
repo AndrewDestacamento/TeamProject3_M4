@@ -2,15 +2,16 @@ import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import * as Dropdown from "@radix-ui/react-dropdown-menu";
-import { CalendarDays, ChevronsUpDown, Check, Moon, Sun, Upload, MessageCircle, ReceiptText, Wallet, Settings2, PencilLine } from "lucide-react";
+import { CalendarDays, ChevronsUpDown, Check, Moon, Sun, Upload, MessageCircle, ReceiptText, House, Settings2, PencilLine, Target } from "lucide-react";
 import { api } from "@/lib/api";
 import { useChat } from "@/lib/chat";
 import { cn } from "@/lib/format";
 
 const NAV = [
-  { to: "/", label: "Today", icon: Wallet, end: true },
-  { to: "/spending", label: "Spending", icon: ReceiptText },
-  { to: "/plan", label: "Weekly plan", icon: CalendarDays },
+  { to: "/", label: "Home", icon: House, end: true },
+  { to: "/spending", label: "Activity", icon: ReceiptText },
+  { to: "/plan", label: "Plan", icon: CalendarDays },
+  { to: "/accounts#goals", label: "Goals", icon: Target },
   { to: "/ask", label: "Ask BudgetWise", short: "Ask", icon: MessageCircle },
 ];
 
@@ -119,9 +120,9 @@ export default function Layout() {
   const ThemeIcon = dark ? Sun : Moon;
 
   return (
-    <div className="min-h-screen lg:grid lg:grid-cols-[260px_1fr]">
+    <div className="min-h-screen lg:grid lg:grid-cols-[250px_1fr]">
       {/* Desktop rail */}
-      <aside className="sticky top-0 hidden h-screen flex-col gap-6 border-r border-line bg-surface/60 px-4 py-6 lg:flex">
+      <aside className="sidebar-dark sticky top-0 hidden h-screen flex-col gap-6 px-4 py-6 lg:flex">
         <Logo className="px-2" />
         <AccountSwitcher />
         <nav className="flex flex-col gap-1" aria-label="Main">
@@ -151,14 +152,14 @@ export default function Layout() {
         </div>
       </header>
 
-      <main className="min-w-0 px-4 pb-28 pt-5 sm:px-6 lg:px-10 lg:pb-12 lg:pt-8">
-        <div className="mx-auto max-w-[1180px]">
+      <main className="min-w-0 px-4 pb-28 pt-5 sm:px-6 lg:px-9 lg:pb-12 lg:pt-7">
+        <div className="mx-auto max-w-[1280px]">
           <Outlet />
         </div>
       </main>
 
       {/* Mobile tab bar */}
-      <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-4 border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden" aria-label="Main">
+      <nav className="fixed inset-x-0 bottom-0 z-30 grid border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden" style={{ gridTemplateColumns: `repeat(${NAV.length}, minmax(0, 1fr))` }} aria-label="Main">
         {NAV.map(({ to, label, short, icon: Icon, end }) => (
           <NavLink key={to} to={to} end={end}
             className={({ isActive }) => cn("flex flex-col items-center gap-0.5 py-2.5 text-[0.72rem] font-medium text-muted", isActive && "text-forest")}>
