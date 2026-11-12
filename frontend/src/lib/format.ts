@@ -8,7 +8,7 @@ const usd0 = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD"
 
 /** $1,234.56 (or $1,235 with whole=true). Negative values keep their minus sign. */
 export const money = (n: number | null | undefined, whole = false) =>
-  n === null || n === undefined || Number.isNaN(n) ? "—" : (whole ? usd0 : usd).format(n);
+  n === null || n === undefined || Number.isNaN(n) ? "—" : (whole ? usd0 : usd).format(n).replace("-$", "−$");
 
 /** Split $27.40 into "$27" and ".40" so the cents can be styled smaller. */
 export const moneyParts = (n: number) => {

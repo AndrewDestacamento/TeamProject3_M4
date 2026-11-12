@@ -133,7 +133,7 @@ export function PlanCard({ p, compact = false }: { p: Plan; compact?: boolean })
         </div>
         <div className="flex items-center gap-3 border-t border-line p-4 sm:border-r sm:border-t-0">
           <CatIcon id={p.focus_category} size={18} />
-          <div><p className="text-[0.8rem] text-muted">{focus.label} cap</p><p className="font-display text-[1.25rem] font-bold">{money(p.focus_category_cap)}</p>
+          <div><p className="text-[0.8rem] text-muted">{p.focus_label || focus.label} cap</p><p className="font-display text-[1.25rem] font-bold">{money(p.focus_category_cap)}</p>
             <p className="text-[0.75rem] text-faint">usually {money(p.focus_weekly_average)}/week</p></div>
         </div>
         <div className="flex items-center gap-3 border-t border-line p-4 sm:border-t-0">
