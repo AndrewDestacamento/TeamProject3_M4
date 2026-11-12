@@ -8,15 +8,15 @@
 /* Design tokens (RGB triplets so Tailwind can add opacity).
    Forest green = money that's safe, marigold = careful, berry = stop. */
 :root {
-  --canvas: 239 247 242;
+  --canvas: 244 248 246;
   --surface: 255 255 255;
-  --sunken: 232 241 235;
-  --line: 203 219 209;
+  --sunken: 235 242 238;
+  --line: 209 222 214;
   --ink: 22 36 29;            /* deep green-black text */
   --muted: 91 102 118;
   --faint: 140 155 146;
-  --forest: 5 91 66;
-  --forest-soft: 220 240 230;
+  --forest: 0 94 67;
+  --forest-soft: 220 239 229;
   --marigold: 214 145 22;
   --marigold-soft: 252 238 205;
   --berry: 196 60 72;
@@ -96,10 +96,18 @@
 }
 
 .brand-header .font-display { color: white; }
+.brand-header .brand-mark-primary { stroke: #bdebd5; }
+.brand-header {
+  background: linear-gradient(110deg, #064c39 0%, #075d45 58%, #064c39 100%);
+}
 
-@media (min-width: 1024px) and (min-height: 720px) {
-  .home-workspace { min-height: calc(100dvh - 132px); }
-  .home-workspace > section { min-height: calc(100dvh - 132px); }
+.home-summary {
+  box-shadow: 0 18px 45px -34px rgb(var(--shadow) / 0.48), 0 3px 10px -7px rgb(var(--shadow) / 0.2);
+}
+
+@media (min-width: 1024px) and (min-height: 640px) {
+  .home-workspace { min-height: calc(100dvh - 98px); }
+  .home-workspace > section { min-height: calc(100dvh - 98px); }
   .home-composer { margin-top: auto; }
 }
 
@@ -108,6 +116,10 @@
   body {
     @apply bg-canvas text-ink font-sans antialiased;
     overflow-x: hidden;
+    background-image:
+      radial-gradient(circle at 88% -12%, rgb(var(--forest-soft) / 0.8), transparent 34rem),
+      linear-gradient(180deg, rgb(248 250 249 / 0.65), transparent 22rem);
+    background-attachment: fixed;
     font-size: 15.5px;
     line-height: 1.55;
     font-feature-settings: "tnum" 0;
