@@ -29,7 +29,7 @@ from fastapi.responses import FileResponse, JSONResponse, StreamingResponse  # n
 from fastapi.staticfiles import StaticFiles  # noqa: E402
 from pydantic import BaseModel, Field  # noqa: E402
 
-from budgetwise import conversation, finance, importer, knowledge, store  # noqa: E402
+from budgetwise import conversation, devlog, finance, importer, knowledge, store  # noqa: E402
 import guardrails
 from budgetwise.agents import MODEL, BudgetWiseTeam, route  # noqa: E402
 from budgetwise.categories import CATEGORIES, FLEXIBLE, merchant_key, rule_category  # noqa: E402
@@ -320,6 +320,9 @@ async def chat(body: ChatIn):
     account = store.active_account_id()
 
     async def events():
+        started = time.perf_counter()
+        before = conversation.state(account)
+        readiness_before = finance.snapshot(account)["readiness"]
         yield {"type": "session", "session_id": sid}
         check = guardrails.check_user_input(body.message)
         quick = None if check.blocked else await conversation.quick_reply(body.message, account)
@@ -329,6 +332,12 @@ async def chat(body: ChatIn):
                 yield {"type": "card", "kind": "saved", "data": saved}
             yield {"type": "replace", "text": answer}
             conversation.remember(account, body.message, answer, saved)
+            after = conversation.state(account)
+            devlog.log_turn(account=account, session_id=sid, message=body.message, answer=answer,
+                            handler="quick", intent="guided", elapsed=time.perf_counter() - started,
+                            before=before, after=after, readiness_before=readiness_before,
+                            readiness_after=finance.snapshot(account)["readiness"], saved=saved,
+                            blocked=check.category if check.blocked else None)
             yield {"type": "done", "answer": answer, "intent": "guided", "elapsed": 0}
             return
         current = conversation.state(account)
@@ -348,8 +357,17 @@ async def chat(body: ChatIn):
                 if not check.blocked:
                     answer = ev.get("answer", "")
                     if ev.get("intent") == "log":
-                        store.save_settings(account, {"pending_clarification": answer if not saved and "?" in answer else None})
+                        clarification = answer if not saved and "?" in answer else None
+                        store.save_settings(account, {"pending_clarification": clarification,
+                                                      "pending_clarification_key": current["question_key"] if clarification else None})
                     conversation.remember(account, body.message, answer, saved)
+                    after = conversation.state(account)
+                    devlog.log_turn(account=account, session_id=sid, message=body.message, answer=answer,
+                                    handler="agent", intent=ev.get("intent"),
+                                    elapsed=ev.get("elapsed", time.perf_counter() - started),
+                                    before=before, after=after, readiness_before=readiness_before,
+                                    readiness_after=finance.snapshot(account)["readiness"], saved=saved,
+                                    blocked=check.category if check.blocked else None)
             yield ev
     return sse(events())
 

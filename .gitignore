@@ -224,6 +224,7 @@ tests/results/*.json
 
 # BudgetWise M4: the user's own data (uploaded bank files, settings, plans) never goes to git
 data/workspace/
+dev_conversations.jsonl
 # the built React app IS committed so the app runs without Node
 !frontend/dist/
 frontend/node_modules/

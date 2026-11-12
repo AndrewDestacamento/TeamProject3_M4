@@ -108,7 +108,18 @@ docs/m3/                M3 architecture and evaluation, kept for reference
 ```
 
 ## Tests
-- `python -m pytest` runs **42 checks with no model calls**: the money math, the CSV importer, the categorizer rules, the router, the guardrails, the ledger (logging, balance, undo, CSV merge), the Bookkeeper's tools, and the MCP server over the real protocol.
+- `python -m pytest` runs **58 checks with no model calls**: the money math, the CSV importer, the categorizer rules, the router, the guardrails, the ledger (logging, balance, undo, CSV merge), the Bookkeeper's tools, and the MCP server over the real protocol.
+
+## Reviewing development conversations
+
+Conversation logging is off by default because messages can contain financial information. To opt in while
+developing or running a consented user test, add `BUDGETWISE_DEV_LOG_CONVERSATIONS=1` to `.env` and restart
+the app. Each turn is appended to `data/workspace/dev_conversations.jsonl`, which is excluded from Git.
+The structured record includes routing, saved-data types, guided-question state, readiness changes, guardrail
+blocks and latency. It does not contain uploaded CSV rows, and obvious account/card numbers are redacted.
+
+Run `python scripts/review_conversations.py` for a quick summary of sessions, latency and questions that did
+not advance. Treat the JSONL file as private test data: do not commit, publish or share it without consent.
 
 ## CHANGES (since M3)
 | Change | Why | Effect |

@@ -49,7 +49,7 @@ uvicorn app:app --port 8000                         # open http://localhost:8000
   but the Python code stays in memory until restart (a stale server shows "—" for new fields).
 - Do **not** use `uvicorn --reload` on Windows: it switches to an event loop that can't start the
   MCP stdio subprocess.
-- Tests (no model calls, about 2 seconds): `python -m pytest`. Currently **42 pass**. Keep them passing
+- Tests (no model calls): `python -m pytest`. Currently **58 pass**. Keep them passing
   and add tests for any money-math change.
 - Frontend (Node 18+): `cd frontend && npm install && npm run dev` (port 5173, proxies /api to 8000),
   then `npm run build` before committing.

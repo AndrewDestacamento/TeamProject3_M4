@@ -1,9 +1,10 @@
 """Regression tests for the first-use journey; no model or real user data."""
 import asyncio
+import json
 from datetime import date
 
 import pytest
-from budgetwise import conversation, finance, store
+from budgetwise import conversation, devlog, finance, store
 
 
 @pytest.fixture(autouse=True)
@@ -119,3 +120,64 @@ def test_help_and_privacy_never_create_money_records():
     assert "CSV" in say(account, "What can you do?")[0]
     assert not store.load_transactions(account)
     assert finance.snapshot(account)["goal"] is None
+
+
+def test_goal_name_named_date_and_saved_confirmation_are_natural():
+    account = store.ensure_default_personal()
+    answer, saved = say(account, "I want to save $500 by december 13 for an orlando trip")
+    assert saved["goal"]["name"] == "Orlando trip"
+    assert saved["goal"]["deadline"] == "2026-12-13"
+    assert "Orlando trip" in answer
+    answer, _ = say(account, "Nothing yet")
+    assert "Set aside for this goal: **$0.00**" in answer
+    assert "Goal saved" not in answer
+
+
+def test_deferred_bill_clarification_is_not_immediately_repeated():
+    account = store.ensure_default_personal()
+    store.set_balance(account, 500)
+    store.add_schedule(account, "income", "Paycheck", "biweekly", amount=600, next_date="2026-11-13")
+    store.save_settings(account, {"conversation_started": True, "typical_weekly_spend": 100,
+                                  "pending_clarification": "What are the amount and due date?",
+                                  "pending_clarification_key": "bills"})
+    assert conversation.state(account)["question_key"] == "clarification"
+    say(account, "Skip for now")
+    state = conversation.state(account)
+    assert state["question_key"] is None
+    assert state["statuses"]["bills"] == "deferred"
+
+
+def test_natural_defer_language_marks_bill_topic_without_model_call():
+    account = store.ensure_default_personal()
+    store.set_balance(account, 500)
+    store.add_schedule(account, "income", "Paycheck", "biweekly", amount=600, next_date="2026-11-13")
+    store.save_settings(account, {"conversation_started": True, "typical_weekly_spend": 100})
+    assert conversation.state(account)["question_key"] == "bills"
+    answer, _ = say(account, "my bills vary i will let you know when it happens")
+    assert "won’t ask for bill details again" in answer
+    assert conversation.state(account)["question_key"] is None
+
+
+def test_pay_statement_with_frequency_is_left_for_bookkeeper_to_save():
+    account = store.ensure_default_personal()
+    say(account, "I want to save $200 this week")
+    say(account, "Nothing yet")
+    say(account, "I have $500")
+    assert conversation.state(account)["question_key"] == "payday"
+    message = "I get paid every two weeks but the amount changes so I will let you know"
+    assert asyncio.run(conversation.quick_reply(message, account)) is None
+
+
+def test_opt_in_development_log_is_structured_local_and_redacted(monkeypatch):
+    monkeypatch.setenv("BUDGETWISE_DEV_LOG_CONVERSATIONS", "1")
+    account = store.ensure_default_personal()
+    before = conversation.state(account)
+    readiness = finance.snapshot(account)["readiness"]
+    devlog.log_turn(account=account, session_id="test-session", message="card 4111111111111111 balance $100",
+                    answer="Saved $100", handler="quick", intent="guided", elapsed=0.012,
+                    before=before, after=before, readiness_before=readiness, readiness_after=readiness)
+    rows = [json.loads(line) for line in devlog.path().read_text(encoding="utf-8").splitlines()]
+    assert rows[0]["session_id"] == "test-session"
+    assert rows[0]["handler"] == "quick"
+    assert "4111111111111111" not in rows[0]["message"]
+    assert rows[0]["account"] != account

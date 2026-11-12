@@ -20,19 +20,43 @@ QUESTIONS = {
     "spending": ("About how much do you spend on everyday things in a typical week?", ["Skip for now"]),
 }
 
+DEFERRED = {"deferred", "unknown", "not_applicable"}
+
+
+def _statuses(settings: dict) -> dict[str, str]:
+    """Per-topic answer state. Keep the old skipped list readable for existing workspaces."""
+    statuses = dict(settings.get("conversation_status", {}))
+    for key in settings.get("conversation_skipped", []):
+        statuses.setdefault(key, "deferred")
+    return statuses
+
+
+def _defer(account: str, key: str | None, status: str = "deferred") -> None:
+    if not key:
+        return
+    settings = store.load_settings(account)
+    statuses = _statuses(settings)
+    statuses[key] = status
+    skipped = sorted(set(settings.get("conversation_skipped", [])) | {key})
+    store.save_settings(account, {"conversation_status": statuses, "conversation_skipped": skipped,
+                                  "pending_clarification": None, "pending_clarification_key": None})
+
 
 def state(account=None):
     account = account or store.active_account_id()
     settings = store.load_settings(account)
     snap = finance.snapshot(account)
-    skipped = settings.get("conversation_skipped", [])
+    statuses = _statuses(settings)
+    skipped = sorted(k for k, value in statuses.items() if value in DEFERRED)
     missing = (["saved"] if snap["goal"] and not snap["goal"]["saved_known"] else []) + snap["readiness"]["missing"]
     key = next((k for k in missing if k not in skipped), None) if snap["goal"] or settings.get("conversation_started") else None
     question, choices = QUESTIONS[key] if key else (None, [])
+    clarification_for = settings.get("pending_clarification_key") or key
     if settings.get("pending_clarification"):
         key, question, choices = "clarification", settings["pending_clarification"], ["Skip for now"]
     return {"question_key": key, "question": question, "choices": choices,
-            "history": settings.get("conversation_history", []), "skipped": skipped}
+            "history": settings.get("conversation_history", []), "skipped": skipped, "statuses": statuses,
+            "clarification_for": clarification_for}
 
 
 def remember(account, message, answer, saved=None):
@@ -52,6 +76,17 @@ def relative_date(value, today):
         return date.fromisoformat(text)
     except ValueError:
         pass
+    months = {name.lower(): i for i, name in enumerate(calendar.month_name) if name}
+    named = re.fullmatch(r"([a-z]+) (\d{1,2})(?:,? (\d{4}))?", text)
+    if named and named[1] in months:
+        year = int(named[3]) if named[3] else today.year
+        try:
+            result = date(year, months[named[1]], int(named[2]))
+        except ValueError:
+            return None
+        if not named[3] and result <= today:
+            result = result.replace(year=year + 1)
+        return result
     words = {"a": 1, "one": 1, "two": 2, "three": 3, "four": 4, "six": 6}
     m = re.fullmatch(r"(?:in )?(\d+|a|one|two|three|four|six) (days?|weeks?|months?)", text)
     if m:
@@ -69,6 +104,42 @@ def relative_date(value, today):
     return None
 
 
+def _goal_parts(text: str, today: date) -> tuple[float, str, date] | None:
+    """Parse common complete goal sentences without losing the name or date."""
+    amount = r"\$?((?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d{1,2})?)(?: dollars)?"
+    match = re.fullmatch(r"(?:i (?:want|need|would like) to |i'm trying to )save " + amount + r"(?: (.+))?", text)
+    if not match or not match[2]:
+        return None
+    rest = match[2].strip()
+    name, deadline_text = "Savings goal", ""
+    if rest.startswith("by "):
+        body = rest[3:]
+        deadline_text, separator, trailing_name = body.partition(" for ")
+        if separator:
+            name = trailing_name
+    elif rest.startswith("in ") or rest == "this week":
+        timing = re.fullmatch(r"((?:in )?(?:\d+|a|one|two|three|four|six) (?:days?|weeks?|months?)|this week)(?: for (.+))?", rest)
+        if not timing:
+            return None
+        deadline_text, name = timing[1], timing[2] or name
+    elif rest.startswith("for "):
+        body = rest[4:]
+        if " by " in body:
+            name, deadline_text = body.rsplit(" by ", 1)
+        elif " in " in body:
+            name, tail = body.rsplit(" in ", 1)
+            deadline_text = "in " + tail
+        else:
+            return None
+    else:
+        return None
+    deadline = relative_date(deadline_text, today)
+    if not deadline:
+        return None
+    name = re.sub(r"^(?:a|an|the)\s+", "", name.strip(), flags=re.I) or "Savings goal"
+    return float(match[1].replace(",", "")), name, deadline
+
+
 async def quick_reply(message, account):
     """Only match unambiguous complete inputs; everything else goes to a specialist."""
     text = message.strip().rstrip(".! ")
@@ -77,8 +148,9 @@ async def quick_reply(message, account):
     key = current["question_key"]
     settings = store.load_settings(account)
     if low in ("skip", "skip for now"):
-        store.save_settings(account, {"pending_clarification": None, "conversation_skipped": list(set(current["skipped"] + ([key] if key else [])))})
-        return "Of course. You can add that anytime, or tell me something else.", None
+        underlying = current.get("clarification_for") if key == "clarification" else key
+        _defer(account, underlying or key)
+        return "Of course. I won’t ask about that again right now. Add it whenever you’re ready.", None
     if low in ("what can you do?", "what can you do", "help", "hi", "hello", "how does this work?", "how does this work"):
         return "I can track spending, income and bills, help you work toward a savings goal, and explain patterns in a bank CSV. Tell me one thing to start. Questions are optional, and you can correct or undo saved entries.", None
     if re.fullmatch(r"(?:what about |tell me about )?privacy\??|(?:is my data private|where is my data stored|what happens to my data)\??", low):
@@ -87,9 +159,15 @@ async def quick_reply(message, account):
         return "What would you like to save for, how much, and by when? For example: ‘I want to save $500 for a trip in two months.’", None
     if low in ("track spending", "understand my spending"):
         return "Tell me a purchase, like ‘Yesterday I spent $5 on coffee’, or import a bank CSV. I’ll keep your activity organized. You don’t need a savings goal.", None
-    if low in ("my pay varies", "i don't know", "not sure") and key in ("payday", "income"):
-        store.save_settings(account, {"conversation_skipped": list(set(current["skipped"] + [key]))})
+    pay_deferred = re.search(r"\b(?:pay|paycheck|income|amount)\b.*\b(?:varies|changes|don't know|do not know|not sure|let you know)\b", low)
+    has_pay_details = re.search(r"\b(?:every (?:one|two|three|four|\d+) weeks?|weekly|biweekly|monthly|\$?\d+)\b", low)
+    if (low in ("my pay varies", "i don't know", "not sure") or (pay_deferred and not has_pay_details)) and key in ("payday", "income"):
+        _defer(account, key, "unknown")
         return "That’s okay. I’ll leave that unknown. You can add a date or an expected pay range whenever you know it.", None
+    bills_deferred = re.search(r"\bbills?\b.*\b(?:vary|varies|change|changes|don't know|do not know|not sure|let you know|when (?:it|they) happen)\b", low)
+    if bills_deferred and key == "bills":
+        _defer(account, "bills", "deferred")
+        return "That’s okay. I won’t ask for bill details again right now. Tell me whenever one comes up, and I’ll add it then.", None
     if low in ("that's all my bills", "i have no bills"):
         if low == "i have no bills" and any(s["kind"] == "bill" for s in store.schedules(account)):
             return "You have saved bills already. Review them in Settings before confirming that you have none.", None
@@ -99,14 +177,14 @@ async def quick_reply(message, account):
     batch = store.new_id("chat-")
     tool, args = None, None
     amount = r"\$?((?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d{1,2})?)(?: dollars)?"
-    goal = re.fullmatch(r"(?:i (?:want|need|would like) to |i'm trying to )save " + amount + r"(?: for (.+?))? (this week|in .+?)(?: for (.+))?", low)
+    goal = _goal_parts(low, store.today())
     balance = re.fullmatch(r"(?:i have|i've got|my balance is) (?:about )?" + amount + r"(?: (?:in my (?:bank )?account|in checking))?(?: (?:currently|right now|today))?", low)
     number = re.fullmatch(amount, low)
     expense = re.fullmatch(r"(?:(yesterday|today) )?i spent (about )?" + amount + r" on ([a-z &'-]+?)(?: (today|yesterday))?", low)
-    if goal and relative_date(goal[3], store.today()):
+    if goal:
         if settings.get("goal"):
             return "You already have an active goal. To change it, say ‘Change my goal to…’ or use Edit on your goal card.", None
-        tool, args = bookkeeper.set_savings_goal, {"target": float(goal[1].replace(",", "")), "deadline": relative_date(goal[3], store.today()).isoformat(), "name": goal[2] or goal[4] or "Savings goal"}
+        tool, args = bookkeeper.set_savings_goal, {"target": goal[0], "deadline": goal[2].isoformat(), "name": goal[1]}
     elif balance:
         tool, args = bookkeeper.set_balance, {"amount": float(balance[1].replace(",", ""))}
     elif expense:
@@ -127,7 +205,8 @@ async def quick_reply(message, account):
         result = await tool.on_invoke_tool(ctx, json.dumps(args))
         summary = store.batch_summary(account, batch)
         if summary["count"]:
-            store.save_settings(account, {"conversation_started": True, "pending_clarification": None})
+            store.save_settings(account, {"conversation_started": True, "pending_clarification": None,
+                                          "pending_clarification_key": None})
             return confirmation(summary), summary
         return str(result), None
     return None
@@ -143,7 +222,8 @@ def confirmation(summary):
         parts.append(f"Saved {s['name']}. You can review the details in Settings.")
     if summary.get("goal"):
         g = summary["goal"]
-        parts.append(f"Goal saved: **{g['name']} · ${g['target']:,.2f} by {finance._nice(g['deadline'])}**.")
+        if summary.get("goal_action") != "saved_amount":
+            parts.append(f"Goal saved: **{g['name']} · ${g['target']:,.2f} by {finance._nice(g['deadline'])}**.")
         if g.get("saved_known"):
             parts.append(f"Set aside for this goal: **${g['saved']:,.2f}**.")
     if summary.get("typical_weekly_spend") is not None:
