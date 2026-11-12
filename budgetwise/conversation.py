@@ -21,6 +21,17 @@ QUESTIONS = {
 }
 
 DEFERRED = {"deferred", "unknown", "not_applicable"}
+MAX_GUIDED_ANSWERS = 3
+TRANSITION = ("That’s enough setup for now. You can log spending, income or bills, "
+              "or ask a question anytime.")
+CLARIFICATIONS = {
+    "saved": "A rough amount already saved is enough, or say ‘skip for now.’",
+    "balance": "A rough account balance is enough, or say ‘skip for now.’",
+    "payday": "A date or day of the week is enough, or say ‘skip for now.’",
+    "income": "A rough paycheck amount or range is enough, or say ‘skip for now.’",
+    "bills": "Share one bill with its amount and due date, or say ‘skip for now.’",
+    "spending": "A rough weekly spending estimate is enough, or say ‘skip for now.’",
+}
 
 
 def _statuses(settings: dict) -> dict[str, str]:
@@ -42,6 +53,61 @@ def _defer(account: str, key: str | None, status: str = "deferred") -> None:
                                   "pending_clarification": None, "pending_clarification_key": None})
 
 
+def _topic(current: dict) -> str | None:
+    return current.get("clarification_for") if current.get("question_key") == "clarification" else current.get("question_key")
+
+
+def pause_guidance(account: str, key: str | None = None, status: str = "deferred") -> None:
+    """End the optional setup sequence without pretending missing information is known."""
+    if key:
+        _defer(account, key, status)
+    store.save_settings(account, {"conversation_guidance_paused": True,
+                                  "pending_clarification": None, "pending_clarification_key": None})
+
+
+def resume_guidance(account: str) -> None:
+    store.save_settings(account, {"conversation_guidance_paused": False,
+                                  "conversation_question_streak": 0,
+                                  "pending_clarification": None, "pending_clarification_key": None})
+
+
+def set_clarification(account: str, key: str | None) -> str | None:
+    """Allow one focused clarification per topic, never a model-selected topic switch."""
+    if not key or key not in CLARIFICATIONS:
+        return None
+    settings = store.load_settings(account)
+    counts = dict(settings.get("conversation_clarifications", {}))
+    if int(counts.get(key, 0)) >= 1:
+        pause_guidance(account, key, "unknown")
+        return None
+    counts[key] = 1
+    question = CLARIFICATIONS[key]
+    store.save_settings(account, {"conversation_clarifications": counts,
+                                  "pending_clarification": question,
+                                  "pending_clarification_key": key})
+    return question
+
+
+def complete_guided_turn(account: str, before: dict, saved: bool = False) -> str:
+    """Advance bounded setup or stop when a reply did not resolve the active topic."""
+    topic = _topic(before)
+    if not topic or store.load_settings(account).get("conversation_guidance_paused"):
+        return ""
+    after = state(account)
+    after_topic = _topic(after)
+    if after_topic == topic:
+        # A useful partial save should be kept, but the app must not demand the
+        # missing part again immediately. Other topic changes pause setup too.
+        pause_guidance(account, topic if saved else None, "deferred")
+        return TRANSITION
+    settings = store.load_settings(account)
+    streak = int(settings.get("conversation_question_streak", 0)) + 1
+    paused = streak >= MAX_GUIDED_ANSWERS
+    store.save_settings(account, {"conversation_question_streak": streak,
+                                  "conversation_guidance_paused": paused})
+    return TRANSITION if paused else ""
+
+
 def state(account=None):
     account = account or store.active_account_id()
     settings = store.load_settings(account)
@@ -49,12 +115,13 @@ def state(account=None):
     statuses = _statuses(settings)
     skipped = sorted(k for k, value in statuses.items() if value in DEFERRED)
     missing = (["saved"] if snap["goal"] and not snap["goal"]["saved_known"] else []) + snap["readiness"]["missing"]
-    key = next((k for k in missing if k not in skipped), None) if snap["goal"] or settings.get("conversation_started") else None
+    active = (snap["goal"] or settings.get("conversation_started")) and not settings.get("conversation_guidance_paused")
+    key = next((k for k in missing if k not in skipped), None) if active else None
     question, choices = QUESTIONS[key] if key else (None, [])
     if key == "income" and any(s["kind"] == "income" and s.get("every") for s in snap.get("told", [])):
         question, choices = "About how much is a typical paycheck? A range is fine.", ["Skip for now"]
     clarification_for = settings.get("pending_clarification_key") or key
-    if settings.get("pending_clarification"):
+    if settings.get("pending_clarification") and active:
         key, question, choices = "clarification", settings["pending_clarification"], ["Skip for now"]
     return {"question_key": key, "question": question, "choices": choices,
             "history": settings.get("conversation_history", []), "skipped": skipped, "statuses": statuses,
@@ -170,10 +237,13 @@ async def quick_reply(message, account):
     current = state(account)
     key = current["question_key"]
     settings = store.load_settings(account)
+    if low in ("continue setup", "resume setup", "ask me the setup questions"):
+        resume_guidance(account)
+        return "Okay. I’ll ask one useful question at a time, and you can stop whenever you want.", None
     if low in ("skip", "skip for now"):
         underlying = current.get("clarification_for") if key == "clarification" else key
-        _defer(account, underlying or key)
-        return "Of course. I won’t ask about that again right now. Add it whenever you’re ready.", None
+        pause_guidance(account, underlying or key)
+        return "Of course. Add it whenever you’re ready. " + TRANSITION, None
     if low in ("what can you do?", "what can you do", "help", "hi", "hello", "how does this work?", "how does this work"):
         return "I can track spending, income and bills, help you work toward a savings goal, and explain patterns in a bank CSV. Tell me one thing to start. Questions are optional, and you can correct or undo saved entries.", None
     if re.fullmatch(r"(?:what about |tell me about )?privacy\??|(?:is my data private|where is my data stored|what happens to my data)\??", low):
@@ -182,15 +252,27 @@ async def quick_reply(message, account):
         return "What would you like to save for, how much, and by when? For example: ‘I want to save $500 for a trip in two months.’", None
     if low in ("track spending", "understand my spending"):
         return "Tell me a purchase, like ‘Yesterday I spent $5 on coffee’, or import a bank CSV. I’ll keep your activity organized. You don’t need a savings goal.", None
+    uncertain = re.fullmatch(
+        r"(?:i(?:'m| am) )?(?:not sure|unsure)|i (?:don't|do not) know|no idea|"
+        r"not right now|maybe later|later|i(?:'ll| will) (?:add|tell you)(?: that)? later|"
+        r"i (?:would )?rather not say|i prefer not to (?:say|share)|i do not want to (?:say|share)", low)
+    if uncertain and key:
+        underlying = current.get("clarification_for") if key == "clarification" else key
+        pause_guidance(account, underlying, "unknown")
+        if underlying == "spending":
+            lead = "That’s okay. Log purchases as they happen, and I’ll learn your spending pattern over time."
+        else:
+            lead = "That’s okay. I’ll leave that unknown, and you can add it later if you want."
+        return lead + " " + TRANSITION, None
     pay_deferred = re.search(r"\b(?:pay|paycheck|income|amount)\b.*\b(?:varies|changes|don't know|do not know|not sure|let you know)\b", low)
     has_pay_details = re.search(r"\b(?:every (?:one|two|three|four|\d+) weeks?|weekly|biweekly|monthly|\$?\d+)\b", low)
     if (low in ("my pay varies", "i don't know", "not sure") or (pay_deferred and not has_pay_details)) and key in ("payday", "income"):
-        _defer(account, key, "unknown")
-        return "That’s okay. I’ll leave that unknown. You can add a date or an expected pay range whenever you know it.", None
+        pause_guidance(account, key, "unknown")
+        return "That’s okay. I’ll leave that unknown. You can add a date or an expected pay range whenever you know it. " + TRANSITION, None
     bills_deferred = re.search(r"\bbills?\b.*\b(?:vary|varies|change|changes|don't know|do not know|not sure|let you know|when (?:it|they) happen)\b", low)
     if bills_deferred and key == "bills":
-        _defer(account, "bills", "deferred")
-        return "That’s okay. I won’t ask for bill details again right now. Tell me whenever one comes up, and I’ll add it then.", None
+        pause_guidance(account, "bills", "deferred")
+        return "That’s okay. I won’t ask for bill details again right now. Tell me whenever one comes up, and I’ll add it then. " + TRANSITION, None
     if low in ("that's all my bills", "i have no bills"):
         if low == "i have no bills" and any(s["kind"] == "bill" for s in store.schedules(account)):
             return "You have saved bills already. Review them in Settings before confirming that you have none.", None

@@ -45,10 +45,10 @@ def main() -> None:
     print(f"Same guided question before/after: {len(repeated)} turn(s) (review these; some are valid clarifications)")
     print("\nRecent turns:")
     for row in rows[-args.recent:]:
-        before = row.get("question_before", {}).get("key") or "—"
-        after = row.get("question_after", {}).get("key") or "—"
+        before = row.get("question_before", {}).get("key") or "none"
+        after = row.get("question_after", {}).get("key") or "none"
         message = str(row.get("message", "")).replace("\n", " ")[:75]
-        print(f"- {row.get('elapsed_seconds', 0):>6}s | {row.get('handler', '?'):<5} | {before:>13} → {after:<13} | {message}")
+        print(f"- {row.get('elapsed_seconds', 0):>6}s | {row.get('handler', '?'):<5} | {before:>13} -> {after:<13} | {message}")
 
 
 if __name__ == "__main__":

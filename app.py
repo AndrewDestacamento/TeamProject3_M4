@@ -328,6 +328,9 @@ async def chat(body: ChatIn):
         quick = None if check.blocked else await conversation.quick_reply(body.message, account)
         if quick is not None:
             answer, saved = quick
+            transition = conversation.complete_guided_turn(account, before, bool(saved))
+            if transition and transition not in answer:
+                answer = f"{answer}\n\n{transition}"
             if saved:
                 yield {"type": "card", "kind": "saved", "data": saved}
             yield {"type": "replace", "text": answer}
@@ -362,10 +365,26 @@ async def chat(body: ChatIn):
             if ev["type"] == "done":
                 if not check.blocked:
                     answer = ev.get("answer", "")
+                    replacement_needed = False
                     if ev.get("intent") == "log":
-                        clarification = answer if not saved and "?" in answer else None
-                        store.save_settings(account, {"pending_clarification": clarification,
-                                                      "pending_clarification_key": current["question_key"] if clarification else None})
+                        topic = (current.get("clarification_for") if current.get("question_key") == "clarification"
+                                 else current.get("question_key"))
+                        asked_for_clarification = not saved and "?" in answer
+                        clarification = conversation.set_clarification(account, topic) if asked_for_clarification else None
+                        if clarification:
+                            answer = f"I don’t want to guess. {clarification}"
+                            replacement_needed = True
+                        elif asked_for_clarification and topic and store.load_settings(account).get("conversation_guidance_paused"):
+                            answer = f"No problem—I won’t keep asking for that. {conversation.TRANSITION}"
+                            replacement_needed = True
+                        else:
+                            transition = conversation.complete_guided_turn(account, current, bool(saved))
+                            if transition and transition not in answer:
+                                answer = f"{answer}\n\n{transition}"
+                                replacement_needed = True
+                    if replacement_needed:
+                        yield {"type": "replace", "text": answer}
+                        ev["answer"] = answer
                     conversation.remember(account, body.message, answer, saved, draft_plan)
                     after = conversation.state(account)
                     devlog.log_turn(account=account, session_id=sid, message=body.message, answer=answer,

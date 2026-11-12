@@ -23,6 +23,14 @@ def say(account, text):
     return answer, saved
 
 
+def guided_say(account, text):
+    """Exercise the same bounded-guidance completion step used by /api/chat."""
+    before = conversation.state(account)
+    answer, saved = say(account, text)
+    transition = conversation.complete_guided_turn(account, before, bool(saved))
+    return answer, saved, transition
+
+
 def test_goal_balance_and_zero_savings_are_distinct_and_persistent():
     account = store.ensure_default_personal()
     assert conversation.state(account)["question"] is None
@@ -66,12 +74,9 @@ def test_skipping_does_not_invent_facts_and_does_not_repeat_question():
     account = store.ensure_default_personal()
     say(account, "I want to save 500 dollars in two months for Orlando trip")
     say(account, "Skip for now")
-    assert conversation.state(account)["question_key"] == "balance"
+    assert conversation.state(account)["question_key"] is None
     assert not finance.snapshot(account)["goal"]["saved_known"]
     assert "saved" in conversation.state(account)["skipped"]
-    say(account, "Skip for now")
-    say(account, "My pay varies")
-    assert conversation.state(account)["question_key"] == "income"
     assert not finance.snapshot(account)["readiness"]["payday_known"]
 
 
@@ -221,6 +226,52 @@ def test_pay_statement_with_frequency_is_left_for_bookkeeper_to_save():
     assert conversation.state(account)["question_key"] == "payday"
     message = "I get paid every two weeks but the amount changes so I will let you know"
     assert asyncio.run(conversation.quick_reply(message, account)) is None
+
+
+def test_guided_setup_stops_after_three_purposeful_answers():
+    account = store.ensure_default_personal()
+    guided_say(account, "I want to save $500 in two months for a trip")
+    guided_say(account, "Nothing yet")
+    guided_say(account, "I have $100 in my account")
+    _, _, transition = guided_say(account, "Friday")
+    assert transition == conversation.TRANSITION
+    assert conversation.state(account)["question_key"] is None
+    settings = store.load_settings(account)
+    assert settings["conversation_question_streak"] == 3
+    assert settings["conversation_guidance_paused"]
+
+
+@pytest.mark.parametrize("reply", ["I'm not sure", "not right now", "maybe later", "I prefer not to share"])
+def test_uncertainty_gracefully_ends_setup_instead_of_switching_topics(reply):
+    account = store.ensure_default_personal()
+    say(account, "I want to save $500 in two months for a trip")
+    answer, _ = say(account, reply)
+    assert "add it later" in answer.lower() or "enough setup" in answer.lower()
+    state = conversation.state(account)
+    assert state["question_key"] is None
+    assert state["statuses"]["saved"] == "unknown"
+
+
+def test_ignored_question_is_not_repeated_and_setup_can_be_resumed():
+    account = store.ensure_default_personal()
+    say(account, "I want to save $500 in two months for a trip")
+    before = conversation.state(account)
+    answer, saved = say(account, "Hello")
+    transition = conversation.complete_guided_turn(account, before, bool(saved))
+    assert "track spending" in answer
+    assert transition == conversation.TRANSITION
+    assert conversation.state(account)["question_key"] is None
+    say(account, "continue setup")
+    assert conversation.state(account)["question_key"] == "saved"
+
+
+def test_only_one_clarification_is_allowed_for_each_topic():
+    account = store.ensure_default_personal()
+    say(account, "I want to save $500 in two months for a trip")
+    assert conversation.set_clarification(account, "saved") == conversation.CLARIFICATIONS["saved"]
+    assert conversation.state(account)["question_key"] == "clarification"
+    assert conversation.set_clarification(account, "saved") is None
+    assert conversation.state(account)["question_key"] is None
 
 
 def test_opt_in_development_log_is_structured_local_and_redacted(monkeypatch):
