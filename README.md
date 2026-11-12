@@ -11,7 +11,7 @@
 ## What you can do
 - **Tell it in plain words.** For example: "spent like $40 the last couple days on gas", "I made $300 in tips this week", "rent is $725 on the 1st", "I have $410 right now" or "that was groceries actually". The Bookkeeper agent saves and organizes it, shows exactly what it saved, and **Undo** removes it with one tap.
 - **Start without a bank file.** Five quick questions (balance, how you get paid, bills, a normal week, a goal) are enough to start. Each day the home screen asks "What did you spend today?" with one-tap answers.
-- **See what's safe to spend today.** BudgetWise subtracts bills due before payday, money held for bills right after payday, and your cushion. The "runway" shows every day until payday, with bills and paychecks marked.
+- **See what's safe to spend today.** BudgetWise checks the next 30 days of conservative pay, recurring bills, usual living costs and your cushion, then spreads today's amount across at least two weeks. The "runway" shows upcoming bills and paychecks.
 - **Ask anything.** For example: "Can I afford a $60 dinner on Friday?", "Where did my money go this month?", or "Will I run short before payday?". Each answer shows which agent did what and confirms that every number was checked.
 - **Get a weekly plan.** It sets a daily limit, a cap on one category and an amount to save. The Critic agent reviews the plan, and nothing is saved until you click **Start this plan**. Next week, BudgetWise checks how it went.
 - **Upload your bank's CSV for exact numbers.** It reads exports from Chase, Bank of America, Capital One, Wells Fargo and most others. Upload a new file each week into the same account: rows it already has are skipped, and your estimates for those dates are replaced by the exact bank rows. Bills and paydays are detected, and anything you told BudgetWise takes priority. Your data stays on your computer.
@@ -108,7 +108,7 @@ docs/m3/                M3 architecture and evaluation, kept for reference
 ```
 
 ## Tests
-- `python -m pytest` runs **58 checks with no model calls**: the money math, the CSV importer, the categorizer rules, the router, the guardrails, the ledger (logging, balance, undo, CSV merge), the Bookkeeper's tools, and the MCP server over the real protocol.
+- `python -m pytest` runs **68 checks with no model calls**: the money math, the CSV importer, the categorizer rules, the router, the guardrails, the ledger (logging, balance, undo, CSV merge), the Bookkeeper's tools, and the MCP server over the real protocol.
 
 ## Reviewing development conversations
 
@@ -132,7 +132,7 @@ not advance. Treat the JSONL file as private test data: do not commit, publish o
 | **Bookkeeper agent: tell it in plain words** ("spent about $40 the last couple days", "I get paid every 2 weeks but it changes"), with a confirmation card and Undo | Most students and gig workers won't download a bank file every day, but they will type a sentence | The app stays current between uploads, and it works with no bank file at all |
 | **SQLite ledger** replaces JSON files: every entry records where it came from (bank, chat, check-in) and whether it's an estimate | Many small saves need to be safe and undoable | Exact bank rows replace estimates for the same dates, and re-uploading a file never double-counts |
 | **Setup without a bank file** (5 questions) and a **daily check-in** ("What did you spend today?") | New users need value in minutes, and the daily number needs fresh input | Works from day one, and one tap keeps today's number accurate |
-| **Smarter safe-to-spend**: holds back money for bills due right after payday when the next paycheck won't cover them | Irregular-income users were told they had money that was really needed for rent | Jordan's demo holds $1,148 for rent that's due the day after a small payout |
+| **30-day cash-flow safe-to-spend**: protects recurring bills, usual living costs and a cushion; daily amounts use at least a 14-day window | A payday tomorrow previously made nearly the whole balance look spendable | Regression cases with payday tomorrow and in 10 days no longer create a huge daily or weekly allowance |
 | **Critic agent** (1-10 score; code approves at 7 or higher, otherwise one revision) | M3 planned this for M4 (Ch 7) | Each plan arrives with a score |
 | **Categorizer agent** with keyword rules first and a cache | Ch 4 cost ladder: the cheapest check first | Most rows are sorted by rules, and only unknown store names go to the model |
 | **Prompt-injection check** and sanitizing of uploaded text | Ch 8 threat model: bank descriptions are untrusted | Blocks "ignore your instructions" attempts |

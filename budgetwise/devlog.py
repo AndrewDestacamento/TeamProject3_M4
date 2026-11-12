@@ -45,7 +45,8 @@ def _saved_shape(saved: dict | None) -> dict:
 
 def log_turn(*, account: str, session_id: str, message: str, answer: str, handler: str,
              intent: str | None, elapsed: float, before: dict, after: dict, readiness_before: dict,
-             readiness_after: dict, saved: dict | None = None, blocked: str | None = None) -> None:
+             readiness_after: dict, saved: dict | None = None, blocked: str | None = None,
+             error_reason: str | None = None) -> None:
     """Append one self-contained JSON event. Logging must never break the app."""
     if not enabled():
         return
@@ -60,6 +61,7 @@ def log_turn(*, account: str, session_id: str, message: str, answer: str, handle
         "intent": intent,
         "elapsed_seconds": round(float(elapsed), 3),
         "blocked": blocked,
+        "error_reason": _safe_text(error_reason) if error_reason else None,
         "saved": _saved_shape(saved),
         "question_before": {"key": before.get("question_key"), "text": before.get("question")},
         "question_after": {"key": after.get("question_key"), "text": after.get("question")},

@@ -351,11 +351,14 @@ async def chat(body: ChatIn):
             mode = "log"
         saved = None
         draft_plan = None
+        error_reason = None
         async for ev in team.chat(body.message, sid, mode=mode, checkin=body.checkin, context_hint=hint):
             if ev["type"] == "card" and ev.get("kind") == "saved":
                 saved = ev["data"]
             if ev["type"] == "card" and ev.get("kind") == "plan":
                 draft_plan = ev["data"]
+            if ev["type"] in {"step", "error"} and (ev.get("status") == "error" or ev["type"] == "error"):
+                error_reason = ev.get("detail") or ev.get("message")
             if ev["type"] == "done":
                 if not check.blocked:
                     answer = ev.get("answer", "")
@@ -370,7 +373,7 @@ async def chat(body: ChatIn):
                                     elapsed=ev.get("elapsed", time.perf_counter() - started),
                                     before=before, after=after, readiness_before=readiness_before,
                                     readiness_after=finance.snapshot(account)["readiness"], saved=saved,
-                                    blocked=check.category if check.blocked else None)
+                                    blocked=check.category if check.blocked else None, error_reason=error_reason)
             yield ev
     return sse(events())
 

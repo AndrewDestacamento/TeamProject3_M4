@@ -51,6 +51,8 @@ def state(account=None):
     missing = (["saved"] if snap["goal"] and not snap["goal"]["saved_known"] else []) + snap["readiness"]["missing"]
     key = next((k for k in missing if k not in skipped), None) if snap["goal"] or settings.get("conversation_started") else None
     question, choices = QUESTIONS[key] if key else (None, [])
+    if key == "income" and any(s["kind"] == "income" and s.get("every") for s in snap.get("told", [])):
+        question, choices = "About how much is a typical paycheck? A range is fine.", ["Skip for now"]
     clarification_for = settings.get("pending_clarification_key") or key
     if settings.get("pending_clarification"):
         key, question, choices = "clarification", settings["pending_clarification"], ["Skip for now"]
@@ -142,6 +144,25 @@ def _goal_parts(text: str, today: date) -> tuple[float, str, date] | None:
     return float(match[1].replace(",", "")), name, deadline
 
 
+def _multiple_expenses(text: str) -> list[dict]:
+    """Parse common multi-purchase sentences so no item depends on model attention."""
+    low = text.strip().lower().replace("’", "'")
+    if not re.search(r"\b(spent|paid|bought)\b", low):
+        return []
+    pattern = re.compile(
+        r"(?:about\s+|around\s+)?\$?((?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d{1,2})?)"
+        r"(?:\s+dollars?)?\s+(?:on\s+|at\s+|for\s+)?(.+?)"
+        r"(?=\s+(?:and|,)\s+(?:about\s+|around\s+)?\$?\d|$)", re.I)
+    items = []
+    for match in pattern.finditer(low):
+        what = re.sub(r"\s+(?:today|yesterday)$", "", match[2]).strip(" ,.!?")
+        if what:
+            items.append({"amount": float(match[1].replace(",", "")), "what": what,
+                          "days_ago": 1 if "yesterday" in low else 0,
+                          "approximate": bool(re.search(r"\b(about|around|roughly|like)\b", low))})
+    return items if len(items) >= 2 else []
+
+
 async def quick_reply(message, account):
     """Only match unambiguous complete inputs; everything else goes to a specialist."""
     text = message.strip().rstrip(".! ")
@@ -183,12 +204,15 @@ async def quick_reply(message, account):
     balance = re.fullmatch(r"(?:i have|i've got|my balance is) (?:about )?" + amount + r"(?: (?:in my (?:bank )?account|in checking))?(?: (?:currently|right now|today))?", low)
     number = re.fullmatch(amount, low)
     expense = re.fullmatch(r"(?:(yesterday|today) )?i spent (about )?" + amount + r" on ([a-z &'-]+?)(?: (today|yesterday))?", low)
+    multiple_expenses = _multiple_expenses(low)
     if goal:
         if settings.get("goal"):
             return "You already have an active goal. To change it, say ‘Change my goal to…’ or use Edit on your goal card.", None
         tool, args = bookkeeper.set_savings_goal, {"target": goal[0], "deadline": goal[2].isoformat(), "name": goal[1]}
     elif balance:
         tool, args = bookkeeper.set_balance, {"amount": float(balance[1].replace(",", ""))}
+    elif multiple_expenses:
+        tool, args = bookkeeper.log_spending, {"items": multiple_expenses}
     elif expense:
         tool, args = bookkeeper.log_spending, {"items": [{"amount": float(expense[3].replace(",", "")), "what": expense[4], "days_ago": 1 if "yesterday" in (expense[1], expense[5]) else 0, "approximate": bool(expense[2])}]}
     elif key == "saved" and (number or low in ("none", "nothing", "nothing yet", "i haven't saved anything yet", "i havent saved anything yet")):
@@ -217,11 +241,26 @@ async def quick_reply(message, account):
 def confirmation(summary):
     parts = []
     for balance in summary.get("balances", []):
-        parts.append(f"Current balance updated to **${balance['balance']:,.2f}**. This is separate from money set aside for your goal.")
+        extra = " This is separate from money set aside for your goal." if summary.get("has_active_goal") else ""
+        parts.append(f"Current balance updated to **${balance['balance']:,.2f}**.{extra}")
     for t in summary.get("transactions", []):
         parts.append(f"Recorded {'income' if t['amount'] > 0 else 'spending'}: **${abs(t['amount']):,.2f}** · {t['description']} · {finance._nice(str(t['date']))}.")
     for s in summary.get("schedules", []):
-        parts.append(f"Saved {s['name']}. You can review the details in Settings.")
+        every = {"weekly": "every week", "biweekly": "every two weeks", "twice_monthly": "twice a month",
+                 "monthly": "monthly", "once": "once"}.get(s["every"], s["every"])
+        if s["kind"] == "income":
+            amount = (f"${s['low']:,.2f}–${s['high']:,.2f}" if s.get("low") is not None and s.get("high") is not None
+                      else f"about ${s['amount']:,.2f}" if s.get("amount") is not None else "amount not added")
+            when = f", next on {finance._nice(s['next_date'])}" if s.get("next_date") else ""
+            parts.append(f"Pay schedule saved: **{every}, {amount}{when}**.")
+        else:
+            if s.get("day_of_month"):
+                n = int(s["day_of_month"])
+                suffix = "th" if 10 <= n % 100 <= 20 else {1: "st", 2: "nd", 3: "rd"}.get(n % 10, "th")
+                when = f" on the {n}{suffix}"
+            else:
+                when = f", next on {finance._nice(s['next_date'])}" if s.get("next_date") else ""
+            parts.append(f"{s['name']} saved: **${s['amount']:,.2f} {every}{when}**.")
     if summary.get("goal"):
         g = summary["goal"]
         if summary.get("goal_action") != "saved_amount":

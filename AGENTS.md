@@ -49,7 +49,7 @@ uvicorn app:app --port 8000                         # open http://localhost:8000
   but the Python code stays in memory until restart (a stale server shows "—" for new fields).
 - Do **not** use `uvicorn --reload` on Windows: it switches to an event loop that can't start the
   MCP stdio subprocess.
-- Tests (no model calls): `python -m pytest`. Currently **58 pass**. Keep them passing
+- Tests (no model calls): `python -m pytest`. Currently **68 pass**. Keep them passing
   and add tests for any money-math change.
 - Frontend (Node 18+): `cd frontend && npm install && npm run dev` (port 5173, proxies /api to 8000),
   then `npm run build` before committing.
@@ -112,12 +112,13 @@ app's run context, never from the model.
 3. **Balance** = latest balance statement (a CSV's ending balance, "I have $410", or the settings page)
    **plus** every entry logged by the user (sources `chat`, `checkin`, `setup`) after that statement.
    CSV rows never move the balance on their own (the bank balance already includes them).
-4. **Safe to spend until payday** = balance - bills due on or before payday - money held back for bills
-   in the next pay cycle that the next (conservative) paycheck won't cover - savings cushion.
+4. **Safe to spend** uses a 30-day cash-flow check: current balance + conservative expected paychecks -
+   recurring bills - usual living costs after the current payday - savings cushion. A short pay window
+   never turns the whole balance into one day's allowance.
 5. **Daily amount** is computed from the **start of today**, because today's spending has already left the
-   balance: `safe_per_day = (safe_to_spend_total + spent_today) / days_until_payday`;
+   balance, and is spread across at least 14 days: `safe_per_day = (safe_to_spend_total + spent_today) / safe_to_spend_window_days`;
    `left_today = safe_per_day - spent_today`;
-   `per_day_after_today = (safe_to_spend_total - max(left_today, 0)) / (days_until_payday - 1)`.
+   `per_day_after_today = (safe_to_spend_total - max(left_today, 0)) / (safe_to_spend_window_days - 1)`.
    (This was a real double-counting bug, now covered by `test_todays_spending_is_counted_once`.)
 6. Paychecks are planned **conservatively** (25th percentile of recent paychecks; 85% if the user says
    "it changes"; the low end of a stated range).

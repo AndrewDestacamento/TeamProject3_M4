@@ -412,11 +412,12 @@ def batch_summary(account_id: str, batch_id: str) -> dict:
     scheds = [schedule_dict(r) for r in _q("SELECT * FROM schedules WHERE account_id=? AND batch_id=? AND deleted=0", (account_id, batch_id))]
     bals = [{"balance": dollars(r["balance_cents"]), "as_of": r["as_of"]}
             for r in _q("SELECT * FROM balances WHERE account_id=? AND batch_id=? AND deleted=0", (account_id, batch_id))]
-    goal, goal_action, typical = None, None, None
+    goal, goal_action, typical, has_active_goal = None, None, None, False
     r = _q("SELECT settings FROM accounts WHERE id=?", (account_id,))
     if r:
         st = json.loads(r[0]["settings"])
         g = st.get("goal") or {}
+        has_active_goal = bool(g)
         if g.get("batch_id") == batch_id:
             goal = {k: g.get(k) for k in ("name", "target", "saved", "saved_known", "deadline")}
             previous = st.get("previous_goal") or {}
@@ -426,8 +427,9 @@ def batch_summary(account_id: str, batch_id: str) -> dict:
             typical = st.get("typical_weekly_spend")
     return {"batch_id": batch_id, "transactions": txns, "schedules": scheds, "balances": bals, "goal": goal,
             "goal_action": goal_action,
+            "has_active_goal": has_active_goal,
             "typical_weekly_spend": typical,
-            "count": len(txns) + len(scheds) + len(bals) + (1 if goal else 0) + (1 if typical else 0)}
+            "count": len(txns) + len(scheds) + len(bals) + (1 if goal else 0) + (1 if typical is not None else 0)}
 
 
 def set_category(account_id: str, txn_id: str, category: str, apply_to_merchant: bool = True) -> int:

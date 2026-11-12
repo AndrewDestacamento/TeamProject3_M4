@@ -5,6 +5,7 @@ from datetime import date
 
 import pytest
 from budgetwise import conversation, devlog, finance, store
+from budgetwise.agents import _partial_afford_text
 
 
 @pytest.fixture(autouse=True)
@@ -89,10 +90,64 @@ def test_expense_with_relative_date_is_saved_once_and_undoable():
 
 def test_fast_path_does_not_guess_ambiguous_or_multiple_statements():
     account = store.ensure_default_personal()
-    for text in ("I have $500 but $100 is my roommate's", "I want to save $500 in two months and spent $20 today", "I spent $40 on gas and $20 on food"):
+    for text in ("I have $500 but $100 is my roommate's", "I want to save $500 in two months and spent $20 today"):
         assert asyncio.run(conversation.quick_reply(text, account)) is None
     assert not store.load_transactions(account)
     assert not finance.snapshot(account)["balance_info"]["as_of"]
+
+
+@pytest.mark.parametrize("text,names", [
+    ("I spent $25 on lunch and $40 on gas", {"Lunch", "Gas"}),
+    ("I spent 60 at Target and 15 on Chipotle", {"Target", "Chipotle"}),
+])
+def test_multiple_purchases_are_all_saved_and_confirmed(text, names):
+    account = store.ensure_default_personal()
+    answer, saved = say(account, text)
+    assert saved["count"] == 2
+    assert {t["description"] for t in saved["transactions"]} == names
+    assert all(name in answer for name in names)
+
+
+def test_partial_affordability_uses_known_balance_without_claiming_safety():
+    account = store.ensure_default_personal()
+    say(account, "I have $100")
+    result = finance.can_afford(account, 30, what="dinner")
+    assert result["verdict"] == "unknown"
+    assert result["balance"] == 100
+    assert result["remaining_balance"] == 70
+    answer = _partial_afford_text(result)
+    assert "$30.00 would leave $70.00" in answer
+    assert "payday, income, bills, spending" not in answer
+
+
+def test_confirmations_repeat_schedule_details_and_only_mention_goals_when_present():
+    from budgetwise import bookkeeper as bk
+    from agents.tool_context import ToolContext
+
+    account = store.ensure_default_personal()
+    ctx = bk.BookContext(account, "details", date(2026, 11, 11))
+    bill_call = ToolContext(context=ctx, tool_name=bk.set_bill.name, tool_call_id="bill",
+                            tool_arguments=json.dumps({"name": "Rent", "amount": 1000, "every": "monthly", "day_of_month": 1}))
+    asyncio.run(bk.set_bill.on_invoke_tool(bill_call, bill_call.tool_arguments))
+    answer = conversation.confirmation(store.batch_summary(account, "details"))
+    assert "Rent" in answer and "$1,000.00 monthly on the 1st" in answer
+
+    balance_ctx = bk.BookContext(account, "balance-only", date(2026, 11, 11))
+    balance_call = ToolContext(context=balance_ctx, tool_name=bk.set_balance.name, tool_call_id="balance",
+                               tool_arguments=json.dumps({"amount": 100}))
+    asyncio.run(bk.set_balance.on_invoke_tool(balance_call, balance_call.tool_arguments))
+    answer = conversation.confirmation(store.batch_summary(account, "balance-only"))
+    assert "set aside for your goal" not in answer
+
+
+def test_saved_pay_frequency_is_not_asked_for_again():
+    account = store.ensure_default_personal()
+    store.set_balance(account, 500)
+    store.add_schedule(account, "income", "Paycheck", "biweekly", next_date="2026-11-13", varies=True)
+    store.save_settings(account, {"conversation_started": True})
+    state = conversation.state(account)
+    assert state["question_key"] == "income"
+    assert state["question"] == "About how much is a typical paycheck? A range is fine."
 
 
 def test_readiness_requires_bill_review_not_only_one_saved_bill():
@@ -175,9 +230,11 @@ def test_opt_in_development_log_is_structured_local_and_redacted(monkeypatch):
     readiness = finance.snapshot(account)["readiness"]
     devlog.log_turn(account=account, session_id="test-session", message="card 4111111111111111 balance $100",
                     answer="Saved $100", handler="quick", intent="guided", elapsed=0.012,
-                    before=before, after=before, readiness_before=readiness, readiness_after=readiness)
+                    before=before, after=before, readiness_before=readiness, readiness_after=readiness,
+                    error_reason="Model timeout")
     rows = [json.loads(line) for line in devlog.path().read_text(encoding="utf-8").splitlines()]
     assert rows[0]["session_id"] == "test-session"
     assert rows[0]["handler"] == "quick"
     assert "4111111111111111" not in rows[0]["message"]
     assert rows[0]["account"] != account
+    assert rows[0]["error_reason"] == "Model timeout"

@@ -374,6 +374,8 @@ class BudgetWiseTeam:
                     yield ev
             text = plan["headline"] if plan else "I couldn't build a plan right now. Please try again."
             if plan:
+                if text and text[-1] not in ".!?":
+                    text += "."
                 text += " Review the plan below, then choose **Start this plan** when you’re ready."
             yield {"type": "token", "text": text}
             self.memory.add(session_id, message, text)
@@ -382,25 +384,27 @@ class BudgetWiseTeam:
 
         evidence = [json.dumps(finance.compact_snapshot(snap)), message]
         user_input = message
+        afford_result = None
         if intent == "afford":
-            if not snap["readiness"]["ready"]:
-                text = "I can’t check whether that fits yet. I still need: " + ", ".join(snap["readiness"]["missing"]) + ". Your current balance alone doesn’t tell me what is available to spend."
-                yield {"type": "replace", "text": text}
-                yield {"type": "done", "answer": text, "intent": intent, "elapsed": round(time.perf_counter() - t0, 2)}
-                return
             what = re.sub(_AMOUNT, "", message)
             what = re.sub(r"^\s*(can|could|should)\s+i\s+(afford|buy|spend|get|go|do)\s+(on\s+|to\s+)?(a|an|the|some)?\s*", "", what, flags=re.I)
             what = re.sub(r"\s+", " ", what).strip(" ?.!,") or "this purchase"
-            result = finance.can_afford(None, extra["amount"], what=what[:60])
-            evidence.append(json.dumps(result))
+            afford_result = finance.can_afford(None, extra["amount"], what=what[:60])
+            if afford_result["verdict"] == "unknown":
+                text = _partial_afford_text(afford_result)
+                yield {"type": "replace", "text": text}
+                yield {"type": "done", "answer": text, "intent": intent, "elapsed": round(time.perf_counter() - t0, 2)}
+                return
+            evidence.append(json.dumps(afford_result))
             yield {"type": "step", "agent": "Money engine", "status": "done",
-                   "detail": f"Affordability math: {result['verdict']}"}
-            yield {"type": "card", "kind": "afford", "data": result}
-            prefix = _afford_text(result) + "\n\n"
+                   "detail": f"Affordability math: {afford_result['verdict']}"}
+            yield {"type": "card", "kind": "afford", "data": afford_result}
+            prefix = _afford_text(afford_result) + "\n\n"
             yield {"type": "token", "text": prefix}
-            user_input = (f"{message}\n\nAFFORDABILITY RESULT (computed by BudgetWise):\n{json.dumps(finance._friendly_dates(result))}\n"
+            user_input = (f"{message}\n\nAFFORDABILITY RESULT (computed by BudgetWise):\n{json.dumps(finance._friendly_dates(afford_result))}\n"
                           f"The user has ALREADY been shown the verdict and the numbers, so do not restate the verdict. "
-                          f"Reply with ONE short sentence of practical advice that makes this work for them (what to trim, when to buy, or a cheaper option). "
+                          f"Reply with ONE short sentence of practical advice that agrees with the {afford_result['verdict']} verdict. "
+                          f"If it fits, do not suggest skipping, delaying or avoiding it. If it is tight or does not fit, suggest a cheaper option or timing. "
                           f"Never suggest using the savings cushion, skipping bills, or borrowing. "
                           f"Avoid repeating numbers; if you use one, copy it exactly. Do not call check_affordability.")
         else:
@@ -412,6 +416,9 @@ class BudgetWiseTeam:
                 answer = ev["text"]
             else:
                 yield ev
+        if afford_result and not _afford_tip_agrees(afford_result["verdict"], answer[len(prefix):]):
+            answer = prefix + _safe_afford_tip(afford_result["verdict"])
+            yield {"type": "replace", "text": answer}
         self.memory.add(session_id, message, answer)
         yield {"type": "done", "answer": answer, "intent": intent, "elapsed": round(time.perf_counter() - t0, 2)}
 
@@ -691,13 +698,14 @@ def _clean_draft(draft: dict | None, snap: dict) -> dict:
     default_focus = (growing or flex or ["dining"])[0]
     weekly_safe = max(snap["weekly_safe_to_spend"], 0)
     goal_need = (snap["goal"] or {}).get("needed_per_week") or 0
-    default_save = round(min(goal_need, weekly_safe * 0.25) if snap["status"] != "red" else 0, 2)
+    max_saving = snap.get("weekly_saving_capacity", 0)
+    default_save = round(min(goal_need, max_saving) if snap["status"] != "red" else 0, 2)
     d = draft if isinstance(draft, dict) else {}
     try:
         save = round(float(d.get("save_this_week", default_save)), 2)
     except (TypeError, ValueError):
         save = default_save
-    save = min(max(save, 0.0), round(weekly_safe, 2))
+    save = min(max(save, 0.0), round(max_saving, 2))
     focus = str(d.get("focus_category", default_focus)).strip().lower()
     if focus not in flex:
         focus = default_focus
@@ -743,14 +751,44 @@ def _template_text(draft: dict, numbers: dict | None, snap: dict) -> dict:
 def _afford_text(r: dict) -> str:
     """The verdict in plain words, straight from the affordability math (instant and always correct)."""
     item, amt = r["item"], f"${r['amount']:,.2f}"
-    after = (f"**${r['safe_to_spend_after']:,.2f}** left until payday, about **${r['per_day_after']:,.2f} a day** "
+    after = (f"**${r['safe_to_spend_after']:,.2f}** left in the plan, about **${r['per_day_after']:,.2f} a day** "
              f"after today (down from ${r['per_day_before']:,.2f})")
     if r["verdict"] == "yes":
         return f"✅ **Yes, {amt} for {item} fits.** You'd still have {after}."
     if r["verdict"] == "tight":
-        return f"⚠️ **You can, but it's tight.** After {amt} for {item} you'd have {after}, below your usual ${r['typical_daily_spending']:,.2f} a day."
-    return (f"⛔ **I'd hold off on {item} for now.** {amt} is more than the ${max(r['safe_to_spend_before'], 0):,.2f} that's safe to spend "
-            f"before payday ({_nice_iso(r['next_payday'])}), so it would cut into money needed for bills.")
+        today = (f" It is above today’s remaining ${max(r.get('left_today', 0), 0):,.2f}."
+                 if r.get("over_today") else "")
+        return f"⚠️ **It may fit overall, but it’s over today’s amount.** After {amt} for {item} you'd have {after}.{today}"
+    if r.get("lowest_balance_after", 0) < 0:
+        return (f"⛔ **I'd hold off on {item} for now.** {amt} would push the projected balance below zero, "
+                "so it does not fit the current plan.")
+    return (f"⛔ **I'd hold off on {item} for now.** {amt} is more than the ${max(r['safe_to_spend_before'], 0):,.2f} available pool, "
+            "so it would cut into money protected for bills and your cushion.")
+
+
+def _partial_afford_text(r: dict) -> str:
+    if not r.get("balance_known"):
+        return (f"I can help think through the **${r['amount']:,.2f}** purchase, but I don’t know your current balance yet. "
+                "Share it if you want a quick comparison, or add the purchase later without answering anything else.")
+    return (f"Based only on the balance you shared, **${r['amount']:,.2f} would leave {finance.money_text(r['remaining_balance'])}**. "
+            "I can’t call that safe yet because upcoming bills and income are still unknown, so cover anything due before you’re paid first.")
+
+
+def _safe_afford_tip(verdict: str) -> str:
+    if verdict == "yes":
+        return "Keep logging today’s spending so the amount stays current."
+    if verdict == "tight":
+        return "A cheaper version or waiting until after payday would leave more room for the rest of your plan."
+    return "Consider a lower-cost option or revisit it after your next paycheck."
+
+
+def _afford_tip_agrees(verdict: str, tip: str) -> bool:
+    text = tip.lower()
+    if verdict == "yes":
+        return not re.search(r"\b(skip|avoid|delay|wait|hold off|don['’]?t buy|cannot afford|can['’]?t afford)\b", text)
+    if verdict in {"tight", "no"}:
+        return not re.search(r"\b(definitely fits|easily fits|go for it|you can afford|safe to buy)\b", text)
+    return True
 
 
 def _nice_iso(iso: str) -> str:

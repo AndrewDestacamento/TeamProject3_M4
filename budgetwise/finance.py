@@ -28,6 +28,12 @@ def _r(x: float) -> float:
     return round(float(x) + 0.0, 2)
 
 
+def money_text(value: float) -> str:
+    """Human money format with the sign before the dollar symbol."""
+    value = _r(value)
+    return f"−${abs(value):,.2f}" if value < 0 else f"${value:,.2f}"
+
+
 def _as_of(txns: list[dict]) -> tuple[date, bool]:
     """The analysis date. Usually today; for an old uploaded statement, its last date."""
     t0 = store.today()
@@ -60,7 +66,9 @@ def _flex_daily_average(txns, as_of: date, days: int = 30, baseline_weekly: floa
     if len(flexible_dates) < 7:
         return 0.0
     days = max(min(days, history_days), 7)
-    spent = spending_by_category(txns, as_of - timedelta(days=days - 1), as_of)
+    # Use completed days for the baseline. Today's purchases reduce today's remaining amount;
+    # they should not simultaneously redefine what the user "usually" spends.
+    spent = spending_by_category(txns, as_of - timedelta(days=days), as_of - timedelta(days=1))
     return _r(sum(v for k, v in spent.items() if k in FLEXIBLE and k != "subscriptions") / days)
 
 
@@ -341,11 +349,13 @@ def _bill_occurrences(bills: list[dict], start: date, end: date) -> list[dict]:
 
 
 def _safe_cash_pool(balance: float, bills: list[dict], projected_income: list[dict],
-                    as_of: date, horizon_end: date, buffer: float) -> float:
+                    as_of: date, horizon_end: date, buffer: float,
+                    typical_daily: float = 0.0, current_payday: date | None = None) -> float:
     """Maximum cash removable today while still covering known 30-day commitments.
 
-    Bills are applied before income on the same date. That conservative ordering avoids
-    promising money that may arrive after a bill is charged.
+    Bills and normal living costs are applied before income on the same date. Spending
+    through the current payday is handled by the daily allowance, so this reserves normal
+    living costs after that payday through the rest of the horizon.
     """
     due: dict[str, float] = defaultdict(float)
     pay: dict[str, float] = defaultdict(float)
@@ -359,6 +369,8 @@ def _safe_cash_pool(balance: float, bills: list[dict], projected_income: list[di
     day = as_of
     while day <= horizon_end:
         iso = day.isoformat()
+        if current_payday and day > current_payday:
+            running -= typical_daily
         running -= due.get(iso, 0.0)
         lowest = min(lowest, running)
         running += pay.get(iso, 0.0)
@@ -390,21 +402,26 @@ def snapshot(account_id: str | None = None) -> dict:
     # nearly the whole balance look spendable when rent is due later in the month.
     horizon_days = 30
     horizon_end = as_of + timedelta(days=horizon_days)
+    spend_window_days = min(max(days_left, 14), horizon_days)
     bill_occurrences = _bill_occurrences(bills, as_of, horizon_end)
     next_cycle_bills = [b for b in bill_occurrences if payday.isoformat() < b["next_due"] <= horizon_end.isoformat()]
     next_cycle_bills_total = _r(sum(b["amount"] for b in next_cycle_bills))
     next_cycle_income = _r(sum(p["amount"] for p in income["projected_income"]
                                if payday.isoformat() <= p["date"] <= horizon_end.isoformat()))
-    safe_total = _safe_cash_pool(balance, bill_occurrences, income["projected_income"], as_of, horizon_end, buffer)
+    typical_daily = _flex_daily_average(txns, as_of, baseline_weekly=settings.get("typical_weekly_spend"))
+    cash_surplus = _safe_cash_pool(balance, bill_occurrences, income["projected_income"], as_of, horizon_end,
+                                   buffer, typical_daily=typical_daily, current_payday=payday)
+    # The cash-flow check above reserves normal living costs after payday. Add the normal
+    # amount for this planning window back before turning the pool into a daily allowance.
+    safe_total = _r(cash_surplus + typical_daily * spend_window_days)
     # Retain the existing field for explanations and API compatibility. It now represents
     # everything protected beyond the bills already due before payday.
-    reserve = _r(max(balance - bills_total - buffer - safe_total, 0.0))
+    reserve = _r(max(balance - bills_total - buffer - cash_surplus, 0.0))
     # Today's spending has already left the balance. Work out the daily amount from the START of today
     # (safe_total + what was spent today), so today's spending is only counted once.
     spent_today = _r(sum(-t["amount"] for t in txns if t["date"] == as_of and t["amount"] < 0 and t["category"] in FLEXIBLE))
     # The daily number still answers "until my next payday". Its available pool has already
     # been stress-tested across 30 days above, so a nearby payday cannot expose rent money.
-    spend_window_days = days_left
     per_day = _r((safe_total + spent_today) / spend_window_days)
     left_today = _r(per_day - spent_today)
     # The days after today share what is left once today's unspent amount is set aside
@@ -413,7 +430,7 @@ def snapshot(account_id: str | None = None) -> dict:
     # Never inflate a short pay window into a seven-day allowance. If payday is tomorrow,
     # this week's available money is the remaining pool—not seven copies of it.
     weekly_safe = _r(max(safe_total * min(spend_window_days, 7) / spend_window_days, 0.0))
-    typical_daily = _flex_daily_average(txns, as_of, baseline_weekly=settings.get("typical_weekly_spend"))
+    weekly_saving_capacity = _r(max(cash_surplus * 7 / horizon_days, 0.0))
     if safe_total <= 0:
         status = "red"
     elif per_day >= typical_daily * 0.9:
@@ -439,7 +456,7 @@ def snapshot(account_id: str | None = None) -> dict:
         if not known:
             readiness_missing.append(key)
     income_amount_known = income.get("expected_next_paycheck") is not None
-    goal = goal_progress(settings, as_of, weekly_safe, balance_known, income_amount_known, bills_known, spending_known)
+    goal = goal_progress(settings, as_of, weekly_saving_capacity, balance_known, income_amount_known, bills_known, spending_known)
     last_plan = check_last_plan(account_id, txns=txns, as_of=as_of)
 
     recent_est = [t for t in txns if t["approx"] and t["date"] > as_of - timedelta(days=30)]
@@ -473,11 +490,13 @@ def snapshot(account_id: str | None = None) -> dict:
         "next_cycle": {"ends": horizon_end.isoformat(), "bills": next_cycle_bills, "bills_total": next_cycle_bills_total,
                        "expected_income": next_cycle_income, "held_back": reserve},
         "held_back_for_next_cycle": reserve,
+        "cash_surplus_after_living_costs": cash_surplus,
         "planning_horizon_days": horizon_days,
         "planning_horizon_end": horizon_end.isoformat(),
         "safe_to_spend_window_days": spend_window_days,
         "safe_to_spend_window_end": (as_of + timedelta(days=spend_window_days - 1)).isoformat(),
         "weekly_safe_to_spend": weekly_safe,
+        "weekly_saving_capacity": weekly_saving_capacity,
         "safe_to_spend_total": safe_total,
         "safe_per_day": per_day,
         "per_day_after_today": per_day_after_today,
@@ -599,7 +618,7 @@ def insights(snap: dict, txns, as_of: date) -> list[dict]:
     elif f["lowest"] < max(50.0, snap["savings_buffer"] * 0.5):
         out.append({"id": "low_balance", "severity": "high", "icon": "alert",
                     "title": "Your balance may run low soon",
-                    "detail": f"At your usual pace it could drop to ${f['lowest']:,.2f} around {_nice(f['lowest_date'])}."})
+                    "detail": f"At your usual pace it could drop to {money_text(f['lowest'])} around {_nice(f['lowest_date'])}."})
     if snap["held_back_for_next_cycle"] > 0:
         nc = snap["next_cycle"]
         out.append({"id": "held_back", "severity": "medium", "icon": "shield",
@@ -681,9 +700,16 @@ def _nice(iso: str) -> str:
 def can_afford(account_id: str | None, amount: float, when: str | None = None, what: str = "") -> dict:
     """Would this purchase still leave enough money until payday?"""
     snap = snapshot(account_id)
-    if not snap["readiness"]["ready"]:
-        return {"verdict": "unknown", "reason": "I need more information before checking affordability.", "missing": snap["readiness"]["missing"]}
     amount = _r(abs(float(amount)))
+    balance_known = "balance" not in snap["readiness"]["missing"]
+    if not snap["readiness"]["ready"]:
+        return {
+            "item": what or "this purchase", "amount": amount, "verdict": "unknown",
+            "reason": "There is not enough information for a safe-to-spend verdict.",
+            "missing": snap["readiness"]["missing"], "balance_known": balance_known,
+            "balance": snap["balance"] if balance_known else None,
+            "remaining_balance": _r(snap["balance"] - amount) if balance_known else None,
+        }
     after_total = _r(snap["safe_to_spend_total"] - amount)
     days = snap["safe_to_spend_window_days"]
     # Compare the days AFTER today, before and after the purchase (same basis as the Today screen).
@@ -692,8 +718,12 @@ def can_afford(account_id: str | None, amount: float, when: str | None = None, w
     after_per_day = _r(after_total / rest) if days > 1 else after_total
     typical = snap["typical_daily_spending"]
     low_after = _r(snap["forecast"]["lowest"] - amount)
-    if after_total < 0:
+    if low_after < 0:
+        verdict, reason = "no", "It would make your projected balance fall below zero."
+    elif after_total < 0:
         verdict, reason = "no", "It would use money already needed for bills and your cushion."
+    elif amount > max(snap["left_today"], 0.0):
+        verdict, reason = "tight", "It is more than the amount left for today, even though it may fit in the longer plan."
     elif after_per_day < typical * 0.75:
         verdict, reason = "tight", "You could, but the rest of the days until payday would be very tight."
     else:
@@ -701,6 +731,7 @@ def can_afford(account_id: str | None, amount: float, when: str | None = None, w
     return {
         "item": what or "this purchase", "amount": amount, "verdict": verdict, "reason": reason,
         "safe_to_spend_before": snap["safe_to_spend_total"], "safe_to_spend_after": after_total,
+        "left_today": snap["left_today"], "over_today": amount > max(snap["left_today"], 0.0),
         "per_day_before": before_per_day, "per_day_after": after_per_day, "days_after_today": max(days - 1, 0),
         "days_until_payday": snap["days_until_payday"], "planning_window_days": days,
         "next_payday": snap["next_payday"],
@@ -726,18 +757,22 @@ def build_weekly_plan(account_id: str | None, save_this_week: float, focus_categ
         cut_percent = int(cut_percent)
     except (TypeError, ValueError):
         return {"error": "save_this_week must be a number and cut_percent a whole number"}
-    if not 0 <= save_this_week <= weekly_safe:
-        return {"error": f"save_this_week must be between 0 and {weekly_safe} (this week's safe-to-spend)"}
+    max_saving = snap["weekly_saving_capacity"]
+    if not 0 <= save_this_week <= max_saving:
+        return {"error": f"save_this_week must be between 0 and {max_saving} (this week's saving capacity)"}
     if not 0 <= cut_percent <= 50:
         return {"error": "cut_percent must be between 0 and 50"}
     last30 = spending_by_category(txns, as_of - timedelta(days=29), as_of)
     focus = str(focus_category).strip().lower()
     options = [c for c in last30 if c in FLEXIBLE]
-    if focus not in options:
+    if not options:
+        focus = "other"
+    elif focus not in options:
         return {"error": f"focus_category must be one of: {', '.join(options)}"}
-    allowance = _r(weekly_safe - save_this_week)
-    weekly_avg = _r(last30[focus] * 7 / 30)
-    cap = _r(weekly_avg * (100 - cut_percent) / 100)
+    typical_weekly = _r(snap["typical_daily_spending"] * 7)
+    allowance = _r(min(weekly_safe - save_this_week, typical_weekly or weekly_safe))
+    weekly_avg = typical_weekly if not options else _r(last30[focus] * 7 / 30)
+    cap = _r(min(weekly_avg * (100 - cut_percent) / 100, allowance))
     prev = next((p for p in reversed(store.load_plans(account_id)) if p.get("focus_category") == focus), None)
     capped_by_last = False
     if prev and prev.get("focus_category_cap") is not None and cap > prev["focus_category_cap"]:
@@ -747,7 +782,7 @@ def build_weekly_plan(account_id: str | None, save_this_week: float, focus_categ
         "week_start": as_of.isoformat(), "week_end": (as_of + timedelta(days=6)).isoformat(),
         "weekly_safe_to_spend": weekly_safe, "save_this_week": save_this_week,
         "weekly_spending_allowance": allowance, "daily_limit": _r(allowance / 7),
-        "focus_category": focus, "focus_label": label(focus), "focus_weekly_average": weekly_avg,
+        "focus_category": focus, "focus_label": "Everyday spending" if not options else label(focus), "focus_weekly_average": weekly_avg,
         "cut_percent": cut_percent, "focus_category_cap": cap, "freed_up_by_cut": _r(weekly_avg - cap),
         "cap_kept_at_last_week": capped_by_last,
         "goal_name": g["name"] if g else None, "goal_needed_per_week": g["needed_per_week"] if g else None,

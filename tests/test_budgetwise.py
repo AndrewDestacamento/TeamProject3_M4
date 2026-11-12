@@ -54,14 +54,16 @@ def test_optional_onboarding_purpose_can_be_saved_without_money_details():
 def test_safe_to_spend_adds_up(acc):
     s = finance.snapshot(acc)
     expected = round(s["balance"] - s["bills_before_payday_total"] - s["held_back_for_next_cycle"] - s["savings_buffer"], 2)
-    assert s["safe_to_spend_total"] == expected
-    assert s["safe_per_day"] == round((expected + s["spent_today"]) / s["days_until_payday"], 2)  # from the start of today
+    assert s["cash_surplus_after_living_costs"] == expected
+    assert s["safe_per_day"] == round((s["safe_to_spend_total"] + s["spent_today"]) / s["safe_to_spend_window_days"], 2)
     assert s["left_today"] == round(s["safe_per_day"] - s["spent_today"], 2)
 
 
 def test_maya_is_amber_and_payday_is_detected():
     s = finance.snapshot("demo-maya")
-    assert s["status"] in ("green", "amber")
+    assert s["status"] == "red"  # her 30-day forecast is negative at her usual spending pace
+    assert s["goal"]["fits"] is False
+    assert any("−$" in i["detail"] for i in s["insights"] if i["id"] == "low_balance")
     assert s["next_payday"] == "2026-11-16"          # biweekly paycheck, last one 8 days ago
     assert s["income"]["pay_every_days"] == 14
     assert [b["name"] for b in s["bills_before_payday"]] == ["Mint Mobile", "Spotify"]
@@ -98,17 +100,18 @@ def test_month_comparison_is_like_for_like():
 
 # ---------------------------------------------------------------- actions
 def test_can_afford_verdicts():
-    s = finance.snapshot("demo-maya")
-    assert finance.can_afford("demo-maya", 5)["verdict"] == "yes"
-    assert finance.can_afford("demo-maya", 60)["verdict"] == "tight"
-    big = finance.can_afford("demo-maya", s["safe_to_spend_total"] + 1)
+    s = finance.snapshot("demo-priya")
+    assert finance.can_afford("demo-priya", 5)["verdict"] == "yes"
+    assert finance.can_afford("demo-maya", 30)["verdict"] == "no"
+    big = finance.can_afford("demo-priya", s["safe_to_spend_total"] + 1)
     assert big["verdict"] == "no" and big["safe_to_spend_after"] < 0
 
 
 def test_weekly_plan_math():
-    p = finance.build_weekly_plan("demo-maya", 20, "dining", 20)
+    p = finance.build_weekly_plan("demo-maya", 0, "dining", 20)
     assert p["daily_limit"] == round(p["weekly_spending_allowance"] / 7, 2)
-    assert p["weekly_spending_allowance"] == round(p["weekly_safe_to_spend"] - 20, 2)
+    assert p["weekly_spending_allowance"] <= p["weekly_safe_to_spend"]
+    assert p["weekly_spending_allowance"] <= round(finance.snapshot("demo-maya")["typical_daily_spending"] * 7, 2)
     assert p["focus_category_cap"] <= 55.0            # never looser than last week's $55 cap (M3 bug fix)
 
 
@@ -119,7 +122,7 @@ def test_weekly_plan_rejects_bad_input():
 
 
 def test_saved_plan_is_checked_next_week(monkeypatch):
-    plan = finance.build_weekly_plan("demo-maya", 20, "dining", 20)
+    plan = finance.build_weekly_plan("demo-maya", 0, "dining", 20)
     store.save_plan("demo-maya", plan)
     assert finance.check_last_plan("demo-maya") is None  # your own plan replaces the sample one, and isn't finished yet
     monkeypatch.setenv("BUDGETWISE_TODAY", "2026-11-18")
@@ -202,7 +205,7 @@ def test_mcp_server_lists_and_runs_tools(tmp_path):
     names, afford = asyncio.run(run())
     assert names == {"search_transactions", "get_spending_by_category", "check_affordability",
                      "get_income_details", "build_weekly_plan", "search_budget_knowledge"}
-    assert afford["verdict"] == "tight"
+    assert afford["verdict"] == "no"
 
 
 # ---------------------------------------------------------------- the ledger: logging, balance, undo, CSV merge (M4)
@@ -239,7 +242,7 @@ def test_nearby_payday_does_not_turn_rent_money_into_a_huge_weekly_plan():
     store.add_transactions(acc, [{"date": TODAY, "description": "Lunch", "amount": -10, "category": "dining"}],
                            source="chat", batch_id="spend")
     store.set_balance(acc, 1160, batch_id="balance")
-    store.add_schedule(acc, "income", "Paycheck", "biweekly", amount=200, next_date="2026-11-11")
+    store.add_schedule(acc, "income", "Paycheck", "biweekly", amount=700, next_date="2026-11-11")
     store.add_schedule(acc, "bill", "Rent", "monthly", amount=1000, day_of_month=1, category="housing")
     store.save_settings(acc, {"bills_reviewed": True, "typical_weekly_spend": 280})
 
@@ -248,10 +251,38 @@ def test_nearby_payday_does_not_turn_rent_money_into_a_huge_weekly_plan():
 
     assert snap["days_until_payday"] == 1
     assert snap["planning_horizon_days"] == 30
-    assert snap["safe_to_spend_total"] == 460  # Rent is protected; two conservative paychecks are counted.
-    assert snap["weekly_safe_to_spend"] == snap["safe_to_spend_total"]
-    assert plan["daily_limit"] == round(snap["weekly_safe_to_spend"] / 7, 2)
-    assert plan["daily_limit"] < 70
+    assert snap["safe_per_day"] < 100
+    assert snap["left_today"] < 100
+    concert = finance.can_afford(acc, 300)
+    assert concert["verdict"] == "tight"
+    assert concert["over_today"] is True
+    assert plan["daily_limit"] <= 40  # the $280 typical week caps the general plan
+
+
+def test_ten_day_pay_window_also_reserves_living_costs_and_uses_fourteen_day_view():
+    acc = store.create_account("Ten days to payday")
+    store.set_balance(acc, 1160, batch_id="balance")
+    store.add_schedule(acc, "income", "Paycheck", "biweekly", amount=700, next_date="2026-11-20")
+    store.add_schedule(acc, "bill", "Rent", "monthly", amount=1000, day_of_month=1, category="housing")
+    store.save_settings(acc, {"bills_reviewed": True, "typical_weekly_spend": 280})
+    snap = finance.snapshot(acc)
+    assert snap["days_until_payday"] == 10
+    assert snap["safe_to_spend_window_days"] == 14
+    assert snap["safe_per_day"] < 100
+
+
+def test_weekly_plan_works_from_typical_week_without_any_purchase_history():
+    acc = store.create_account("Estimate only")
+    store.set_balance(acc, 1160, batch_id="balance")
+    store.add_schedule(acc, "income", "Paycheck", "biweekly", amount=700, next_date="2026-11-11")
+    store.add_schedule(acc, "bill", "Rent", "monthly", amount=1000, day_of_month=1, category="housing")
+    store.save_settings(acc, {"bills_reviewed": True, "typical_weekly_spend": 280})
+    plan = finance.build_weekly_plan(acc, 0, "dining", 20)
+    assert "error" not in plan
+    assert plan["focus_category"] == "other"
+    assert plan["focus_label"] == "Everyday spending"
+    assert plan["weekly_spending_allowance"] <= 280
+    assert plan["daily_limit"] <= 40
 
 
 def test_one_purchase_is_not_enough_to_claim_usual_spending_is_known():
@@ -367,11 +398,11 @@ def test_todays_spending_is_counted_once():
     # START of today (safe + spent today). Fixed after testing with Maya's demo.
     s = finance.snapshot("demo-maya")
     start_of_day = s["safe_to_spend_total"] + s["spent_today"]
-    assert s["safe_per_day"] == round(start_of_day / s["days_until_payday"], 2)
+    assert s["safe_per_day"] == round(start_of_day / s["safe_to_spend_window_days"], 2)
     assert s["left_today"] == round(s["safe_per_day"] - s["spent_today"], 2)
     store.add_transactions("demo-maya", [{"date": TODAY, "description": "Groceries and gas", "amount": -40,
                                           "category": "groceries"}], source="chat", batch_id="b40")
     after = finance.snapshot("demo-maya")
     assert after["safe_per_day"] == s["safe_per_day"]                 # logging $40 doesn't shrink today's budget
     assert after["left_today"] == round(s["left_today"] - 40, 2)      # it only comes out of what's left today
-    assert after["per_day_after_today"] == round(after["safe_to_spend_total"] / (s["days_until_payday"] - 1), 2)
+    assert after["per_day_after_today"] == round(after["safe_to_spend_total"] / (s["safe_to_spend_window_days"] - 1), 2)
