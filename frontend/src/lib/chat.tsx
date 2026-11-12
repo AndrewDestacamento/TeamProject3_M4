@@ -98,8 +98,10 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       hydrated.current = accounts.active;
       session.current = null;
       setMessages(conversation.history.map((m, i) => ({ ...m, id: `saved-${i}`, timeline: [] })));
+      const savedPlan = [...conversation.history].reverse().find((m) => m.plan)?.plan;
+      if (savedPlan) qc.setQueryData(["draftPlan"], savedPlan);
     }
-  }, [accounts?.active, conversation]);
+  }, [accounts?.active, conversation, qc]);
 
   const send = useCallback(async (text: string) => {
     const q = text.trim();

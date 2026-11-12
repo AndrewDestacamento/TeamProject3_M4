@@ -24,7 +24,7 @@ export interface LastPlan {
   stuck_to_focus_cap: boolean; summary: string;
 }
 export interface Snapshot {
-  readiness: { ready: boolean; missing: string[]; payday_known: boolean };
+  readiness: { ready: boolean; missing: string[]; payday_known: boolean; spending_history_days: number };
   account: { id: string; name: string; kind: "demo" | "personal" };
   setup_needed: boolean;
   use_case: string | null;
@@ -37,6 +37,8 @@ export interface Snapshot {
   bills_before_payday: Bill[]; bills_before_payday_total: number;
   next_cycle: { ends: string; bills: Bill[]; bills_total: number; expected_income: number; held_back: number };
   held_back_for_next_cycle: number;
+  planning_horizon_days: number; planning_horizon_end: string; safe_to_spend_window_days: number;
+  safe_to_spend_window_end: string; weekly_safe_to_spend: number;
   safe_to_spend_total: number; safe_per_day: number; per_day_after_today: number; spent_today: number; left_today: number;
   typical_daily_spending: number; status: Status;
   income: {
@@ -111,7 +113,7 @@ const json = (method: string, data?: unknown): RequestInit => ({
 });
 
 export const api = {
-  conversation: () => request<{ question_key: string | null; question: string | null; choices: string[]; skipped: string[]; history: { role: "user" | "assistant"; text: string; saved?: Saved }[] }>("/api/conversation"),
+  conversation: () => request<{ question_key: string | null; question: string | null; choices: string[]; skipped: string[]; history: { role: "user" | "assistant"; text: string; saved?: Saved; plan?: Plan }[] }>("/api/conversation"),
   snapshot: () => request<Snapshot>("/api/snapshot"),
   accounts: () => request<{ active: string; accounts: Account[]; personas: Persona[] }>("/api/accounts"),
   setActive: (id: string) => request("/api/accounts/active", json("POST", { id })),

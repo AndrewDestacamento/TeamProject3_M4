@@ -6,6 +6,7 @@ import { ArrowUpRight, CalendarDays, Check, Coins, Loader2, Send, Target, Upload
 import { api, type Snapshot } from "@/lib/api";
 import { useChat } from "@/lib/chat";
 import { Skeleton } from "@/components/Bits";
+import { PlanCard } from "@/components/Cards";
 import { day, money } from "@/lib/format";
 
 function Avatar() {
@@ -14,6 +15,15 @@ function Avatar() {
 
 export function GoalSummary({ s, embedded = false }: { s: Snapshot; embedded?: boolean }) {
   const g = s.goal;
+  const paceLabel = !g ? "" : g.remaining === 0 ? "Goal reached" : g.days_remaining === 0 ? "Deadline reached"
+    : g.plan_level === "personalized" ? (g.fits ? "Personalized pace" : "Needs adjustment")
+    : g.plan_level === "estimated" ? "Estimated pace" : "Starter pace";
+  const paceHelp = !g ? "" : g.remaining === 0 ? "You’ve recorded enough savings for this goal. Edit it when you’re ready for your next one."
+    : g.days_remaining === 0 ? "There’s still money to set aside. Edit your deadline to choose a new pace."
+    : !g.saved_known ? "This starts from zero until you add what you’ve already saved."
+    : g.plan_level === "personalized" ? (g.fits ? "This pace fits the income, bills and spending you’ve shared." : "The current pace does not comfortably fit yet. Ask BudgetWise to adjust the plan.")
+    : g.plan_level === "estimated" ? "This uses the information you’ve shared so far. More spending history will sharpen it."
+    : "This is a starting target. Add income and bills whenever you want to check what fits.";
   const qc = useQueryClient();
   const [editing, setEditing] = useState(false);
   const [error, setError] = useState("");
@@ -41,7 +51,7 @@ export function GoalSummary({ s, embedded = false }: { s: Snapshot; embedded?: b
       {!g.saved_known && <p className="mt-1 text-sm text-muted">Amount already set aside hasn’t been added.</p>}
       <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-line/65" role="progressbar" aria-label="Goal savings" aria-valuemin={0} aria-valuemax={100} aria-valuenow={g.saved_known ? Math.min(g.percent, 100) : 0}><div className="h-full rounded-full bg-forest" style={{ width: `${g.saved_known ? Math.min(g.percent, 100) : 0}%` }} /></div>
       <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm"><span className="flex items-center gap-2"><CalendarDays size={17} className="text-forest" /> By {day(g.deadline)}</span><span className="flex items-center gap-2 font-semibold"><Coins size={17} className="text-forest" />{money(g.pace_amount)} / {g.pace_unit}</span></div>
-      <div className="mt-3 flex items-start gap-3 border-t border-line pt-3"><span className="shrink-0 rounded-full bg-marigold-soft px-2.5 py-1 text-xs font-semibold">{g.remaining === 0 ? "Goal reached" : g.days_remaining === 0 ? "Deadline reached" : "Starter pace"}</span><p className="text-xs leading-relaxed text-muted">{g.remaining === 0 ? "You’ve recorded enough savings for this goal. Edit it when you’re ready for your next one." : g.days_remaining === 0 ? "There’s still money to set aside. Edit your deadline to choose a new pace." : !g.saved_known ? "Assumes you’re starting from zero. Add what you’ve saved to update it." : "This is a saving target. Add income and bills to check what fits."}</p></div>
+      <div className="mt-3 flex items-start gap-3 border-t border-line pt-3"><span className="shrink-0 rounded-full bg-marigold-soft px-2.5 py-1 text-xs font-semibold">{paceLabel}</span><p className="text-xs leading-relaxed text-muted">{paceHelp}</p></div>
     </div> : <div className="py-5"><Target size={28} className="text-forest" /><h3 className="mt-3 text-lg font-semibold">What are you working toward?</h3><p className="mt-2 text-sm leading-relaxed text-muted">A trip, a little breathing room, or something else. Tell me an amount and a date, and your goal will appear here.</p><p className="mt-3 text-sm text-muted">Goals are optional. You can just track your spending.</p></div>}
   </section>;
 }
@@ -67,11 +77,12 @@ export default function Today() {
   const g = s.goal;
   return <div className="home-workspace grid items-start gap-5 lg:grid-cols-[minmax(0,1.58fr)_minmax(340px,0.92fr)] xl:gap-7">
     <section className="flex min-w-0 flex-col">
-      <header className="pb-3"><p className="mb-1 text-xs font-bold uppercase tracking-[0.14em] text-forest/75">Your money, one step at a time</p><h1 className="text-[2rem] font-extrabold leading-tight tracking-tight sm:text-[2.35rem]">Hi, I’m BudgetWise.</h1><p className="mt-0.5 text-base sm:text-lg">Let’s reach your goals, one step at a time.</p></header>
+      <header className="pb-3"><p className="mb-1 text-xs font-bold uppercase tracking-[0.14em] text-forest/75">Your money, one step at a time</p><h1 className="text-[2rem] font-extrabold leading-tight tracking-tight sm:text-[2.35rem]">Hi, I’m BudgetWise.</h1><p className="mt-0.5 text-base sm:text-lg">Let’s make your next money decision simpler.</p></header>
       <div className="min-h-[205px] space-y-3 py-2" aria-live="polite" aria-label="Conversation">
         {messages.length === 0 && <div className="flex items-start gap-3"><Avatar /><div className="max-w-xl"><p className="leading-relaxed">I can help you save for something, understand your spending, and keep track of bills and income. Start with anything you know.</p><p className="mt-2 text-sm text-muted">You can skip questions and add or correct details anytime.</p><div className="mt-4 flex flex-wrap gap-2"><button className="btn-primary text-sm" onClick={() => submit("Save for something")}>Save for something</button><button className="btn-quiet text-sm" onClick={() => submit("Track spending")}>Track spending</button><button className="btn-ghost text-sm" onClick={() => submit("What can you do?")}>What can you do?</button></div></div></div>}
         {messages.map((m) => m.role === "user" ? <div key={m.id} className="flex justify-end pl-10"><p className="max-w-[85%] rounded-2xl rounded-br-md bg-forest px-4 py-3 text-white">{m.text}</p></div> : <div key={m.id} className="flex items-start gap-3"><Avatar /><div className="min-w-0 max-w-[90%]">
-          <div className="prose-chat rounded-2xl bg-sunken px-4 py-3 text-[0.96rem] leading-relaxed">{m.pending && !m.text ? <span className="flex items-center gap-2 text-muted"><Loader2 size={16} className="animate-spin" /> Working on your message…</span> : <ReactMarkdown>{m.text}</ReactMarkdown>}</div>
+          <div className="prose-chat rounded-2xl bg-sunken px-4 py-3 text-[0.96rem] leading-relaxed">{m.pending && !m.text ? <span className="flex items-center gap-2 text-muted"><Loader2 size={16} className="animate-spin" />{m.timeline.at(-1)?.label || "Reading what you shared…"}</span> : <ReactMarkdown>{m.text}</ReactMarkdown>}</div>
+          {m.plan && <div className="mt-3"><PlanCard p={m.plan} compact /><Link to="/plan" className="btn-primary mt-3 w-full justify-center">Review and start this plan</Link></div>}
           {m.saved?.count ? <div className="mt-2 flex items-center gap-3 text-xs text-muted"><span className="flex items-center gap-1"><Check size={13} />{undone.includes(m.saved.batch_id) ? "Undone" : "Saved to your workspace"}</span><button disabled={busy || undone.includes(m.saved.batch_id)} onClick={() => void undo(m.saved!.batch_id)} className="font-semibold text-forest underline disabled:opacity-40">Undo</button><button disabled={busy} onClick={() => { setDraft("Actually, "); input.current?.focus(); }} className="font-semibold text-forest underline">Correct</button></div> : null}
           {m.error && <p role="alert" className="mt-2 text-sm text-berry">{m.error} Check your saved information before trying again.</p>}
         </div></div>)}
@@ -84,6 +95,7 @@ export default function Today() {
     </section>
     <aside className="home-summary min-w-0 overflow-hidden rounded-3xl border border-line bg-surface lg:sticky lg:top-[84px]">
       <GoalSummary s={s} embedded />
+      <section className="border-t border-line px-4 py-3 sm:px-5"><div className="flex items-center justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-wide text-muted">Safe to spend today</p>{s.readiness.ready ? <p className="num mt-0.5 text-2xl font-bold text-forest">{money(Math.max(s.left_today, 0))}</p> : <p className="mt-1 font-semibold">Not calculated yet</p>}</div><Wallet className="text-forest" size={24} /></div><p className="mt-1 text-xs leading-relaxed text-muted">{s.readiness.ready ? `Known bills and your cushion are protected across the next ${s.planning_horizon_days} days.` : `Add ${s.readiness.missing.join(", ")} when you’re ready for a reliable amount.`}</p></section>
       <section className="border-t border-line px-4 pb-4 pt-3 sm:px-5"><div className="flex items-center justify-between gap-3"><h2 className="text-[1.1rem] font-bold">What you’ve shared</h2><span className="text-xs text-muted">Add or correct anytime</span></div><dl className="mt-2 grid grid-cols-2 gap-2 text-sm">
         <Fact icon={Target} name="Goal" value={g ? `${money(g.target, true)} by ${day(g.deadline)}` : "Not added"} />
         <Fact icon={Coins} name="Set aside" value={g?.saved_known ? money(g.saved) : "Not added"} />
