@@ -1,5 +1,5 @@
-import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { stream, api, type AgentEvent, type Afford, type Plan, type Saved } from "./api";
 
 // One line in the "how I got this" timeline under each answer.
@@ -80,7 +80,7 @@ interface ChatState {
   messages: ChatMessage[];
   busy: boolean;
   send: (text: string) => Promise<void>;
-  reset: () => void;
+  reset: (clearHistory?: boolean) => void;
 }
 const Ctx = createContext<ChatState | null>(null);
 
@@ -89,10 +89,22 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [busy, setBusy] = useState(false);
   const session = useRef<string | null>(null);
   const qc = useQueryClient();
+  const { data: accounts } = useQuery({ queryKey: ["accounts"], queryFn: api.accounts });
+  const { data: conversation } = useQuery({ queryKey: ["conversation", accounts?.active], queryFn: api.conversation, enabled: !!accounts?.active });
+  const hydrated = useRef<string | null>(null);
+  const sending = useRef(false);
+  useEffect(() => {
+    if (accounts?.active && conversation && hydrated.current !== accounts.active) {
+      hydrated.current = accounts.active;
+      session.current = null;
+      setMessages(conversation.history.map((m, i) => ({ ...m, id: `saved-${i}`, timeline: [] })));
+    }
+  }, [accounts?.active, conversation]);
 
   const send = useCallback(async (text: string) => {
     const q = text.trim();
-    if (!q || busy) return;
+    if (!q || sending.current) return;
+    sending.current = true;
     setBusy(true);
     const id = crypto.randomUUID?.() ?? String(Date.now());
     const user: ChatMessage = { id: `${id}-u`, role: "user", text: q, timeline: [] };
@@ -111,7 +123,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           update((m) => ({ ...m, plan: ev.data }));
           qc.setQueryData(["draftPlan"], ev.data);  // the Plan page picks it up so it can be started
         }
-        else if (ev.type === "done") update((m) => ({ ...m, pending: false, elapsed: ev.elapsed, intent: ev.intent }));
+        else if (ev.type === "done") update((m) => ({ ...m, text: ev.answer ?? m.text, pending: false, elapsed: ev.elapsed, intent: ev.intent }));
         else if (ev.type === "error") update((m) => ({ ...m, pending: false, error: ev.message }));
         else update((m) => ({ ...m, timeline: applyEvent(m.timeline, ev) }));
       });
@@ -120,15 +132,17 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     } finally {
       update((m) => ({ ...m, pending: false }));
       setBusy(false);
+      sending.current = false;
       qc.invalidateQueries();  // anything logged in chat changes the numbers everywhere
     }
   }, [busy, qc]);
 
-  const reset = useCallback(() => {
-    if (session.current) api.resetChat(session.current).catch(() => undefined);
+  const reset = useCallback((clearHistory = true) => {
+    if (clearHistory) api.resetChat(session.current || "current").then(() => qc.invalidateQueries({ queryKey: ["conversation"] })).catch(() => undefined);
+    if (!clearHistory) hydrated.current = null;
     session.current = null;
     setMessages([]);
-  }, []);
+  }, [qc]);
 
   return <Ctx.Provider value={{ messages, busy, send, reset }}>{children}</Ctx.Provider>;
 }

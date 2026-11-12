@@ -12,6 +12,7 @@ export interface Insight {
 export interface ForecastPoint { date: string; balance: number; bill: number | null; income: number | null; payday: boolean }
 export interface MonthRow { category: string; label: string; this_month: number; last_month_same_days: number; change: number; change_pct: number | null }
 export interface Goal {
+  saved_known: boolean; days_remaining: number; pace_amount: number; pace_unit: "day" | "week";
   name: string; target: number; saved: number; remaining: number; percent: number; deadline: string;
   weeks_left: number; needed_per_day: number; needed_per_week: number; needed_per_month: number;
   weekly_safe_to_spend: number; fits: boolean | null; plan_level: "starter" | "estimated" | "personalized";
@@ -23,6 +24,7 @@ export interface LastPlan {
   stuck_to_focus_cap: boolean; summary: string;
 }
 export interface Snapshot {
+  readiness: { ready: boolean; missing: string[]; payday_known: boolean };
   account: { id: string; name: string; kind: "demo" | "personal" };
   setup_needed: boolean;
   use_case: string | null;
@@ -109,6 +111,7 @@ const json = (method: string, data?: unknown): RequestInit => ({
 });
 
 export const api = {
+  conversation: () => request<{ question_key: string | null; question: string | null; choices: string[]; skipped: string[]; history: { role: "user" | "assistant"; text: string; saved?: Saved }[] }>("/api/conversation"),
   snapshot: () => request<Snapshot>("/api/snapshot"),
   accounts: () => request<{ active: string; accounts: Account[]; personas: Persona[] }>("/api/accounts"),
   setActive: (id: string) => request("/api/accounts/active", json("POST", { id })),

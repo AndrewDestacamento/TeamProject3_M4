@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import * as Dropdown from "@radix-ui/react-dropdown-menu";
-import { CalendarDays, ChevronsUpDown, Check, Moon, Sun, Upload, MessageCircle, ReceiptText, House, Settings2, PencilLine, Target, Sparkles } from "lucide-react";
+import { CalendarDays, ChevronsUpDown, Check, Moon, Sun, Upload, ReceiptText, House, Settings2, PencilLine, Sparkles } from "lucide-react";
 import { api } from "@/lib/api";
 import { useChat } from "@/lib/chat";
 import { cn } from "@/lib/format";
@@ -11,17 +11,14 @@ const NAV = [
   { to: "/", label: "Home", icon: House, end: true },
   { to: "/spending", label: "Activity", icon: ReceiptText },
   { to: "/plan", label: "Plan", icon: CalendarDays },
-  { to: "/goals", label: "Goals", icon: Target },
-  { to: "/ask", label: "Ask BudgetWise", short: "Ask", icon: MessageCircle },
 ];
 
 export function Logo({ className = "" }: { className?: string }) {
   return (
     <span className={cn("flex items-center gap-2.5", className)}>
       <svg width="30" height="30" viewBox="0 0 64 64" aria-hidden>
-        <rect width="64" height="64" rx="18" fill="rgb(var(--forest))" />
-        <path d="M14 40c8 0 10-16 18-16s10 10 18 10" stroke="rgb(var(--marigold))" strokeWidth="6" fill="none" strokeLinecap="round" />
-        <circle cx="50" cy="34" r="5" fill="#fff" />
+        <path d="M5 48 24 28 36 38 57 12" stroke="rgb(var(--forest))" strokeWidth="5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M43 12h14v14" stroke="rgb(var(--marigold))" strokeWidth="5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
       <span className="font-display text-[1.28rem] font-bold tracking-tight">BudgetWise</span>
     </span>
@@ -40,26 +37,28 @@ function useTheme() {
 function AccountSwitcher({ compact = false }: { compact?: boolean }) {
   const qc = useQueryClient();
   const nav = useNavigate();
-  const { reset } = useChat();
+  const { reset, busy } = useChat();
   const { data } = useQuery({ queryKey: ["accounts"], queryFn: api.accounts });
   const active = data?.accounts.find((a) => a.id === data.active);
 
   const pick = async (id: string) => {
     await api.setActive(id);
-    reset();
+    reset(false);
     await qc.invalidateQueries();
   };
 
   return (
     <Dropdown.Root>
       <Dropdown.Trigger
+        disabled={busy}
         className={cn(
           "flex w-full items-center gap-3 rounded-xl border border-line bg-surface px-3 py-2.5 text-left hover:bg-sunken",
           compact && "w-auto border-0 bg-transparent px-2 py-1.5",
         )}
         aria-label="Switch account"
       >
-        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-sunken text-lg">{active?.emoji ?? "👤"}</span>
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-forest-soft text-sm font-bold text-forest">{active?.kind === "demo" ? active.emoji : "MW"}</span>
+        {compact && <span className="hidden text-sm font-medium xl:inline">{active?.kind === "demo" ? active.name : "My workspace"}</span>}
         {!compact && (
           <span className="min-w-0 flex-1">
             <span className="block truncate font-semibold leading-tight">{active?.name ?? "Loading"}</span>
@@ -112,7 +111,7 @@ function DemoNotice() {
   if (active?.kind !== "demo" || !mine) return null;
   const leave = async () => {
     await api.setActive(mine.id);
-    reset();
+    reset(false);
     await qc.invalidateQueries();
   };
   return <div className="sticky top-3 z-20 mb-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-marigold/35 bg-marigold-soft px-4 py-3 text-[0.9rem] shadow-sm"><span><strong>Example mode:</strong> You're viewing {active.name}'s sample data. Nothing here is part of your personal workspace.</span><button onClick={() => void leave()} className="btn bg-surface px-3 py-1.5 text-[0.85rem] text-ink hover:bg-sunken">Return to my workspace</button></div>;
@@ -125,9 +124,9 @@ export default function Layout() {
   const ThemeIcon = dark ? Sun : Moon;
 
   return (
-    <div className="min-h-screen lg:grid lg:grid-cols-[250px_1fr]">
+    <div className="min-h-screen">
       {/* Desktop rail */}
-      <aside className="sidebar-dark sticky top-0 hidden h-screen flex-col gap-6 px-4 py-6 lg:flex">
+      <aside className="hidden">
         <Logo className="px-2" />
         <AccountSwitcher />
         <nav className="flex flex-col gap-1" aria-label="Main">
@@ -149,27 +148,32 @@ export default function Layout() {
       </aside>
 
       {/* Mobile top bar */}
-      <header className="sticky top-0 z-30 flex items-center justify-between border-b border-line bg-canvas/90 px-4 py-2.5 backdrop-blur lg:hidden">
+      <header className="sticky top-0 z-30 flex min-h-[76px] items-center justify-between gap-5 border-b border-line bg-canvas/95 px-4 py-3 backdrop-blur sm:px-8">
         <Logo />
+        <nav className="hidden items-center gap-3 md:flex" aria-label="Main">
+          {NAV.map(({ to, label, end }) => <NavLink key={to} to={to} end={end} className={({ isActive }) => cn("rounded-xl px-5 py-2 font-semibold", isActive ? "bg-forest-soft text-forest" : "text-muted hover:bg-sunken")}>{label}</NavLink>)}
+        </nav>
         <div className="flex items-center gap-1">
+          <Link to="/accounts#examples" className="btn-ghost hidden text-sm lg:inline-flex">View example</Link>
+          <Link to="/accounts" className="btn-ghost hidden text-sm sm:inline-flex"><Settings2 size={17} /> Settings</Link>
           <AccountSwitcher compact />
           <button onClick={toggle} className="btn-ghost p-2" aria-label={dark ? "Light mode" : "Dark mode"}><ThemeIcon size={18} /></button>
         </div>
       </header>
 
-      <main className="min-w-0 px-4 pb-28 pt-5 sm:px-6 lg:px-9 lg:pb-12 lg:pt-7">
-        <div className="mx-auto max-w-[1280px]">
+      <main className="min-w-0 px-4 pb-24 pt-6 sm:px-8 md:pb-8 lg:pt-9">
+        <div className="mx-auto max-w-[1480px]">
           <DemoNotice />
           <Outlet />
         </div>
       </main>
 
       {/* Mobile tab bar */}
-      <nav className="fixed inset-x-0 bottom-0 z-30 grid border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden" style={{ gridTemplateColumns: `repeat(${NAV.length}, minmax(0, 1fr))` }} aria-label="Main">
-        {NAV.map(({ to, label, short, icon: Icon, end }) => (
+      <nav className="fixed inset-x-0 bottom-0 z-30 grid border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden" style={{ gridTemplateColumns: `repeat(${NAV.length}, minmax(0, 1fr))` }} aria-label="Main">
+        {NAV.map(({ to, label, icon: Icon, end }) => (
           <NavLink key={to} to={to} end={end}
             className={({ isActive }) => cn("flex flex-col items-center gap-0.5 py-2.5 text-[0.72rem] font-medium text-muted", isActive && "text-forest")}>
-            <Icon size={21} strokeWidth={2.1} /> {short ?? label.split(" ")[0]}
+            <Icon size={21} strokeWidth={2.1} /> {label}
           </NavLink>
         ))}
       </nav>

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
+import { GoalSummary } from "@/pages/Today";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CalendarDays, Check, RefreshCw, X } from "lucide-react";
@@ -49,6 +50,7 @@ export default function PlanPage() {
   const qc = useQueryClient();
   const [params, setParams] = useSearchParams();
   const { data, isLoading } = useQuery({ queryKey: ["plans"], queryFn: api.plans });
+  const { data: snapshot } = useQuery({ queryKey: ["snapshot"], queryFn: api.snapshot });
   const { data: draft } = useQuery<Plan | null>({ queryKey: ["draftPlan"], queryFn: () => null, staleTime: Infinity, initialData: null });
   const [timeline, setTimeline] = useState<TimelineItem[]>([]);
   const [working, setWorking] = useState(false);
@@ -75,12 +77,12 @@ export default function PlanPage() {
   };
 
   useEffect(() => {
-    if (params.get("new") && !started.current) {
+    if (params.get("new") && !started.current && snapshot?.readiness.ready) {
       started.current = true;
       setParams({}, { replace: true });
       void generate();
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [snapshot]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const accept = async () => {
     if (!draft) return;
@@ -98,14 +100,16 @@ export default function PlanPage() {
     <div className="space-y-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-[2rem] font-bold leading-tight">Weekly plan</h1>
-          <p className="mt-1 max-w-xl text-muted">The Planner picks a daily limit, one category to cap and a savings amount. The Critic reviews it before you see it, and nothing is saved until you start it.</p>
+          <h1 className="text-[2rem] font-bold leading-tight">Your plan</h1>
+          <p className="mt-1 max-w-xl text-muted">Your goal, upcoming commitments, and practical next steps. Review a suggested weekly plan before choosing to start it.</p>
         </div>
-        <button onClick={generate} disabled={working} className={current || draft ? "btn-quiet" : "btn-primary"}>
+        <button onClick={generate} disabled={working || !snapshot?.readiness.ready} className={current || draft ? "btn-quiet" : "btn-primary"}>
           {working ? <RefreshCw size={18} className="animate-spin" /> : <CalendarDays size={18} />}
           {working ? "Building your plan" : current || draft ? "Make a new plan" : "Make this week's plan"}
         </button>
       </div>
+      {snapshot && <div className="grid gap-6 md:grid-cols-2"><GoalSummary s={snapshot} /><section className="panel p-6"><h2 className="text-xl font-bold">Coming up</h2>{snapshot.upcoming_bills.length ? <ul className="mt-3 divide-y divide-line">{snapshot.upcoming_bills.slice(0, 6).map((b) => <li key={`${b.name}-${b.next_due}`} className="flex justify-between gap-4 py-3 text-sm"><span>{b.name}<span className="block text-muted">{day(b.next_due)}</span></span><strong>{money(b.amount)}</strong></li>)}</ul> : <p className="mt-3 text-sm text-muted">No upcoming bills recorded. Tell BudgetWise about bills on Home.</p>}<Link to="/" className="btn-quiet mt-4 text-sm">Continue with BudgetWise</Link></section></div>}
+      {snapshot && !snapshot.readiness.ready && <div className="rounded-2xl bg-forest-soft p-5"><h2 className="font-bold">Let’s fill in a little more first</h2><p className="mt-2 text-sm text-muted">Before suggesting spending limits, BudgetWise needs: {snapshot.readiness.missing.join(", ")}. Your goal’s starter pace is available now, and you can add these details whenever you’re ready.</p></div>}
 
       <div className="grid gap-6 lg:grid-cols-[1.45fr_1fr]">
         <div className="space-y-6">
@@ -135,10 +139,10 @@ export default function PlanPage() {
               )}
             </div>
           )}
-          {!draft && !working && !current && !isLoading && (
+          {!draft && !working && !current && !isLoading && snapshot?.readiness.ready && (
             <div className="rounded-3xl border border-dashed border-line p-8">
               <p className="font-display text-[1.3rem] font-bold">No plan for this week yet</p>
-              <p className="mt-2 max-w-lg text-muted">It takes about ten seconds. You'll see each agent working on the right, and you can try again if the plan doesn't feel right.</p>
+              <p className="mt-2 max-w-lg text-muted">Get a suggested spending and saving plan based on what you’ve shared. This can take a little longer than a quick update.</p>
               <button onClick={generate} className="btn-primary mt-5"><CalendarDays size={18} /> Make this week's plan</button>
             </div>
           )}

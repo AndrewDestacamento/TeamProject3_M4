@@ -73,7 +73,7 @@ export default function Ask() {
           <p className="mt-2 text-[0.82rem] text-faint">Share only what you're comfortable sharing. Every question is optional, estimates are fine, and saved information can be corrected or undone.</p>
         </div>
         {messages.length > 0 && (
-          <button onClick={reset} className="btn-ghost shrink-0 text-[0.9rem]"><RotateCcw size={16} /> New chat</button>
+          <button onClick={() => reset()} className="btn-ghost shrink-0 text-[0.9rem]"><RotateCcw size={16} /> New chat</button>
         )}
       </div>
 
