@@ -14,6 +14,7 @@ command runs everything.
 
 import asyncio
 import json
+import re
 import time
 import uuid
 from contextlib import asynccontextmanager
@@ -28,8 +29,9 @@ from fastapi.responses import FileResponse, JSONResponse, StreamingResponse  # n
 from fastapi.staticfiles import StaticFiles  # noqa: E402
 from pydantic import BaseModel, Field  # noqa: E402
 
-from budgetwise import finance, importer, knowledge, store  # noqa: E402
-from budgetwise.agents import MODEL, BudgetWiseTeam  # noqa: E402
+from budgetwise import conversation, finance, importer, knowledge, store  # noqa: E402
+import guardrails
+from budgetwise.agents import MODEL, BudgetWiseTeam, route  # noqa: E402
 from budgetwise.categories import CATEGORIES, FLEXIBLE, merchant_key, rule_category  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent
@@ -144,6 +146,7 @@ class SettingsIn(BaseModel):
     clear_payday: bool = False
     use_case: str | None = Field(None, max_length=80)
     onboarding_complete: bool | None = None
+    bills_reviewed: bool | None = None
 
 
 @app.get("/api/settings")
@@ -209,8 +212,14 @@ def patch_settings(body: SettingsIn):
     if "goal" in changes:
         g = changes["goal"]
         try:
-            changes["goal"] = {"name": str(g["name"])[:40], "target": float(g["target"]),
-                               "saved": float(g.get("saved", 0)), "deadline": str(g["deadline"])}
+            target, saved = float(g["target"]), float(g.get("saved", 0))
+            from datetime import date
+            import math
+            deadline = date.fromisoformat(str(g["deadline"]))
+            if not math.isfinite(target) or not math.isfinite(saved) or target <= 0 or saved < 0 or deadline <= store.today():
+                raise ValueError("Invalid goal")
+            changes["goal"] = {"name": str(g["name"])[:40], "target": target,
+                               "saved": saved, "saved_known": g.get("saved_known", "saved" in g), "deadline": deadline.isoformat()}
         except (KeyError, TypeError, ValueError):
             raise HTTPException(400, "goal needs name, target, saved and deadline")
     return store.save_settings(store.active_account_id(), changes)
@@ -292,6 +301,11 @@ async def import_commit(body: CommitIn):
 
 
 # ------------------------------------------------------------------ chat and plans (streamed)
+@app.get("/api/conversation")
+def get_conversation():
+    return conversation.state()
+
+
 class ChatIn(BaseModel):
     message: str = Field(..., min_length=1, max_length=1000)
     session_id: str | None = None
@@ -303,10 +317,39 @@ class ChatIn(BaseModel):
 @app.post("/api/chat")
 async def chat(body: ChatIn):
     sid = body.session_id or uuid.uuid4().hex
+    account = store.active_account_id()
 
     async def events():
         yield {"type": "session", "session_id": sid}
-        async for ev in team.chat(body.message, sid, mode=body.mode, checkin=body.checkin, context_hint=body.context_hint):
+        check = guardrails.check_user_input(body.message)
+        quick = None if check.blocked else await conversation.quick_reply(body.message, account)
+        if quick is not None:
+            answer, saved = quick
+            if saved:
+                yield {"type": "card", "kind": "saved", "data": saved}
+            yield {"type": "replace", "text": answer}
+            conversation.remember(account, body.message, answer, saved)
+            yield {"type": "done", "answer": answer, "intent": "guided", "elapsed": 0}
+            return
+        current = conversation.state(account)
+        history = current["history"]
+        team.memory.items[sid] = [{"role": m["role"], "content": m["text"]} for m in history[-12:]]
+        hint = body.context_hint
+        mode = body.mode
+        # Short answers inherit the actual pending question; a new question can change topic.
+        if current["question"] and route(body.message)[0] == "analyst" and not re.match(r"\s*(what|why|how|can|could|should|will|do|does|is|are)\b", body.message, re.I) and not body.message.rstrip().endswith("?"):
+            hint = current["question"]
+            mode = "log"
+        saved = None
+        async for ev in team.chat(body.message, sid, mode=mode, checkin=body.checkin, context_hint=hint):
+            if ev["type"] == "card" and ev.get("kind") == "saved":
+                saved = ev["data"]
+            if ev["type"] == "done":
+                if not check.blocked:
+                    answer = ev.get("answer", "")
+                    if ev.get("intent") == "log":
+                        store.save_settings(account, {"pending_clarification": answer if not saved and "?" in answer else None})
+                    conversation.remember(account, body.message, answer, saved)
             yield ev
     return sse(events())
 
@@ -314,6 +357,7 @@ async def chat(body: ChatIn):
 @app.post("/api/chat/reset")
 def chat_reset(session_id: str):
     team.memory.reset(session_id)
+    store.save_settings(store.active_account_id(), {"conversation_history": []})
     return {"ok": True}
 
 

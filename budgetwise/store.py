@@ -418,7 +418,7 @@ def batch_summary(account_id: str, batch_id: str) -> dict:
         st = json.loads(r[0]["settings"])
         g = st.get("goal") or {}
         if g.get("batch_id") == batch_id:
-            goal = {k: g.get(k) for k in ("name", "target", "saved", "deadline")}
+            goal = {k: g.get(k) for k in ("name", "target", "saved", "saved_known", "deadline")}
         if st.get("typical_batch") == batch_id:
             typical = st.get("typical_weekly_spend")
     return {"batch_id": batch_id, "transactions": txns, "schedules": scheds, "balances": bals, "goal": goal,

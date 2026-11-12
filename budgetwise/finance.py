@@ -371,10 +371,17 @@ def snapshot(account_id: str | None = None) -> dict:
     month = month_comparison(txns, as_of)
     last30 = spending_by_category(txns, as_of - timedelta(days=29), as_of)
     subs = [b for b in bills if b["category"] == "subscriptions"]
-    balance_known = store.balance_note(account_id)["as_of"] is not None
+    balance_known = store.balance_note(account_id)["as_of"] is not None or store.is_demo(account_id)
     income_known = any(s["kind"] == "income" for s in told) or any(t["category"] == "income" for t in txns)
-    bills_known = any(s["kind"] == "bill" for s in told) or bool(bills)
+    bills_known = bool(settings.get("bills_reviewed")) or store.is_demo(account_id)
     spending_known = any(t["amount"] < 0 and t["category"] in FLEXIBLE for t in txns)
+    payday_known = bool(settings.get("next_payday")) or bool(pay_sched and (pay_sched.get("next_date") or pay_sched.get("day_of_month"))) or income["next_payday_confidence"] in ("high", "medium")
+    readiness_missing = []
+    for key, known in (("balance", balance_known), ("payday", payday_known),
+                       ("income", income.get("expected_next_paycheck") is not None), ("bills", bills_known),
+                       ("spending", spending_known or settings.get("typical_weekly_spend") is not None)):
+        if not known:
+            readiness_missing.append(key)
     goal = goal_progress(settings, as_of, safe_total, days_left, balance_known, income_known, bills_known, spending_known)
     last_plan = check_last_plan(account_id, txns=txns, as_of=as_of)
 
@@ -383,6 +390,7 @@ def snapshot(account_id: str | None = None) -> dict:
     weekly_earner = (income["pay_every_days"] or 99) <= 8 or not income["sources"]
     income_last_week = any(t["category"] == "income" and t["date"] > as_of - timedelta(days=7) for t in txns)
     snap = {
+        "readiness": {"ready": not readiness_missing, "missing": readiness_missing, "payday_known": payday_known},
         "account": {"id": account_id, "name": settings.get("name"), "kind": "demo" if store.is_demo(account_id) else "personal"},
         "setup_needed": not store.is_demo(account_id) and not settings.get("onboarding_complete")
                         and not txns and not told and store.balance_note(account_id)["as_of"] is None,
@@ -423,7 +431,17 @@ def snapshot(account_id: str | None = None) -> dict:
         "goal": goal,
         "last_plan": last_plan,
     }
+    if goal:
+        goal["saved_known"] = bool(settings["goal"].get("saved_known", store.is_demo(account_id)))
+        goal["days_remaining"] = max((date.fromisoformat(goal["deadline"]) - as_of).days, 0)
+        goal["pace_amount"] = goal["needed_per_day"] if goal["days_remaining"] < 7 else goal["needed_per_week"]
+        goal["pace_unit"] = "day" if goal["days_remaining"] < 7 else "week"
+        goal["fits"] = goal["fits"] if not readiness_missing else None
+        goal["plan_level"] = "starter" if readiness_missing else "estimated"
+        goal["weekly_safe_to_spend"] = goal["weekly_safe_to_spend"] if not readiness_missing else None
     snap["insights"] = insights(snap, txns, as_of)
+    if readiness_missing:
+        snap["insights"] = [i for i in snap["insights"] if i["id"] not in {"short", "low_balance", "held_back", "goal_pace", "goal_ok"}]
     return snap
 
 
@@ -601,6 +619,8 @@ def _nice(iso: str) -> str:
 def can_afford(account_id: str | None, amount: float, when: str | None = None, what: str = "") -> dict:
     """Would this purchase still leave enough money until payday?"""
     snap = snapshot(account_id)
+    if not snap["readiness"]["ready"]:
+        return {"verdict": "unknown", "reason": "I need more information before checking affordability.", "missing": snap["readiness"]["missing"]}
     amount = _r(abs(float(amount)))
     after_total = _r(snap["safe_to_spend_total"] - amount)
     days = snap["days_until_payday"]
@@ -632,6 +652,8 @@ def build_weekly_plan(account_id: str | None, save_this_week: float, focus_categ
     account_id = account_id or store.active_account_id()
     snap = snapshot(account_id)
     txns = store.load_transactions(account_id)
+    if not snap["readiness"]["ready"]:
+        return {"error": "Add your balance, next payday, expected income, bills and everyday spending before building a spending plan."}
     as_of = date.fromisoformat(snap["as_of"])
     weekly_safe = _r(snap["safe_to_spend_total"] * 7 / snap["days_until_payday"])
     if weekly_safe <= 0:
@@ -724,9 +746,10 @@ def compact_snapshot(snap: dict) -> dict:
     """A smaller version of the snapshot for the agents' context (fewer tokens = faster).
     Dates are written out with the weekday ("Sun Nov 15") so the model never has to work them out."""
     m = snap["month"]
-    return _friendly_dates({
+    facts = {
+        "readiness": snap["readiness"],
         "today": snap["as_of"],
-        "balance_known": bool(snap["balance_info"]["as_of"]),
+        "balance_known": "balance" not in snap["readiness"]["missing"],
         "what_the_user_wants_help_with": snap.get("use_case"),
         "balance": snap["balance"],
         "next_payday": snap["next_payday"],
@@ -760,7 +783,18 @@ def compact_snapshot(snap: dict) -> dict:
         "estimates_logged_last_30_days": snap["estimates"],
         "bills_and_pay_you_told_me": [{k: s[k] for k in ("kind", "name", "amount", "every", "day_of_month", "next_date", "varies")}
                                       for s in snap.get("told", [])],
-    })
+    }
+    if not snap["readiness"]["ready"]:
+        for key in ("safe_to_spend_total", "safe_per_day", "per_day_after_today", "left_today",
+                    "forecast_lowest_balance", "forecast_lowest_date", "held_back_for_bills_after_payday",
+                    "next_cycle_bills_total", "next_cycle_expected_income"):
+            facts.pop(key, None)
+    if not snap["readiness"]["payday_known"]:
+        facts["next_payday"] = None
+        facts["days_until_payday"] = None
+    if not facts["balance_known"]:
+        facts["balance"] = None
+    return _friendly_dates(facts)
 
 
 _ISO = __import__("re").compile(r"^\d{4}-\d{2}-\d{2}$")

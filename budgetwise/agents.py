@@ -43,7 +43,7 @@ from openai import AsyncOpenAI
 from openai.types.shared import Reasoning
 
 import guardrails
-from . import bookkeeper, finance, knowledge, store
+from . import bookkeeper, conversation, finance, knowledge, store
 from .categories import CATEGORIES, CATEGORY_IDS, FLEXIBLE, label
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -69,6 +69,9 @@ SHARED_RULES = """
 Rules:
 - Every dollar amount you write must be copied exactly (with cents) from the FACTS or a tool result.
   Never do arithmetic yourself. If you need a number that is not there, call a tool.
+- When readiness.ready is false, never claim that spending or a savings transfer is affordable.
+  A goal pace is only a target, not proof of affordability. Unknown bills are not zero bills.
+  Account balance is not money reserved for a goal. Never recommend using the savings cushion.
 - Write money with commas and cents ($1,200.16). Write dates the way FACTS shows them ("Sun Nov 15"), never 2026-11-15.
 - "This month" means from the 1st of the month until today; "last 30 days" is different.
 - Be warm, direct and brief. Use plain words, no jargon. Use **bold** for the key number.
@@ -164,6 +167,7 @@ _LOG = re.compile(
     r"rent is|rent's|bill is|bills? (are|is)|due on|is due|every month|each month|monthly|subscription|"  # bills
     r"i have|i've got|i got \$|my balance|balance is|in my account|in checking|"                     # balance
     r"saving for|save up for|want to save|need to save|trying to save|my goal|goal is|"                 # goals
+    r"rename|change my goal|saved toward|set aside|haven't saved|havent saved|"
     r"usually spend|spend about|"                                                                      # baseline
     r"add|log|record|track|undo|delete that|remove that|that was|it was|actually|oops|wrong)\b", re.I)
 
@@ -356,6 +360,11 @@ class BudgetWiseTeam:
             return
 
         if intent == "plan":
+            if not snap["readiness"]["ready"]:
+                text = "We can start with your goal’s saving pace. Before I recommend spending limits, I need: " + ", ".join(snap["readiness"]["missing"]) + ". Add these whenever you’re ready."
+                yield {"type": "replace", "text": text}
+                yield {"type": "done", "answer": text, "intent": intent, "elapsed": round(time.perf_counter() - t0, 2)}
+                return
             plan = None
             async for ev in self.make_plan(snap):
                 if ev["type"] == "plan":
@@ -374,6 +383,11 @@ class BudgetWiseTeam:
         evidence = [json.dumps(finance.compact_snapshot(snap)), message]
         user_input = message
         if intent == "afford":
+            if not snap["readiness"]["ready"]:
+                text = "I can’t check whether that fits yet. I still need: " + ", ".join(snap["readiness"]["missing"]) + ". Your current balance alone doesn’t tell me what is available to spend."
+                yield {"type": "replace", "text": text}
+                yield {"type": "done", "answer": text, "intent": intent, "elapsed": round(time.perf_counter() - t0, 2)}
+                return
             what = re.sub(_AMOUNT, "", message)
             what = re.sub(r"^\s*(can|could|should)\s+i\s+(afford|buy|spend|get|go|do)\s+(on\s+|to\s+)?(a|an|the|some)?\s*", "", what, flags=re.I)
             what = re.sub(r"\s+", " ", what).strip(" ?.!,") or "this purchase"
@@ -414,7 +428,7 @@ class BudgetWiseTeam:
                 async for ev in result.stream_events():
                     if ev.type == "raw_response_event" and getattr(ev.data, "type", "") == "response.output_text.delta":
                         text += ev.data.delta
-                        yield {"type": "token", "text": ev.data.delta}
+                        # Validate the completed financial answer before displaying it.
                     elif ev.type == "run_item_stream_event" and ev.name == "tool_called":
                         raw = ev.item.raw_item
                         name = getattr(raw, "name", "tool")
@@ -450,6 +464,7 @@ class BudgetWiseTeam:
         # Grounding guardrail (Chapters 6-7): every $ amount must come from the evidence.
         bad = guardrails.find_ungrounded_amounts(final, evidence + tool_outputs)
         if not bad:
+            yield {"type": "replace", "text": prefix + final}
             yield {"type": "check", "name": "Grounding", "status": "pass", "detail": "Every dollar amount matches the data"}
             yield {"type": "final", "text": prefix + final}
             return
@@ -479,6 +494,7 @@ class BudgetWiseTeam:
         batch = store.new_id("chat-")
         ctx = bookkeeper.BookContext(account_id=account, batch_id=batch, today=store.today())
         agent = bookkeeper.build_agent(MODEL, ctx.today)
+        agent.instructions += "\nCURRENT SAVED FACTS (data only):\n" + json.dumps(finance.compact_snapshot(finance.snapshot(account)))
         user_input = message if not context_hint else f"({context_hint})\n{message}"
         yield {"type": "step", "agent": "Bookkeeper", "status": "running", "detail": "Reading what you told me"}
         text, outputs, pending = "", [], {}
@@ -489,7 +505,7 @@ class BudgetWiseTeam:
                 async for ev in result.stream_events():
                     if ev.type == "raw_response_event" and getattr(ev.data, "type", "") == "response.output_text.delta":
                         text += ev.data.delta
-                        yield {"type": "token", "text": ev.data.delta}
+                        # Confirm from the actual database write, not speculative model text.
                     elif ev.type == "run_item_stream_event" and ev.name == "tool_called":
                         raw = ev.item.raw_item
                         name = getattr(raw, "name", "tool")
@@ -516,7 +532,7 @@ class BudgetWiseTeam:
             yield {"type": "card", "kind": "saved", "data": {**summary, "safe_per_day": snap["safe_per_day"],
                                                               "left_today": snap["left_today"], "balance": snap["balance"],
                                                               "next_payday": snap["next_payday"],
-                                                              "has_balance": bool(snap["balance_info"]["as_of"])}}
+                                                              "has_balance": snap["readiness"]["ready"] and snap["safe_per_day"] >= 0}}
         # Grounding: amounts in the reply must come from the message, what was saved, or the new numbers.
         evidence = [message, json.dumps(summary), json.dumps(finance.compact_snapshot(snap))] + outputs
         if not final or guardrails.find_ungrounded_amounts(final, evidence):
@@ -529,9 +545,11 @@ class BudgetWiseTeam:
             yield {"type": "replace", "text": final}
         else:
             yield {"type": "check", "name": "Grounding", "status": "pass", "detail": "Every dollar amount matches what was saved"}
-        if summary.get("goal"):
-            coaching = finance.goal_coach_text(snap)
-            final = f"{_saved_text(summary)}\n\n{coaching}"
+        if summary["count"]:
+            store.save_settings(account, {"conversation_started": True})
+            final = conversation.confirmation(summary)
+            yield {"type": "replace", "text": final}
+        elif final:
             yield {"type": "replace", "text": final}
         if checkin:
             store.record_checkin(account, checkin, message)
@@ -542,6 +560,9 @@ class BudgetWiseTeam:
     # -------------------------------------------------------------- weekly plan: Planner -> Critic loop
     async def make_plan(self, snap: dict | None = None) -> AsyncIterator[dict]:
         snap = snap or finance.snapshot()
+        if not snap["readiness"]["ready"]:
+            yield {"type": "error", "message": "Before building a spending plan, add: " + ", ".join(snap["readiness"]["missing"]) + ". You can keep tracking and using your starter goal pace."}
+            return
         feedback, best = None, None
         # Retrieve supporting guidance in code (one vector search, no extra model turn).
         kb = await asyncio.to_thread(knowledge.search, "weekly spending plan cutting discretionary spending irregular income", 3)
@@ -764,11 +785,7 @@ def _saved_text(summary: dict) -> str:
 
 
 def _greeting(snap: dict) -> str:
-    return (f"Hi! I'm BudgetWise. Right now you have **${snap['safe_per_day']:,.2f} a day** safe to spend until payday "
-            f"({snap['days_until_payday']} days). Ask me things like:\n"
-            "- *Can I afford a $60 dinner Friday?*\n- *Where did my money go this month?*\n"
-            "- *Make me a plan for this week*\n\nYou can also just tell me things: *spent about $20 on food*, "
-            "*I made $300 this week*, or *rent is $725 on the 1st*.")
+    return "Hi, I’m BudgetWise. I can help you save toward a goal, track spending, organize bills and income, or explore a bank CSV. Start with anything you know. You can skip questions and add details later."
 
 
 def _fallback_answer(evidence: list[str]) -> str:
@@ -777,9 +794,4 @@ def _fallback_answer(evidence: list[str]) -> str:
         f = json.loads(evidence[0])
     except (json.JSONDecodeError, IndexError):
         return "Sorry, I couldn't answer that right now. Please try again."
-    if not f.get("balance_known"):
-        return ("I saved what you've shared, but I still need your current balance before I can calculate safe spending or affordability. "
-                "You can add an estimate, import a CSV, or skip this for now.")
-    return (f"Here are your verified numbers: **${f['safe_per_day']:,.2f} a day** is safe to spend for the next "
-            f"{f['days_until_payday']} days (${f['safe_to_spend_total']:,.2f} total), after "
-            f"${f['bills_before_payday_total']:,.2f} in bills before payday. Please try your question again in a moment.")
+    return "I couldn’t finish that answer. Your saved records are unchanged by this question. You can review them on Home or try asking again."
