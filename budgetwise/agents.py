@@ -374,7 +374,7 @@ class BudgetWiseTeam:
                     yield ev
             text = plan["headline"] if plan else "I couldn't build a plan right now. Please try again."
             if plan:
-                text += " Tap **Start this plan** to save it, and I'll check in on it next week."
+                text += " Review the plan below, then choose **Start this plan** when you’re ready."
             yield {"type": "token", "text": text}
             self.memory.add(session_id, message, text)
             yield {"type": "done", "answer": text, "intent": intent, "elapsed": round(time.perf_counter() - t0, 2)}
@@ -689,7 +689,7 @@ def _clean_draft(draft: dict | None, snap: dict) -> dict:
     flex = [r["category"] for r in snap["spending_last_30_days"] if r["category"] in FLEXIBLE and r["category"] != "subscriptions"]
     growing = [r["category"] for r in snap["month"]["categories"] if r["category"] in flex and r["change"] > 0]
     default_focus = (growing or flex or ["dining"])[0]
-    weekly_safe = max(snap["safe_to_spend_total"] * 7 / snap["days_until_payday"], 0)
+    weekly_safe = max(snap["weekly_safe_to_spend"], 0)
     goal_need = (snap["goal"] or {}).get("needed_per_week") or 0
     default_save = round(min(goal_need, weekly_safe * 0.25) if snap["status"] != "red" else 0, 2)
     d = draft if isinstance(draft, dict) else {}
@@ -731,7 +731,7 @@ def _template_text(draft: dict, numbers: dict | None, snap: dict) -> dict:
     else:
         d["headline"] = f"Keep {focus_label} in check this week and set a little aside."
     d["why"] = [
-        f"You have ${snap['safe_to_spend_total']:,.2f} safe to spend over the next {snap['days_until_payday']} days.",
+        f"Your ${snap['safe_to_spend_total']:,.2f} available pool protects known bills and your cushion across the next {snap['planning_horizon_days']} days.",
         f"{label(d['focus_category'])} is one of your biggest flexible costs right now.",
         "A small, steady saving habit beats a big one you can't keep.",
     ]

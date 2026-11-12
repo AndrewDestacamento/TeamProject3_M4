@@ -350,9 +350,12 @@ async def chat(body: ChatIn):
             hint = current["question"]
             mode = "log"
         saved = None
+        draft_plan = None
         async for ev in team.chat(body.message, sid, mode=mode, checkin=body.checkin, context_hint=hint):
             if ev["type"] == "card" and ev.get("kind") == "saved":
                 saved = ev["data"]
+            if ev["type"] == "card" and ev.get("kind") == "plan":
+                draft_plan = ev["data"]
             if ev["type"] == "done":
                 if not check.blocked:
                     answer = ev.get("answer", "")
@@ -360,7 +363,7 @@ async def chat(body: ChatIn):
                         clarification = answer if not saved and "?" in answer else None
                         store.save_settings(account, {"pending_clarification": clarification,
                                                       "pending_clarification_key": current["question_key"] if clarification else None})
-                    conversation.remember(account, body.message, answer, saved)
+                    conversation.remember(account, body.message, answer, saved, draft_plan)
                     after = conversation.state(account)
                     devlog.log_turn(account=account, session_id=sid, message=body.message, answer=answer,
                                     handler="agent", intent=ev.get("intent"),

@@ -234,6 +234,57 @@ def test_told_pay_schedule_and_bills_drive_safe_to_spend():
     assert s["safe_to_spend_total"] == round(410 - 45 - s["held_back_for_next_cycle"] - s["savings_buffer"], 2)
 
 
+def test_nearby_payday_does_not_turn_rent_money_into_a_huge_weekly_plan():
+    acc = store.create_account("Near payday")
+    store.add_transactions(acc, [{"date": TODAY, "description": "Lunch", "amount": -10, "category": "dining"}],
+                           source="chat", batch_id="spend")
+    store.set_balance(acc, 1160, batch_id="balance")
+    store.add_schedule(acc, "income", "Paycheck", "biweekly", amount=200, next_date="2026-11-11")
+    store.add_schedule(acc, "bill", "Rent", "monthly", amount=1000, day_of_month=1, category="housing")
+    store.save_settings(acc, {"bills_reviewed": True, "typical_weekly_spend": 280})
+
+    snap = finance.snapshot(acc)
+    plan = finance.build_weekly_plan(acc, 0, "dining", 20)
+
+    assert snap["days_until_payday"] == 1
+    assert snap["planning_horizon_days"] == 30
+    assert snap["safe_to_spend_total"] == 460  # Rent is protected; two conservative paychecks are counted.
+    assert snap["weekly_safe_to_spend"] == snap["safe_to_spend_total"]
+    assert plan["daily_limit"] == round(snap["weekly_safe_to_spend"] / 7, 2)
+    assert plan["daily_limit"] < 70
+
+
+def test_one_purchase_is_not_enough_to_claim_usual_spending_is_known():
+    acc = _new_account()
+    store.add_schedule(acc, "income", "Paycheck", "biweekly", amount=600, next_date="2026-11-13")
+    store.save_settings(acc, {"bills_reviewed": True})
+    store.add_transactions(acc, [{"date": TODAY, "description": "Coffee", "amount": -5, "category": "dining"}],
+                           source="chat", batch_id="one")
+
+    snap = finance.snapshot(acc)
+    assert snap["readiness"]["spending_history_days"] == 1
+    assert "spending" in snap["readiness"]["missing"]
+    assert snap["typical_daily_spending"] == 0
+
+    rows = [{"date": f"2026-11-{day:02d}", "description": "Daily purchase", "amount": -5, "category": "dining"}
+            for day in range(4, 10)]
+    store.add_transactions(acc, rows, source="chat", batch_id="week")
+    snap = finance.snapshot(acc)
+    assert snap["readiness"]["spending_history_days"] == 7
+    assert "spending" not in snap["readiness"]["missing"]
+
+
+def test_goal_stays_at_starter_pace_when_pay_schedule_has_no_amount():
+    acc = _new_account()
+    store.add_schedule(acc, "income", "Paycheck", "biweekly", varies=True, next_date="2026-11-13")
+    store.save_settings(acc, {"goal": {"name": "Trip", "target": 500, "saved": 0,
+                                               "saved_known": True, "deadline": "2026-12-13"}})
+    snap = finance.snapshot(acc)
+    assert "income" in snap["readiness"]["missing"]
+    assert snap["goal"]["plan_level"] == "starter"
+    assert snap["goal"]["fits"] is None
+
+
 def test_same_bill_name_updates_instead_of_duplicating():
     acc = _new_account()
     store.add_schedule(acc, "bill", "Rent", "monthly", amount=725, day_of_month=1)

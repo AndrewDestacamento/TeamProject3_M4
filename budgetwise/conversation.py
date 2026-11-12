@@ -59,10 +59,12 @@ def state(account=None):
             "clarification_for": clarification_for}
 
 
-def remember(account, message, answer, saved=None):
+def remember(account, message, answer, saved=None, plan=None):
     saved = json.loads(json.dumps(saved, default=str)) if saved else None
+    plan = json.loads(json.dumps(plan, default=str)) if plan else None
     history = store.load_settings(account).get("conversation_history", [])
-    history += [{"role": "user", "text": message}, {"role": "assistant", "text": answer, "saved": saved}]
+    history += [{"role": "user", "text": message},
+                {"role": "assistant", "text": answer, "saved": saved, "plan": plan}]
     store.save_settings(account, {"conversation_history": history[-40:]})
 
 
