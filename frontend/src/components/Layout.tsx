@@ -20,7 +20,7 @@ export function Logo({ className = "" }: { className?: string }) {
         <path d="M5 48 24 28 36 38 57 12" stroke="rgb(var(--forest))" strokeWidth="5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
         <path d="M43 12h14v14" stroke="rgb(var(--marigold))" strokeWidth="5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
-      <span className="font-display text-[1.28rem] font-bold tracking-tight">BudgetWise</span>
+      <span className="hidden font-display text-[1.28rem] font-bold tracking-tight min-[360px]:inline">BudgetWise</span>
     </span>
   );
 }
@@ -148,10 +148,10 @@ export default function Layout() {
       </aside>
 
       {/* Mobile top bar */}
-      <header className="sticky top-0 z-30 flex min-h-[76px] items-center justify-between gap-5 border-b border-line bg-canvas/95 px-4 py-3 backdrop-blur sm:px-8">
+      <header className="brand-header sticky top-0 z-30 flex min-h-[76px] items-center justify-between gap-2 border-b border-white/10 bg-forest px-3 py-3 text-white shadow-sm min-[360px]:gap-4 min-[360px]:px-4 sm:px-8">
         <Logo />
         <nav className="hidden items-center gap-3 md:flex" aria-label="Main">
-          {NAV.map(({ to, label, end }) => <NavLink key={to} to={to} end={end} className={({ isActive }) => cn("rounded-xl px-5 py-2 font-semibold", isActive ? "bg-forest-soft text-forest" : "text-muted hover:bg-sunken")}>{label}</NavLink>)}
+          {NAV.map(({ to, label, end }) => <NavLink key={to} to={to} end={end} className={({ isActive }) => cn("rounded-xl px-5 py-2 font-semibold transition-colors", isActive ? "bg-white/16 text-white" : "text-white/80 hover:bg-white/10 hover:text-white")}>{label}</NavLink>)}
         </nav>
         <div className="flex items-center gap-1">
           <Link to="/accounts#examples" className="btn-ghost hidden text-sm lg:inline-flex">View example</Link>
@@ -161,7 +161,7 @@ export default function Layout() {
         </div>
       </header>
 
-      <main className="min-w-0 px-4 pb-24 pt-6 sm:px-8 md:pb-8 lg:pt-9">
+      <main className="min-w-0 px-4 pb-24 pt-5 sm:px-8 md:pb-4 lg:pt-7">
         <div className="mx-auto max-w-[1480px]">
           <DemoNotice />
           <Outlet />
