@@ -214,8 +214,40 @@ def test_natural_defer_language_marks_bill_topic_without_model_call():
     store.save_settings(account, {"conversation_started": True, "typical_weekly_spend": 100})
     assert conversation.state(account)["question_key"] == "bills"
     answer, _ = say(account, "my bills vary i will let you know when it happens")
-    assert "won’t ask for bill details again" in answer
+    assert "without asking again" in answer
     assert conversation.state(account)["question_key"] is None
+
+
+@pytest.mark.parametrize("reply", [
+    "I will let you know my bills",
+    "I meant I will let you know my bills later on or as I get them",
+    "I'll add them as they come up",
+    "I’ll add bills as they come up",
+])
+def test_bill_deferral_is_understood_in_different_word_orders(reply):
+    account = store.ensure_default_personal()
+    store.set_balance(account, 500)
+    store.add_schedule(account, "income", "Paycheck", "biweekly", amount=600, next_date="2026-11-13")
+    store.save_settings(account, {"conversation_started": True, "typical_weekly_spend": 100})
+    state = conversation.state(account)
+    assert state["question_key"] == "bills"
+    assert state["choices"] == ["I’ll add bills as they come up", "I don’t have regular bills"]
+    answer, _ = say(account, reply)
+    assert "without asking again" in answer
+    state = conversation.state(account)
+    assert state["question_key"] is None
+    assert state["statuses"]["bills"] == "deferred"
+
+
+def test_no_regular_bills_is_clear_and_completes_bill_review():
+    account = store.ensure_default_personal()
+    store.set_balance(account, 500)
+    store.add_schedule(account, "income", "Paycheck", "biweekly", amount=600, next_date="2026-11-13")
+    store.save_settings(account, {"conversation_started": True, "typical_weekly_spend": 100})
+    answer, _ = say(account, "I don't have regular bills")
+    assert "won’t plan for regular bills" in answer
+    assert store.load_settings(account)["bills_reviewed"]
+    assert "bills" not in finance.snapshot(account)["readiness"]["missing"]
 
 
 def test_pay_statement_with_frequency_is_left_for_bookkeeper_to_save():

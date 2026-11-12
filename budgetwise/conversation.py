@@ -16,7 +16,8 @@ QUESTIONS = {
     "balance": ("About how much is in your account right now?", ["Skip for now"]),
     "payday": ("When do you next get paid?", ["My pay varies", "Skip for now"]),
     "income": ("How often do you get paid, and about how much? A range is fine.", ["Skip for now"]),
-    "bills": ("What bills should we plan around? Tell me an amount and when it’s due.", ["That’s all my bills", "I have no bills", "Skip for now"]),
+    "bills": ("Tell me a regular bill, its amount, and when it’s due—or add bills later as they come up.",
+              ["I’ll add bills as they come up", "I don’t have regular bills"]),
     "spending": ("About how much do you spend on everyday things in a typical week?", ["Skip for now"]),
 }
 
@@ -269,15 +270,19 @@ async def quick_reply(message, account):
     if (low in ("my pay varies", "i don't know", "not sure") or (pay_deferred and not has_pay_details)) and key in ("payday", "income"):
         pause_guidance(account, key, "unknown")
         return "That’s okay. I’ll leave that unknown. You can add a date or an expected pay range whenever you know it. " + TRANSITION, None
-    bills_deferred = re.search(r"\bbills?\b.*\b(?:vary|varies|change|changes|don't know|do not know|not sure|let you know|when (?:it|they) happen)\b", low)
-    if bills_deferred and key == "bills":
+    bill_topic = current.get("clarification_for") if key == "clarification" else key
+    bill_deferral_words = re.search(
+        r"\b(?:let you know|later|as i get them|as they come(?: up)?|when they come(?: up)?|"
+        r"add (?:them|bills?) as (?:i get|they come)|bills? (?:vary|varies|change|changes))\b", low)
+    bills_deferred = bill_topic == "bills" and bill_deferral_words and not re.search(r"\$?\d", low)
+    if bills_deferred:
         pause_guidance(account, "bills", "deferred")
-        return "That’s okay. I won’t ask for bill details again right now. Tell me whenever one comes up, and I’ll add it then. " + TRANSITION, None
-    if low in ("that's all my bills", "i have no bills"):
-        if low == "i have no bills" and any(s["kind"] == "bill" for s in store.schedules(account)):
+        return "Got it. Add bills whenever they come up, and I’ll keep track of them without asking again now. " + TRANSITION, None
+    if low in ("that's all my bills", "i have no bills", "i don't have regular bills"):
+        if low in ("i have no bills", "i don't have regular bills") and any(s["kind"] == "bill" for s in store.schedules(account)):
             return "You have saved bills already. Review them in Settings before confirming that you have none.", None
         store.save_settings(account, {"bills_reviewed": True})
-        return "Your bill review is saved. Add any changes whenever they come up.", None
+        return "Got it. I won’t plan for regular bills unless you add one later.", None
 
     batch = store.new_id("chat-")
     tool, args = None, None
