@@ -138,6 +138,24 @@ def remember(account, message, answer, saved=None, plan=None):
     store.save_settings(account, {"conversation_history": history[-40:]})
 
 
+def starter_plan(account: str) -> str:
+    """Useful, verified first steps that do not pretend missing data is known."""
+    snap = finance.snapshot(account)
+    goal = snap.get("goal")
+    if not goal:
+        return ("You don’t need a savings goal to start. Log spending and income as they happen, "
+                "and I’ll organize them and look for patterns. Once I have about a week of activity—or "
+                "a bank CSV—I can give more specific spending advice.")
+    pace = (f"**Starting target:** set aside about **${goal['needed_per_week']:,.2f} per week** "
+            f"(${goal['needed_per_day']:,.2f} per day on average) toward **{goal['name']}**.")
+    if goal["plan_level"] == "personalized":
+        fit = ("That pace fits the income, bills, and spending you’ve shared."
+               if goal.get("fits") else "That pace looks tight with the information you’ve shared, so ask me to adjust it before committing.")
+        return f"{pace}\n\n{fit} Keep logging changes and I’ll update the plan."
+    return (f"{pace}\n\nThis is a goal pace, not a safe-to-spend amount yet. Share purchases, income, "
+            "or bills whenever they happen, and I’ll make it more realistic without requiring every detail up front.")
+
+
 def relative_date(value, today):
     text = value.strip().lower()
     if text == "this week":
@@ -253,6 +271,8 @@ async def quick_reply(message, account):
         return "What would you like to save for, how much, and by when? For example: ‘I want to save $500 for a trip in two months.’", None
     if low in ("track spending", "understand my spending"):
         return "Tell me a purchase, like ‘Yesterday I spent $5 on coffee’, or import a bank CSV. I’ll keep your activity organized. You don’t need a savings goal.", None
+    if low in ("give me a starter plan", "show me a starter plan", "starter plan"):
+        return starter_plan(account), None
     uncertain = re.fullmatch(
         r"(?:i(?:'m| am) )?(?:not sure|unsure)|i (?:don't|do not) know|no idea|"
         r"not right now|maybe later|later|i(?:'ll| will) (?:add|tell you)(?: that)? later|"

@@ -182,6 +182,16 @@ def test_help_and_privacy_never_create_money_records():
     assert finance.snapshot(account)["goal"] is None
 
 
+def test_starter_plan_is_immediate_and_honest_with_minimal_information():
+    account = store.ensure_default_personal()
+    say(account, "I want to save $500 in four weeks for a trip")
+    answer, saved = say(account, "Give me a starter plan")
+    assert saved is None
+    assert "$125.00 per week" in answer
+    assert "not a safe-to-spend amount" in answer
+    assert "income" in answer and "bills" in answer
+
+
 def test_goal_name_named_date_and_saved_confirmation_are_natural():
     account = store.ensure_default_personal()
     answer, saved = say(account, "I want to save $500 by december 13 for an orlando trip")

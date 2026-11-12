@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import * as Dialog from "@radix-ui/react-dialog";
 import ReactMarkdown from "react-markdown";
-import { ArrowUpRight, CalendarDays, Check, Coins, Loader2, Send, Target, Upload, Wallet } from "lucide-react";
-import { api, type Snapshot } from "@/lib/api";
+import { ArrowUpRight, CalendarDays, Check, Coins, History, Loader2, Send, Sparkles, Target, Upload, Wallet, X } from "lucide-react";
+import { api, type Plan, type Saved, type Snapshot } from "@/lib/api";
 import { useChat } from "@/lib/chat";
 import { Skeleton } from "@/components/Bits";
 import { PlanCard } from "@/components/Cards";
@@ -11,6 +12,40 @@ import { day, money } from "@/lib/format";
 
 function Avatar() {
   return <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-forest text-white"><ArrowUpRight size={23} /></span>;
+}
+
+type HistoryEntry = { role: "user" | "assistant"; text: string; saved?: Saved; plan?: Plan };
+
+function ConversationHistory({ history, onNewChat }: { history: HistoryEntry[]; onNewChat: () => void }) {
+  if (!history.length) return null;
+  return <Dialog.Root>
+    <Dialog.Trigger className="btn-ghost px-0 text-sm"><History size={16} /> View conversation history</Dialog.Trigger>
+    <Dialog.Portal>
+      <Dialog.Overlay className="fixed inset-0 z-50 bg-ink/35 backdrop-blur-sm" />
+      <Dialog.Content className="fixed left-1/2 top-1/2 z-50 flex max-h-[82vh] w-[min(680px,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 flex-col rounded-3xl border border-line bg-surface p-5 shadow-lift sm:p-6">
+        <div className="flex items-start justify-between gap-4"><div><Dialog.Title className="text-xl font-bold">Conversation history</Dialog.Title><Dialog.Description className="mt-1 text-sm text-muted">Your financial records stay saved even if you start a new chat.</Dialog.Description></div><Dialog.Close className="grid h-9 w-9 place-items-center rounded-full hover:bg-sunken" aria-label="Close history"><X size={18} /></Dialog.Close></div>
+        <div className="mt-5 space-y-3 overflow-y-auto pr-1">
+          {history.map((m, i) => m.role === "user" ? <div key={i} className="flex justify-end"><p className="max-w-[85%] rounded-2xl rounded-br-md bg-forest px-3 py-2 text-sm text-white">{m.text}</p></div> : <div key={i} className="rounded-2xl bg-sunken px-3 py-2 text-sm leading-relaxed"><ReactMarkdown>{m.text}</ReactMarkdown></div>)}
+        </div>
+        <div className="mt-5 flex items-center justify-between gap-3 border-t border-line pt-4"><p className="text-xs text-muted">Showing the most recent saved conversation.</p><Dialog.Close onClick={onNewChat} className="btn-quiet text-sm">Start a new chat</Dialog.Close></div>
+      </Dialog.Content>
+    </Dialog.Portal>
+  </Dialog.Root>;
+}
+
+function ResumeSummary({ s, history, submit, startLogging, onNewChat }: { s: Snapshot; history: HistoryEntry[]; submit: (text: string) => void; startLogging: () => void; onNewChat: () => void }) {
+  const g = s.goal;
+  return <div className="flex items-start gap-3"><Avatar /><div className="min-w-0 max-w-2xl flex-1 rounded-2xl border border-forest/15 bg-surface p-4 shadow-sm sm:p-5">
+    <div className="flex items-center gap-2 text-forest"><Sparkles size={18} /><h2 className="font-bold">Here’s where we left off</h2></div>
+    {g ? <div className="mt-3 space-y-2 text-[0.95rem] leading-relaxed">
+      <p>You’re working toward <strong>{money(g.target, true)} for {g.name}</strong> by <strong>{day(g.deadline)}</strong>.</p>
+      <p>{g.saved_known ? <>You’ve set aside <strong>{money(g.saved)}</strong>, and your current target is <strong>{money(g.pace_amount)} per {g.pace_unit}</strong>.</> : <>Your current starting target is <strong>{money(g.pace_amount)} per {g.pace_unit}</strong>. You haven’t added an amount already set aside.</>}</p>
+      <p className="text-muted">{g.plan_level === "personalized" ? "This uses the income, bills, and spending you’ve shared." : "This is a starting target. I’ll make it more realistic as you share spending, income, or bills."}</p>
+    </div> : <div className="mt-3 space-y-2 text-[0.95rem] leading-relaxed"><p>Your workspace is ready{s.balance_info.as_of ? <> with a recorded balance of <strong>{money(s.balance)}</strong></> : null}.</p><p className="text-muted">Share spending, income, or bills whenever they happen. I’ll organize them and explain what they mean.</p></div>}
+    <p className="mt-3 text-sm">Tell me anything whenever it happens, or choose a place to continue:</p>
+    <div className="mt-3 flex flex-wrap gap-2">{g && <button className="btn-primary text-sm" onClick={() => submit("Give me a starter plan")}>Give me a starter plan</button>}<button className={g ? "btn-quiet text-sm" : "btn-primary text-sm"} onClick={startLogging}>Log spending or income</button><Link to="/accounts#upload" className="btn-ghost text-sm"><Upload size={16} /> Import transactions</Link></div>
+    <div className="mt-3"><ConversationHistory history={history} onNewChat={onNewChat} /></div>
+  </div></div>;
 }
 
 export function GoalSummary({ s, embedded = false }: { s: Snapshot; embedded?: boolean }) {
@@ -59,7 +94,7 @@ export function GoalSummary({ s, embedded = false }: { s: Snapshot; embedded?: b
 export default function Today() {
   const { data: s, error } = useQuery({ queryKey: ["snapshot"], queryFn: api.snapshot });
   const { data: guide } = useQuery({ queryKey: ["conversation", s?.account.id], queryFn: api.conversation, enabled: !!s });
-  const { messages, busy, send } = useChat();
+  const { messages, busy, send, reset } = useChat();
   const qc = useQueryClient();
   const [draft, setDraft] = useState("");
   const [dateOpen, setDateOpen] = useState(false);
@@ -75,11 +110,13 @@ export default function Today() {
   if (error) return <p role="alert" className="panel p-6">Couldn’t load your workspace. Please refresh to try again.</p>;
   if (!s) return <Skeleton className="h-96" />;
   const g = s.goal;
+  const hasWorkspace = Boolean(g || s.balance_info.as_of || s.told.length || s.estimates.count || s.spending_last_30_days.length);
+  const history = (guide?.history || []) as HistoryEntry[];
   return <div className="home-workspace grid items-start gap-5 lg:grid-cols-[minmax(0,1.58fr)_minmax(340px,0.92fr)] xl:gap-7">
     <section className="flex min-w-0 flex-col">
-      <header className="pb-3"><p className="mb-1 text-xs font-bold uppercase tracking-[0.14em] text-forest/75">Your money, one step at a time</p><h1 className="text-[2rem] font-extrabold leading-tight tracking-tight sm:text-[2.35rem]">Hi, I’m BudgetWise.</h1><p className="mt-0.5 text-base sm:text-lg">Let’s make your next money decision simpler.</p></header>
+      <header className="pb-3"><p className="mb-1 text-xs font-bold uppercase tracking-[0.14em] text-forest/75">{hasWorkspace ? "Your current money picture" : "Your money, one step at a time"}</p><h1 className="text-[2rem] font-extrabold leading-tight tracking-tight sm:text-[2.35rem]">{hasWorkspace ? "Welcome back." : "Hi, I’m BudgetWise."}</h1><p className="mt-0.5 text-base sm:text-lg">{hasWorkspace ? "Let’s continue from what you’ve already shared." : "Let’s make your next money decision simpler."}</p></header>
       <div className="min-h-[205px] space-y-3 py-2" aria-live="polite" aria-label="Conversation">
-        {messages.length === 0 && <div className="flex items-start gap-3"><Avatar /><div className="max-w-xl"><p className="leading-relaxed">I can help you save for something, understand your spending, and keep track of bills and income. Start with anything you know.</p><p className="mt-2 text-sm text-muted">You can skip questions and add or correct details anytime.</p><div className="mt-4 flex flex-wrap gap-2"><button className="btn-primary text-sm" onClick={() => submit("Save for something")}>Save for something</button><button className="btn-quiet text-sm" onClick={() => submit("Track spending")}>Track spending</button><button className="btn-ghost text-sm" onClick={() => submit("What can you do?")}>What can you do?</button></div></div></div>}
+        {messages.length === 0 && (hasWorkspace ? <ResumeSummary s={s} history={history} submit={submit} startLogging={() => { setDraft("I spent "); input.current?.focus(); }} onNewChat={() => reset()} /> : <div className="flex items-start gap-3"><Avatar /><div className="max-w-xl"><p className="leading-relaxed">I can help you save for something, understand your spending, and keep track of bills and income. Start with anything you know.</p><p className="mt-2 text-sm text-muted">You can skip questions and add or correct details anytime.</p><div className="mt-4 flex flex-wrap gap-2"><button className="btn-primary text-sm" onClick={() => submit("Save for something")}>Save for something</button><button className="btn-quiet text-sm" onClick={() => submit("Track spending")}>Track spending</button><button className="btn-ghost text-sm" onClick={() => submit("What can you do?")}>What can you do?</button></div></div></div>)}
         {messages.map((m) => m.role === "user" ? <div key={m.id} className="flex justify-end pl-10"><p className="max-w-[85%] rounded-2xl rounded-br-md bg-forest px-4 py-3 text-white">{m.text}</p></div> : <div key={m.id} className="flex items-start gap-3"><Avatar /><div className="min-w-0 max-w-[90%]">
           <div className="prose-chat rounded-2xl bg-sunken px-4 py-3 text-[0.96rem] leading-relaxed">{m.pending && !m.text ? <span className="flex items-center gap-2 text-muted"><Loader2 size={16} className="animate-spin" />{m.timeline.at(-1)?.label || "Reading what you shared…"}</span> : <ReactMarkdown>{m.text}</ReactMarkdown>}</div>
           {m.plan && <div className="mt-3"><PlanCard p={m.plan} compact /><Link to="/plan" className="btn-primary mt-3 w-full justify-center">Review and start this plan</Link></div>}

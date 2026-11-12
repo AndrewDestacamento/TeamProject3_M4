@@ -97,7 +97,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     if (accounts?.active && conversation && hydrated.current !== accounts.active) {
       hydrated.current = accounts.active;
       session.current = null;
-      setMessages(conversation.history.map((m, i) => ({ ...m, id: `saved-${i}`, timeline: [] })));
+      // A reload resumes from saved financial facts instead of replaying an
+      // ever-growing transcript. The full transcript remains available from Home.
+      setMessages([]);
       const savedPlan = [...conversation.history].reverse().find((m) => m.plan)?.plan;
       if (savedPlan) qc.setQueryData(["draftPlan"], savedPlan);
     }
