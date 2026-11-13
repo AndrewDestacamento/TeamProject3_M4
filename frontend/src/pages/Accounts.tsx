@@ -249,15 +249,7 @@ export default function Accounts() {
 
   useEffect(() => {
     if (window.location.hash === "#upload") document.getElementById("upload")?.scrollIntoView({ behavior: "smooth" });
-    if (window.location.hash === "#examples") document.getElementById("examples")?.scrollIntoView({ behavior: "smooth" });
   }, []);
-
-  const use = async (id: string) => {
-    await api.setActive(id);
-    reset();
-    await qc.invalidateQueries();
-    toast.success("Switched accounts");
-  };
   const remove = async () => {
     if (!active) return;
     await api.deleteAccount(active.id);
@@ -269,39 +261,21 @@ export default function Accounts() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-[2rem] font-bold leading-tight">Accounts & data</h1>
-        <p className="mt-1 max-w-2xl text-muted">Your personal workspace stays separate from the optional examples below.</p>
+        <p className="text-xs font-bold uppercase tracking-[0.14em] text-forest/75">Your workspace</p>
+        <h1 className="mt-1 text-[2rem] font-bold leading-tight">Settings & accounts</h1>
+        <p className="mt-1 max-w-2xl text-muted">Review and update the information BudgetWise uses for your current workspace. Sample profiles are available separately under View example.</p>
       </div>
 
-      <Section title="Example profiles" aside="Sample data only" className="scroll-mt-6" >
-        <div id="examples" className="-mt-24 h-24 pointer-events-none" aria-hidden />
-        <p className="mb-4 text-[0.9rem] text-muted">Open an example to see what BudgetWise looks like after consistent use. A clear banner will keep it separate from your information.</p>
-        <div className="grid gap-3 md:grid-cols-3">
-          {data?.personas.map((p) => {
-            const id = `demo-${p.id}`;
-            const on = data.active === id;
-            return (
-              <div key={p.id} className={cn("flex flex-col rounded-2xl border p-4", on ? "border-forest/50 bg-forest-soft/40" : "border-line")}>
-                <div className="flex items-center gap-3">
-                  <span className="grid h-11 w-11 place-items-center rounded-full bg-sunken text-2xl">{p.emoji}</span>
-                  <div><p className="font-display text-[1.1rem] font-bold leading-tight">{p.name}</p><p className="text-[0.85rem] text-muted">{p.tagline}</p></div>
-                </div>
-                <p className="mt-3 flex-1 text-[0.9rem] text-muted">{p.description}</p>
-                <button onClick={() => use(id)} disabled={on} className={cn("mt-4", on ? "btn-quiet" : "btn-primary")}>
-                  {on ? <><Check size={17} /> Viewing example</> : `View ${p.name}'s example`}
-                </button>
-              </div>
-            );
-          })}
-        </div>
-      </Section>
+      {active && <Section title={`Financial settings for ${active.name}`} aside={active.kind === "demo" ? "Example mode" : "Saved on this computer"}>
+        <SettingsForm />
+      </Section>}
 
       <div className="grid gap-6 lg:grid-cols-[1fr_1.6fr]">
-        <Section title="Start without a bank file">
+        <Section title="Add details in your own words">
           <div className="flex h-full flex-col">
             <PencilLine className="text-forest" />
-            <p className="mt-2 flex-1 text-[0.93rem] text-muted">Answer a few optional questions in your own words. Skip anything and add it later whenever you want.</p>
-            <Link to="/setup" className="btn-primary mt-4 self-start">Add some details <ArrowRight size={17} /></Link>
+            <p className="mt-2 flex-1 text-[0.93rem] text-muted">Add or correct income, bills, balances, and goals conversationally. Every question is optional.</p>
+            <Link to="/" className="btn-primary mt-4 self-start">Continue with BudgetWise <ArrowRight size={17} /></Link>
           </div>
         </Section>
         <div id="upload" className="scroll-mt-24">
@@ -311,16 +285,10 @@ export default function Accounts() {
         </div>
       </div>
 
-      {active && (
-        <Section title={`Settings for ${active.name}`}>
-          <SettingsForm />
-          <div className="mt-6 border-t border-line pt-5">
-            <button onClick={remove} className="btn-ghost text-berry hover:text-berry">
-              <Trash2 size={16} /> {active.kind === "demo" ? `Reset ${active.name}'s demo` : `Delete ${active.name} from this computer`}
-            </button>
-          </div>
-        </Section>
-      )}
+      {active && <Section title="Workspace data controls" aside="This action cannot be undone">
+        <p className="mb-3 max-w-2xl text-sm text-muted">Your conversation can be cleared separately without removing saved financial records. Deleting this workspace removes its saved settings and activity from this computer.</p>
+        <button onClick={remove} className="btn-ghost text-berry hover:text-berry"><Trash2 size={16} /> {active.kind === "demo" ? `Reset ${active.name}'s demo` : `Delete ${active.name} from this computer`}</button>
+      </Section>}
     </div>
   );
 }

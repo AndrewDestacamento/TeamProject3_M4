@@ -5,6 +5,7 @@ import Today from "@/pages/Today";
 import Spending from "@/pages/Spending";
 import PlanPage from "@/pages/Plan";
 import Accounts from "@/pages/Accounts";
+import Examples from "@/pages/Examples";
 import Setup from "@/pages/Setup";
 
 export default function App() {
@@ -18,6 +19,7 @@ export default function App() {
           <Route path="goals" element={<Navigate to="/plan" replace />} />
           <Route path="ask" element={<Navigate to="/" replace />} />
           <Route path="accounts" element={<Accounts />} />
+          <Route path="examples" element={<Examples />} />
           <Route path="setup" element={<Setup />} />
           <Route path="*" element={<Today />} />
         </Route>

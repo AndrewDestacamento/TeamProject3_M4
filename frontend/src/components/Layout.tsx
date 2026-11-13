@@ -80,7 +80,7 @@ function AccountSwitcher({ compact = false }: { compact?: boolean }) {
             </Dropdown.Item>
           ))}
           <Dropdown.Separator className="my-1.5 h-px bg-line" />
-          <Dropdown.Item onSelect={() => nav("/accounts#examples")}
+          <Dropdown.Item onSelect={() => nav("/examples")}
             className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 font-medium outline-none data-[highlighted]:bg-sunken">
             <Sparkles size={18} className="text-marigold" /> View example profiles
           </Dropdown.Item>
@@ -154,7 +154,7 @@ export default function Layout() {
           {NAV.map(({ to, label, end }) => <NavLink key={to} to={to} end={end} className={({ isActive }) => cn("rounded-xl px-4 py-2 text-sm font-semibold transition-colors", isActive ? "bg-white/16 text-white" : "text-white/80 hover:bg-white/10 hover:text-white")}>{label}</NavLink>)}
         </nav>
         <div className="flex items-center gap-1">
-          <Link to="/accounts#examples" className="btn-ghost hidden text-sm lg:inline-flex">View example</Link>
+          <Link to="/examples" className="btn-ghost hidden text-sm lg:inline-flex">View example</Link>
           <Link to="/accounts" className="btn-ghost hidden text-sm sm:inline-flex"><Settings2 size={17} /> Settings</Link>
           <AccountSwitcher compact />
           <button onClick={toggle} className="btn-ghost p-2" aria-label={dark ? "Light mode" : "Dark mode"}><ThemeIcon size={18} /></button>

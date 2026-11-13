@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import * as Dialog from "@radix-ui/react-dialog";
 import ReactMarkdown from "react-markdown";
-import { ArrowUpRight, CalendarDays, Check, Coins, History, Loader2, Send, Sparkles, Target, Upload, Wallet, X } from "lucide-react";
+import { ArrowDown, ArrowUpRight, CalendarDays, Check, Coins, History, Loader2, Send, Sparkles, Target, Upload, Wallet, X } from "lucide-react";
 import { api, type Plan, type Saved, type Snapshot } from "@/lib/api";
 import { useChat } from "@/lib/chat";
 import { Skeleton } from "@/components/Bits";
@@ -72,22 +72,22 @@ export function GoalSummary({ s, embedded = false }: { s: Snapshot; embedded?: b
     } catch (e) { setError((e as Error).message); }
     finally { setSaving(false); }
   };
-  return <section className={embedded ? "p-4 sm:p-5" : "panel border-t-[3px] border-t-forest p-5 shadow-sm sm:p-6"}>
-    <div className="flex items-center justify-between gap-3"><h2 className="text-[1.25rem] font-bold">Your next milestone</h2>{g && <button onClick={() => setEditing(!editing)} className="text-sm font-semibold text-forest underline">{editing ? "Cancel" : "Edit"}</button>}</div>
+  return <section className={embedded ? "p-3.5 sm:p-4" : "panel border-t-[3px] border-t-forest p-5 shadow-sm sm:p-6"}>
+    <div className="flex items-center justify-between gap-3"><h2 className={embedded ? "text-[1.12rem] font-bold" : "text-[1.25rem] font-bold"}>Your next milestone</h2>{g && <button onClick={() => setEditing(!editing)} className="text-sm font-semibold text-forest underline">{editing ? "Cancel" : "Edit"}</button>}</div>
     {editing && g ? <form onSubmit={(e) => { e.preventDefault(); void save(e.currentTarget); }} className="mt-3 space-y-2.5">
       <label className="block text-sm">Goal name<input name="name" className="field mt-1" defaultValue={g.name} required maxLength={40} /></label>
       <label className="block text-sm">Target amount ($)<input name="target" type="number" min="0.01" step="0.01" className="field mt-1" defaultValue={g.target} required /></label>
       <label className="block text-sm">Deadline<input name="deadline" type="date" min={s.as_of} className="field mt-1" defaultValue={g.deadline} required /></label>
       <label className="block text-sm">Already set aside ($)<input name="saved" type="number" min="0" step="0.01" className="field mt-1" defaultValue={g.saved_known ? g.saved : ""} placeholder="Leave blank if unknown" /></label>
       {error && <p role="alert" className="text-sm text-berry">{error}</p>}<button disabled={saving} className="btn-primary w-full">{saving ? "Saving…" : "Save changes"}</button>
-    </form> : g ? <div className="mt-3">
+    </form> : g ? <div className={embedded ? "mt-2" : "mt-3"}>
       <p className="text-sm text-muted">{g.name}</p>
-      <p className="num mt-1 font-display text-[2rem] font-bold leading-tight text-forest">{g.saved_known ? money(g.saved, true) : "—"} <span className="text-[1.15rem]">of {money(g.target, true)}</span></p>
+      <p className={`num mt-0.5 font-display font-bold leading-tight text-forest ${embedded ? "text-[1.7rem]" : "text-[2rem]"}`}>{g.saved_known ? money(g.saved, true) : "—"} <span className="text-[1.05rem]">of {money(g.target, true)}</span></p>
       {!g.saved_known && <p className="mt-1 text-sm text-muted">Amount already set aside hasn’t been added.</p>}
-      <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-line/65" role="progressbar" aria-label="Goal savings" aria-valuemin={0} aria-valuemax={100} aria-valuenow={g.saved_known ? Math.min(g.percent, 100) : 0}><div className="h-full rounded-full bg-forest" style={{ width: `${g.saved_known ? Math.min(g.percent, 100) : 0}%` }} /></div>
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm"><span className="flex items-center gap-2"><CalendarDays size={17} className="text-forest" /> By {day(g.deadline)}</span><span className="flex items-center gap-2 font-semibold"><Coins size={17} className="text-forest" />{money(g.pace_amount)} / {g.pace_unit}</span></div>
-      <div className="mt-3 flex items-start gap-3 border-t border-line pt-3"><span className="shrink-0 rounded-full bg-marigold-soft px-2.5 py-1 text-xs font-semibold">{paceLabel}</span><p className="text-xs leading-relaxed text-muted">{paceHelp}</p></div>
-    </div> : <div className="py-5"><Target size={28} className="text-forest" /><h3 className="mt-3 text-lg font-semibold">What are you working toward?</h3><p className="mt-2 text-sm leading-relaxed text-muted">A trip, a little breathing room, or something else. Tell me an amount and a date, and your goal will appear here.</p><p className="mt-3 text-sm text-muted">Goals are optional. You can just track your spending.</p></div>}
+      <div className={embedded ? "mt-2 h-1.5 overflow-hidden rounded-full bg-line/65" : "mt-3 h-1.5 overflow-hidden rounded-full bg-line/65"} role="progressbar" aria-label="Goal savings" aria-valuemin={0} aria-valuemax={100} aria-valuenow={g.saved_known ? Math.min(g.percent, 100) : 0}><div className="h-full rounded-full bg-forest" style={{ width: `${g.saved_known ? Math.min(g.percent, 100) : 0}%` }} /></div>
+      <div className={embedded ? "mt-2 flex flex-wrap items-center justify-between gap-2 text-sm" : "mt-3 flex flex-wrap items-center justify-between gap-3 text-sm"}><span className="flex items-center gap-2"><CalendarDays size={17} className="text-forest" /> By {day(g.deadline)}</span><span className="flex items-center gap-2 font-semibold"><Coins size={17} className="text-forest" />{money(g.pace_amount)} / {g.pace_unit}</span></div>
+      <div className={embedded ? "mt-2 flex items-start gap-2 border-t border-line pt-2" : "mt-3 flex items-start gap-3 border-t border-line pt-3"}><span className="shrink-0 rounded-full bg-marigold-soft px-2.5 py-1 text-xs font-semibold">{paceLabel}</span><p className="text-xs leading-relaxed text-muted">{paceHelp}</p></div>
+    </div> : <div className={embedded ? "py-2" : "py-5"}><Target size={embedded ? 24 : 28} className="text-forest" /><h3 className="mt-2 text-lg font-semibold">What are you working toward?</h3><p className="mt-1 text-sm leading-relaxed text-muted">A trip, a little breathing room, or something else. Tell me an amount and a date, and your goal will appear here.</p><p className="mt-2 text-sm text-muted">Goals are optional. You can just track your spending.</p></div>}
   </section>;
 }
 
@@ -101,8 +101,35 @@ export default function Today() {
   const [undoError, setUndoError] = useState("");
   const [undone, setUndone] = useState<string[]>([]);
   const input = useRef<HTMLInputElement>(null);
-  useEffect(() => { input.current?.scrollIntoView({ block: "nearest", behavior: "smooth" }); }, [messages, guide?.question]);
-  const submit = (text: string) => { if (!text.trim() || busy) return; setDraft(""); setDateOpen(false); void send(text); };
+  const conversationEnd = useRef<HTMLDivElement>(null);
+  const followLatest = useRef(true);
+  const automaticScroll = useRef(false);
+  const [showLatest, setShowLatest] = useState(false);
+  const scrollToLatest = (behavior: ScrollBehavior = "smooth") => {
+    followLatest.current = true;
+    setShowLatest(false);
+    automaticScroll.current = true;
+    conversationEnd.current?.scrollIntoView({ block: "end", behavior });
+    window.setTimeout(() => { automaticScroll.current = false; }, behavior === "smooth" ? 650 : 0);
+  };
+  useEffect(() => {
+    const onScroll = () => {
+      if (automaticScroll.current) return;
+      const distance = document.documentElement.scrollHeight - (window.scrollY + window.innerHeight);
+      const nearLatest = distance < 150;
+      followLatest.current = nearLatest;
+      setShowLatest(!nearLatest && messages.length > 0);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [messages.length]);
+  const latestText = messages.at(-1)?.text;
+  useEffect(() => {
+    if (!messages.length || !followLatest.current) return;
+    const frame = window.requestAnimationFrame(() => scrollToLatest("smooth"));
+    return () => window.cancelAnimationFrame(frame);
+  }, [messages.length, latestText, guide?.question]); // eslint-disable-line react-hooks/exhaustive-deps
+  const submit = (text: string) => { if (!text.trim() || busy) return; followLatest.current = true; setShowLatest(false); setDraft(""); setDateOpen(false); void send(text); };
   const undo = async (batch: string) => {
     try { await api.undo(batch); setUndone((old) => [...old, batch]); await qc.invalidateQueries(); }
     catch (e) { setUndoError((e as Error).message); }
@@ -127,24 +154,25 @@ export default function Today() {
           {guide.question_key === "payday" && <button className="btn-primary text-sm" onClick={() => setDateOpen(!dateOpen)}><CalendarDays size={16} /> Choose a date</button>}
           {guide.choices.map((c) => <button key={c} className="btn border border-line bg-surface px-3 py-2 text-sm" onClick={() => submit(c)}>{c}</button>)}
         </div>{dateOpen && <label className="mt-3 block text-sm">Next payday<input aria-label="Next payday" type="date" min={s.as_of} className="field mt-1 max-w-xs" onChange={(e) => { if (e.target.value) submit(e.target.value); }} /></label>}</div></div>}
+        <div ref={conversationEnd} className="h-px scroll-mb-40" aria-hidden />
       </div>
-      <div className="home-composer sticky bottom-[72px] z-10 mt-4 rounded-2xl bg-canvas/95 pt-2 backdrop-blur md:bottom-3"><form onSubmit={(e) => { e.preventDefault(); submit(draft); }} className="flex items-center gap-2 rounded-2xl border border-forest/30 bg-surface p-2 shadow-md sm:gap-3"><Link to="/accounts#upload" aria-label="Import transactions" className="border-r border-line px-2 py-2 text-forest sm:px-3"><Upload size={22} /></Link><input ref={input} aria-label="Message BudgetWise" className="min-w-0 flex-1 bg-transparent py-3 text-base outline-none" placeholder="Tell me anything, or ask a question…" value={draft} maxLength={1000} onChange={(e) => setDraft(e.target.value)} /><button disabled={busy || !draft.trim()} className="btn-primary px-3" aria-label="Send message">{busy ? <Loader2 size={19} className="animate-spin" /> : <Send size={19} />}</button></form><p className="mt-2 text-xs text-muted">Add spending, income or bills anytime. Estimates are welcome. <button onClick={() => submit("Privacy")} className="underline">About privacy</button></p>{undoError && <p role="alert" className="text-sm text-berry">{undoError}</p>}</div>
+      <div className="home-composer sticky bottom-[72px] z-10 mt-4 rounded-2xl bg-canvas/95 pt-2 backdrop-blur md:bottom-3">{showLatest && <button onClick={() => scrollToLatest()} className="absolute -top-10 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full border border-line bg-surface px-3 py-1.5 text-xs font-semibold text-forest shadow-sm"><ArrowDown size={14} /> Jump to latest</button>}<form onSubmit={(e) => { e.preventDefault(); submit(draft); }} className="flex items-center gap-2 rounded-2xl border border-forest/30 bg-surface p-2 shadow-md sm:gap-3"><Link to="/accounts#upload" aria-label="Import transactions" className="border-r border-line px-2 py-2 text-forest sm:px-3"><Upload size={22} /></Link><input ref={input} aria-label="Message BudgetWise" className="min-w-0 flex-1 bg-transparent py-3 text-base outline-none" placeholder="Tell me anything, or ask a question…" value={draft} maxLength={1000} onChange={(e) => setDraft(e.target.value)} /><button disabled={busy || !draft.trim()} className="btn-primary px-3" aria-label="Send message">{busy ? <Loader2 size={19} className="animate-spin" /> : <Send size={19} />}</button></form><p className="mt-2 text-xs text-muted">Add spending, income or bills anytime. Estimates are welcome. <button onClick={() => submit("Privacy")} className="underline">About privacy</button></p>{undoError && <p role="alert" className="text-sm text-berry">{undoError}</p>}</div>
     </section>
     <aside className="home-summary min-w-0 overflow-hidden rounded-3xl border border-line bg-surface lg:sticky lg:top-[84px]">
       <GoalSummary s={s} embedded />
-      <section className="border-t border-line px-4 py-3 sm:px-5"><div className="flex items-center justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-wide text-muted">Safe to spend today</p>{s.readiness.ready ? <p className="num mt-0.5 text-2xl font-bold text-forest">{money(Math.max(s.left_today, 0))}</p> : <p className="mt-1 font-semibold">Not calculated yet</p>}</div><Wallet className="text-forest" size={24} /></div><p className="mt-1 text-xs leading-relaxed text-muted">{s.readiness.ready ? `Known bills and your cushion are protected across the next ${s.planning_horizon_days} days.` : `Add ${s.readiness.missing.join(", ")} when you’re ready for a reliable amount.`}</p></section>
-      <section className="border-t border-line px-4 pb-4 pt-3 sm:px-5"><div className="flex items-center justify-between gap-3"><h2 className="text-[1.1rem] font-bold">What you’ve shared</h2><span className="text-xs text-muted">Add or correct anytime</span></div><dl className="mt-2 grid grid-cols-2 gap-2 text-sm">
+      <section className="border-t border-line px-4 py-2.5"><div className="flex items-center justify-between gap-3"><div><p className="text-[0.7rem] font-semibold uppercase tracking-wide text-muted">Safe to spend today</p>{s.readiness.ready ? <p className="num mt-0.5 text-xl font-bold text-forest">{money(Math.max(s.left_today, 0))}</p> : <p className="mt-0.5 font-semibold">Not calculated yet</p>}</div><Wallet className="text-forest" size={22} /></div><p className="mt-1 text-xs leading-snug text-muted">{s.readiness.ready ? `Known bills and your cushion are protected across the next ${s.planning_horizon_days} days.` : `Add ${s.readiness.missing.join(", ")} when you’re ready for a reliable amount.`}</p></section>
+      <section className="border-t border-line px-4 pb-3 pt-2.5"><div className="flex items-center justify-between gap-3"><h2 className="text-[1.02rem] font-bold">What you’ve shared</h2><span className="text-[0.7rem] text-muted">Add or correct anytime</span></div><dl className="mt-1.5 grid grid-cols-2 gap-1.5 text-sm">
         <Fact icon={Target} name="Goal" value={g ? `${money(g.target, true)} by ${day(g.deadline)}` : "Not added"} />
         <Fact icon={Coins} name="Set aside" value={g?.saved_known ? money(g.saved) : "Not added"} />
         <Fact icon={Wallet} name="Balance" value={!s.readiness.missing.includes("balance") ? money(s.balance) : "Not added"} />
         <Fact icon={CalendarDays} name="Next payday" value={s.readiness.payday_known ? day(s.next_payday) : "Not added"} />
-      </dl><Link to="/accounts#upload" className="mt-3 flex items-center justify-center gap-2 rounded-xl border border-line bg-sunken/55 px-3 py-2 text-sm font-semibold text-forest"><Upload size={17} /> Import transactions</Link></section>
-      {s.insights.length > 0 && <section className="border-t border-line bg-forest-soft/45 px-5 py-4 sm:px-6"><h2 className="font-bold">From your activity</h2><p className="mt-1 text-sm leading-relaxed text-muted">{s.insights[0].detail}</p><Link to="/spending" className="mt-2 inline-block text-sm font-semibold text-forest">Review activity →</Link></section>}
-      <p className="border-t border-line px-5 py-3 text-xs leading-relaxed text-muted sm:px-6">Share only what you choose. Your plan becomes more useful as you add information.</p>
+      </dl><Link to="/accounts#upload" className="mt-2 flex items-center justify-center gap-2 rounded-xl border border-line bg-sunken/55 px-3 py-1.5 text-sm font-semibold text-forest"><Upload size={16} /> Import transactions</Link></section>
+      {s.insights.length > 0 && <section className="border-t border-line bg-forest-soft/45 px-4 py-2.5"><h2 className="text-sm font-bold">From your activity</h2><p className="mt-0.5 text-xs leading-snug text-muted">{s.insights[0].detail}</p><Link to="/spending" className="mt-1 inline-block text-xs font-semibold text-forest">Review activity →</Link></section>}
+      <p className="border-t border-line px-4 py-2 text-[0.7rem] leading-snug text-muted">Share only what you choose. Your plan improves as you add information.</p>
     </aside>
   </div>;
 }
 
 function Fact({ icon: Icon, name, value }: { icon: typeof Target; name: string; value: string }) {
-  return <div className="rounded-xl bg-sunken/60 p-2.5"><div className="flex items-center gap-2"><Icon size={16} className="shrink-0 text-forest" /><dt className="text-xs font-semibold text-muted">{name}</dt></div><dd className="mt-1 truncate font-semibold" title={value}>{value}</dd></div>;
+  return <div className="rounded-xl bg-sunken/60 p-2"><div className="flex items-center gap-1.5"><Icon size={15} className="shrink-0 text-forest" /><dt className="text-[0.7rem] font-semibold text-muted">{name}</dt></div><dd className="mt-0.5 truncate text-[0.86rem] font-semibold" title={value}>{value}</dd></div>;
 }
