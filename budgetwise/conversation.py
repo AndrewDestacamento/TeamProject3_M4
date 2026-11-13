@@ -167,6 +167,13 @@ def relative_date(value, today):
     except ValueError:
         pass
     months = {name.lower(): i for i, name in enumerate(calendar.month_name) if name}
+    if text in months:
+        year = today.year
+        result = date(year, months[text], calendar.monthrange(year, months[text])[1])
+        if result < today:
+            year += 1
+            result = date(year, months[text], calendar.monthrange(year, months[text])[1])
+        return result
     named = re.fullmatch(r"([a-z]+) (\d{1,2})(?:,? (\d{4}))?", text)
     if named and named[1] in months:
         year = int(named[3]) if named[3] else today.year
@@ -230,6 +237,31 @@ def _goal_parts(text: str, today: date) -> tuple[float, str, date] | None:
     return float(match[1].replace(",", "")), name, deadline
 
 
+def _pending_goal_parts(text: str, today: date) -> tuple[tuple[float, str, date] | None, bool, bool, bool]:
+    """Parse a short answer to the explicit goal prompt without calling a model."""
+    amount_match = re.search(r"\$?((?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d{1,2})?)(?:\s+dollars?)?", text)
+    amount = float(amount_match[1].replace(",", "")) if amount_match else None
+    deadline_text = None
+    assumed_month_end = False
+    by = re.search(r"\bby\s+(.+)$", text)
+    if by:
+        deadline_text = by[1].strip()
+        if " for " in deadline_text:
+            deadline_text = deadline_text.split(" for ", 1)[0].strip()
+    else:
+        duration = re.search(r"\b(in\s+(?:\d+|a|one|two|three|four|six)\s+(?:days?|weeks?|months?)|this week)\b", text)
+        if duration:
+            deadline_text = duration[1]
+    deadline = relative_date(deadline_text, today) if deadline_text else None
+    month_names = {name.lower() for name in calendar.month_name if name}
+    assumed_month_end = bool(deadline and deadline_text and deadline_text.lower() in month_names)
+    name_match = re.search(r"\bfor\s+(?:a\s+|an\s+|the\s+)?(.+?)(?=\s+(?:by|in)\b|$)", text)
+    name = name_match[1].strip() if name_match else "Savings goal"
+    if amount is None or deadline is None:
+        return None, amount is not None, deadline is not None, assumed_month_end
+    return (amount, name, deadline), True, True, assumed_month_end
+
+
 def _multiple_expenses(text: str) -> list[dict]:
     """Parse common multi-purchase sentences so no item depends on model attention."""
     low = text.strip().lower().replace("’", "'")
@@ -256,10 +288,14 @@ async def quick_reply(message, account):
     current = state(account)
     key = current["question_key"]
     settings = store.load_settings(account)
+    pending_goal = settings.get("conversation_pending_intent") == "goal"
     if low in ("continue setup", "resume setup", "ask me the setup questions"):
         resume_guidance(account)
         return "Okay. I’ll ask one useful question at a time, and you can stop whenever you want.", None
     if low in ("skip", "skip for now"):
+        if pending_goal:
+            store.save_settings(account, {"conversation_pending_intent": None})
+            return "No problem. You can create a savings goal whenever you want.", None
         underlying = current.get("clarification_for") if key == "clarification" else key
         pause_guidance(account, underlying or key)
         return "Of course. Add it whenever you’re ready. " + TRANSITION, None
@@ -268,6 +304,7 @@ async def quick_reply(message, account):
     if re.fullmatch(r"(?:what about |tell me about )?privacy\??|(?:is my data private|where is my data stored|what happens to my data)\??", low):
         return "Your records are stored in this app’s local database. When you use AI, your message and relevant financial context are sent to the configured model provider. Share only what you choose; don’t include passwords or full account numbers. This prototype has no individual logins, so use sample data on a shared installation.", None
     if low in ("save for something", "save toward a goal"):
+        store.save_settings(account, {"conversation_pending_intent": "goal"})
         return "What would you like to save for, how much, and by when? For example: ‘I want to save $500 for a trip in two months.’", None
     if low in ("track spending", "understand my spending"):
         return "Tell me a purchase, like ‘Yesterday I spent $5 on coffee’, or import a bank CSV. I’ll keep your activity organized. You don’t need a savings goal.", None
@@ -304,10 +341,20 @@ async def quick_reply(message, account):
         store.save_settings(account, {"bills_reviewed": True})
         return "Got it. I won’t plan for regular bills unless you add one later.", None
 
+    pending_parts, has_pending_amount, has_pending_deadline, assumed_month_end = _pending_goal_parts(low, store.today()) if pending_goal else (None, False, False, False)
+    if pending_goal and not pending_parts:
+        if has_pending_amount and not has_pending_deadline:
+            return "I have the amount. When would you like to reach this goal? A month, date, or timeframe is fine.", None
+        if has_pending_deadline and not has_pending_amount:
+            return "I have the deadline. About how much would you like to save?", None
+        return "Tell me an amount and a deadline, such as ‘$300 by December’ or ‘$500 in two months.’", None
+
     batch = store.new_id("chat-")
     tool, args = None, None
     amount = r"\$?((?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d{1,2})?)(?: dollars)?"
-    goal = _goal_parts(low, store.today())
+    goal = _goal_parts(low, store.today()) or pending_parts
+    month_pattern = "|".join(name.lower() for name in calendar.month_name if name)
+    assumed_month_end = assumed_month_end or bool(goal and re.search(rf"\bby\s+(?:{month_pattern})(?:\s+for\b.*)?$", low))
     balance = re.fullmatch(r"(?:i have|i've got|my balance is) (?:about )?" + amount + r"(?: (?:in my (?:bank )?account|in checking))?(?: (?:currently|right now|today))?", low)
     number = re.fullmatch(amount, low)
     expense = re.fullmatch(r"(?:(yesterday|today) )?i spent (about )?" + amount + r" on ([a-z &'-]+?)(?: (today|yesterday))?", low)
@@ -339,8 +386,12 @@ async def quick_reply(message, account):
         summary = store.batch_summary(account, batch)
         if summary["count"]:
             store.save_settings(account, {"conversation_started": True, "pending_clarification": None,
-                                          "pending_clarification_key": None})
-            return confirmation(summary), summary
+                                          "pending_clarification_key": None,
+                                          "conversation_pending_intent": None})
+            answer = confirmation(summary)
+            if goal and assumed_month_end:
+                answer += f"\n\nI used the end of {goal[2].strftime('%B')} as the deadline. You can change it anytime."
+            return answer, summary
         return str(result), None
     return None
 

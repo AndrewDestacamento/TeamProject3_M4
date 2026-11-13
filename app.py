@@ -400,7 +400,10 @@ async def chat(body: ChatIn):
 @app.post("/api/chat/reset")
 def chat_reset(session_id: str):
     team.memory.reset(session_id)
-    store.save_settings(store.active_account_id(), {"conversation_history": []})
+    store.save_settings(store.active_account_id(), {"conversation_history": [],
+                                                     "conversation_pending_intent": None,
+                                                     "pending_clarification": None,
+                                                     "pending_clarification_key": None})
     return {"ok": True}
 
 

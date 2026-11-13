@@ -203,6 +203,35 @@ def test_goal_name_named_date_and_saved_confirmation_are_natural():
     assert "Goal saved" not in answer
 
 
+def test_split_goal_answer_with_month_never_needs_a_model_call():
+    account = store.ensure_default_personal()
+    answer, saved = say(account, "Save for something")
+    assert saved is None and "how much" in answer
+    assert store.load_settings(account)["conversation_pending_intent"] == "goal"
+    answer, saved = say(account, "300 dollars by December")
+    assert saved["goal"]["target"] == 300
+    assert saved["goal"]["deadline"] == "2026-12-31"
+    assert "end of December" in answer
+    assert store.load_settings(account).get("conversation_pending_intent") is None
+
+
+def test_split_goal_only_asks_for_the_one_missing_detail():
+    account = store.ensure_default_personal()
+    say(account, "Save for something")
+    answer, saved = say(account, "$300")
+    assert saved is None
+    assert "When would you like" in answer
+    answer, saved = say(account, "300 for a trip by December")
+    assert saved["goal"]["name"] == "Trip"
+
+
+def test_complete_goal_with_month_uses_same_fast_month_end_rule():
+    account = store.ensure_default_personal()
+    answer, saved = say(account, "I want to save $500 by December")
+    assert saved["goal"]["deadline"] == "2026-12-31"
+    assert "end of December" in answer
+
+
 def test_deferred_bill_clarification_is_not_immediately_repeated():
     account = store.ensure_default_personal()
     store.set_balance(account, 500)
