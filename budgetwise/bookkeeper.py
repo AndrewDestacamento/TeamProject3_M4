@@ -51,6 +51,7 @@ class SpendItem(BaseModel):
     days_ago: int | None = None      # 0 = today, 1 = yesterday
     spread_over_days: int = 1        # "the last couple days" -> 2
     approximate: bool = False        # "about", "around", "like", "roughly"
+    payment_method: str = "available_money"  # available_money | credit_card | cash_other
 
 
 def _resolve_date(ctx: BookContext, iso: str | None, days_ago: int | None) -> date | str:
@@ -105,11 +106,16 @@ def log_spending(ctx: RunContextWrapper[BookContext], items: list[SpendItem]) ->
         total_c = store.cents(amt)
         per, extra = divmod(total_c, days)
         what = (it.what or "").strip()[:60] or label(cat)
+        method = (it.payment_method or "available_money").strip().lower()
+        if method not in {"available_money", "credit_card", "cash_other"}:
+            problems.append(f"{what}: payment_method must be available_money, credit_card or cash_other")
+            continue
         for i in range(days):
             share = (per + (1 if i < extra else 0)) / 100
             entry_day = d - timedelta(days=i)
             saved.append({"date": entry_day.isoformat(), "description": what.capitalize(), "merchant": what.capitalize(),
                           "amount": -share, "category": cat, "approx": it.approximate or days > 1,
+                          "payment_method": method, "affects_balance": method == "available_money",
                           "note": f"spread over {days} days" if days > 1 else None})
     if saved:
         store.add_transactions(c.account_id, saved, source="chat", batch_id=c.batch_id)
@@ -121,9 +127,36 @@ def log_spending(ctx: RunContextWrapper[BookContext], items: list[SpendItem]) ->
 
 
 @function_tool(strict_mode=False, failure_error_function=_tool_error)
+def prepare_spending(ctx: RunContextWrapper[BookContext], items: list[SpendItem]) -> str:
+    """Stage purchase details without writing a transaction. The application will ask the user
+    for a payment source, then deterministic code calls log_spending after that explicit choice."""
+    c = ctx.context
+    prepared, problems = [], []
+    for item in items:
+        amount = _check_amount(item.amount)
+        event_date = _resolve_date(c, item.date, item.days_ago)
+        if isinstance(amount, str) or isinstance(event_date, str):
+            problems.append(f"{item.what}: {amount if isinstance(amount, str) else event_date}")
+            continue
+        what = (item.what or "").strip()[:60]
+        if not what:
+            problems.append("purchase description is missing")
+            continue
+        prepared.append({"amount": amount, "what": what, "date": event_date.isoformat(),
+                         "spread_over_days": min(max(int(item.spread_over_days or 1), 1), 14),
+                         "approximate": bool(item.approximate), "category": item.category})
+    if not prepared:
+        return "Not prepared: " + ("; ".join(problems) if problems else "no valid purchase details")
+    store.save_settings(c.account_id, {"pending_money_event": {"kind": "payment_source", "items": prepared},
+                                       "conversation_started": True})
+    return f"Prepared {len(prepared)} purchase{'s' if len(prepared) != 1 else ''}; no transaction was saved yet."
+
+
+@function_tool(strict_mode=False, failure_error_function=_tool_error)
 def log_income(ctx: RunContextWrapper[BookContext], amount: float, source: str = "Paycheck",
-               date: str | None = None, days_ago: int | None = None, approximate: bool = False) -> str:
-    """Save money the user RECEIVED (paycheck, tips, gig payout, a client payment)."""
+               date: str | None = None, days_ago: int | None = None, approximate: bool = False,
+               deposited_to_available_money: bool = True) -> str:
+    """Save money received. Only move available money when it was deposited into that pool."""
     c = ctx.context
     amt = _check_amount(amount)
     d = _resolve_date(c, date, days_ago)
@@ -131,7 +164,9 @@ def log_income(ctx: RunContextWrapper[BookContext], amount: float, source: str =
         return f"Not saved: {amt if isinstance(amt, str) else d}"
     src = (source or "Paycheck").strip()[:60].capitalize()
     store.add_transactions(c.account_id, [{"date": d.isoformat(), "description": src, "merchant": src, "amount": amt,
-                                           "category": "income", "approx": approximate}], source="chat", batch_id=c.batch_id)
+                                           "category": "income", "approx": approximate,
+                                           "payment_method": "available_money" if deposited_to_available_money else "cash_other",
+                                           "affects_balance": deposited_to_available_money}], source="chat", batch_id=c.batch_id)
     return f"Saved income: {src} ${amt:,.2f} on {d.isoformat()}."
 
 
@@ -241,7 +276,8 @@ def set_savings_goal(ctx: RunContextWrapper[BookContext], target: float, deadlin
     prev = store.load_settings(c.account_id).get("goal")
     store.save_settings(c.account_id, {"goal": {"name": name.strip()[:40].capitalize(), "target": t, "saved": round(float(saved_so_far or 0), 2),
                                                 "saved_known": saved_so_far is not None,
-                                                "deadline": dl.isoformat(), "batch_id": c.batch_id},
+                                                "deadline": dl.isoformat(), "batch_id": c.batch_id,
+                                                "last_checkin": c.today.isoformat()},
                                        "previous_goal": prev})
     return f"Saved goal: {name} ${t:,.2f} by {dl.isoformat()}."
 
@@ -276,6 +312,7 @@ def update_savings_goal(ctx: RunContextWrapper[BookContext], name: str | None = 
         if isinstance(checked, str):
             return f"Not saved: {checked}"
         updated["saved"], updated["saved_known"] = checked, True
+        updated["last_checkin"] = c.today.isoformat()
     updated["batch_id"] = c.batch_id
     store.save_settings(c.account_id, {"goal": updated, "previous_goal": current})
     return f"Updated goal: {updated['name']} ${updated['target']:,.2f} by {updated['deadline']}."
@@ -339,7 +376,7 @@ def undo_last(ctx: RunContextWrapper[BookContext]) -> str:
     return f"Removed {n} saved item{'s' if n != 1 else ''}."
 
 
-TOOLS = [log_spending, log_income, set_bill, set_pay_schedule, set_balance, set_savings_goal, update_savings_goal,
+TOOLS = [prepare_spending, log_income, set_bill, set_pay_schedule, set_balance, set_savings_goal, update_savings_goal,
          set_typical_weekly_spending, fix_last_entry, undo_last]
 
 
@@ -354,8 +391,9 @@ INSTRUCTIONS = """You are the Bookkeeper on the BudgetWise team. People tell you
 and you save it with your tools so BudgetWise stays up to date without a bank file.
 
 What to save:
-- Money spent -> log_spending (several purchases in one message -> several items in ONE call).
-- Money received -> log_income.
+- Money spent -> prepare_spending (several purchases in one message -> several items in ONE call). This only stages
+  the details; the application asks the payment source and saves afterward. Never infer or select a payment method.
+- Money received -> log_income. Set deposited_to_available_money=false unless the user says it entered the tracked pool.
 - A bill that repeats or is coming up (rent, phone, insurance, a subscription) -> set_bill.
 - How they get paid ("every 2 weeks", "every Friday", "on the 1st and 15th", "it changes") -> set_pay_schedule.
 - "I have $X" / "my balance is $X" -> set_balance.
@@ -378,6 +416,9 @@ How to read vague messages:
 
 When to ask instead of saving:
 - No amount at all ("I bought groceries") -> ask how much. Don't guess amounts.
+- If payment source is not known, ask whether it came from available money, a credit card, or somewhere else.
+- If received money may be cash or undeposited, ask whether it entered available money.
+- A past "bill" is ambiguous: ask whether it was paid from available money, put on credit, or is still due.
 - A monthly bill with no due day -> ask which day. A pay schedule with no next payday is fine to save, then ask.
 - Ask at most ONE short question per reply.
 

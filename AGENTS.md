@@ -49,7 +49,7 @@ uvicorn app:app --port 8000                         # open http://localhost:8000
   but the Python code stays in memory until restart (a stale server shows "—" for new fields).
 - Do **not** use `uvicorn --reload` on Windows: it switches to an event loop that can't start the
   MCP stdio subprocess.
-- Tests (no model calls): `python -m pytest`. Currently **68 pass**. Keep them passing
+- Tests (no model calls): `python -m pytest`. Currently **99 pass**. Keep them passing
   and add tests for any money-math change.
 - Frontend (Node 18+): `cd frontend && npm install && npm run dev` (port 5173, proxies /api to 8000),
   then `npm run build` before committing.
@@ -64,16 +64,17 @@ uvicorn app:app --port 8000                         # open http://localhost:8000
 ```
 Browser (React, frontend/)  --HTTP + Server-Sent Events-->  app.py (FastAPI)
   app.py lifespan: warms ChromaDB, starts the MCP tool server ONCE (mcp_server.py over stdio)
-  /api/chat -> budgetwise/agents.py BudgetWiseTeam.chat():
-     1. Input guardrail (guardrails.py: off-topic, card/account numbers, prompt injection)
-     2. Router (CODE, regex, no model call): greeting | plan | afford | log | analyst
-     3a. log     -> Bookkeeper agent (budgetwise/bookkeeper.py, function tools that WRITE to SQLite)
-     3b. afford  -> finance.can_afford() (math) -> instant verdict text -> Analyst adds one tip
-     3c. plan    -> Planner agent (calls build_weekly_plan via MCP) -> Critic agent scores 1-10,
+  /api/chat -> conversation controller -> budgetwise/agents.py BudgetWiseTeam.chat():
+     1. Restore saved history and handle guided quick replies when possible (no model call)
+     2. Input guardrail (guardrails.py: off-topic, card/account numbers, prompt injection)
+     3. Router (CODE, regex, no model call): greeting | plan | afford | log | analyst
+     4a. log     -> Bookkeeper agent (budgetwise/bookkeeper.py, function tools that WRITE to SQLite)
+     4b. afford  -> finance.can_afford() (math) -> instant verdict text -> Analyst adds one tip
+     4c. plan    -> Planner agent (calls build_weekly_plan via MCP) -> Critic agent scores 1-10,
                     code approves at >= 7, otherwise one revision
-     3d. analyst -> Analyst agent (ReAct, MCP read tools: search_transactions, get_spending_by_category,
+     4d. analyst -> Analyst agent (ReAct, MCP read tools: search_transactions, get_spending_by_category,
                     check_affordability, get_income_details, search_budget_knowledge)
-     4. Grounding guardrail: every $ amount in a reply must appear in the facts/tool results
+     5. Grounding guardrail: every $ amount in a reply must appear in the facts/tool results
         (whole-dollar rounding allowed); otherwise retry once, then fall back to calculated numbers
   Uploads: budgetwise/importer.py reads any bank CSV -> keyword rules -> merchant cache ->
            Categorizer agent for unknown store names only -> store.import_rows() merges into the ledger
@@ -91,14 +92,16 @@ app's run context, never from the model.
 | `budgetwise/store.py` | SQLite ledger at `data/workspace/budgetwise.db`: accounts, transactions, schedules, balances, plans, checkins, overrides, merchant_cache |
 | `budgetwise/agents.py` | Router, Analyst, Planner, Critic, Categorizer, streaming, grounding retry, conversation memory |
 | `budgetwise/bookkeeper.py` | Bookkeeper agent + tools: log_spending, log_income, set_bill, set_pay_schedule, set_balance, set_savings_goal, set_typical_weekly_spending, fix_last_entry, undo_last |
+| `budgetwise/conversation.py` | Guided conversation state, quick replies, persistent history, question progression and loop prevention |
+| `budgetwise/devlog.py` | Opt-in private JSONL logs for development and consented test conversations |
 | `budgetwise/importer.py` | Bank CSV reader (header names or headerless; Amount or Debit/Credit columns; masks long digit runs) |
 | `budgetwise/categories.py` | Category list and keyword rules; merchant name cleanup |
 | `budgetwise/knowledge.py` | ChromaDB search over `knowledge/*.md` (keyword fallback if Chroma fails) |
 | `mcp_server.py` | MCP tool server (FastMCP), thin wrappers over finance.py |
 | `guardrails.py` | Deterministic checks: input scope/privacy/injection, grounding, sanitizing |
 | `agent.py` | Terminal client for the same agent team |
-| `frontend/src/pages/` | Today, Spending, Plan, Ask, Accounts, Setup |
-| `frontend/src/components/` | Layout, Runway (days until payday), Charts, Cards (plan/afford/saved), Logging (check-in + log box), AgentTimeline |
+| `frontend/src/pages/` | Home conversation, Activity, Plan, Settings/accounts, Setup and separate example profiles |
+| `frontend/src/components/` | Shared layout, charts, cards, loading states and reusable interface elements |
 | `data/personas/*.json` | Demo people Maya, Jordan, Priya (dates stored as "days ago", so the demo never goes stale). Regenerate with `python scripts/make_demo_data.py` |
 | `data/samples/sample_chase_checking.csv` | Sample bank export for testing uploads |
 | `tests/test_budgetwise.py`, `tests/test_guardrails.py` | Unit tests (no model calls) |
@@ -109,9 +112,11 @@ app's run context, never from the model.
    Agents receive numbers in the FACTS JSON or from tools and must copy them exactly; the grounding
    guardrail enforces it.
 2. Money is stored in SQLite as **integer cents**; `store.cents()` / `store.dollars()` convert.
-3. **Balance** = latest balance statement (a CSV's ending balance, "I have $410", or the settings page)
-   **plus** every entry logged by the user (sources `chat`, `checkin`, `setup`) after that statement.
-   CSV rows never move the balance on their own (the bank balance already includes them).
+3. **Available money** is the MVP's one planning pool. Each transaction records a payment method and
+   `affects_balance`. Debit/checking purchases and deposited income move it; credit-card and separate-cash
+   activity still count as spending/income history but do not move it. A transaction dated before the latest
+   balance statement is already included and must not be counted twice. CSV rows never move the balance on
+   their own (the bank balance already includes them).
 4. **Safe to spend** uses a 30-day cash-flow check: current balance + conservative expected paychecks -
    recurring bills - usual living costs after the current payday - savings cushion. A short pay window
    never turns the whole balance into one day's allowance.
@@ -126,11 +131,16 @@ app's run context, never from the model.
    those dates is imported. Re-importing the same file skips duplicates.
 8. Things the user **told** us (`schedules` table: bills, pay schedule) win over what is detected.
 9. Every write from one chat message shares a `batch_id`, so one **Undo** removes all of it.
+10. Weekly balance confirmation creates a new balance anchor. Weekly goal contributions add to cumulative
+    saved progress and recalculate the remaining pace; they are not income or spending transactions.
 
 ## 7. UI and writing conventions
-- The design is deliberately simple: one big "You can spend $X today" number, a one-line explanation,
-  details behind "How is this worked out?", one card to add spending (daily check-in), the days-until-payday
-  strip, then "Coming up" and "This week's plan"; everything else is folded under "More".
+- Home is a conversation-first workspace with a compact right-hand summary for the active goal,
+  safe-to-spend readiness, saved facts and the most useful current insight. The composer follows new
+  messages automatically but lets a user scroll up without being pulled back down.
+- Setup is optional and conversational: ask one purposeful question at a time, never repeat a declined
+  question, and stop guided setup after enough context. Users can log any fact or ask for advice at any time.
+- Settings edits the current workspace; View example is a separate route for the fake profiles.
 - Tokens are CSS variables in `frontend/src/index.css` (forest green, marigold, berry; light and dark).
   Fonts: Bricolage Grotesque (headings and numbers), Figtree (body). Icons: lucide-react. Charts: Recharts.
 - Plain, friendly, specific wording. Avoid jargon, ALL-CAPS labels and filler.
@@ -143,8 +153,8 @@ app's run context, never from the model.
   `docs/m3/test_cases.md`. Update them for M4 (include logging, affordability, plan, an out-of-scope
   question and a prompt-injection attempt). Also measure latency per case (M3 took minutes; M4 is
   usually 2-15 s). Put results in `tests/results/`.
-- [ ] **Updated architecture diagram** for M4 (five agents, router, SQLite ledger, MCP, guardrails), in
-  the same style as `docs/m3/architecture.png`.
+- [x] **Updated architecture diagram** for M4 (guided conversation, five agents, router, SQLite ledger,
+  MCP, CSV pipeline and guardrails) in `docs/ARCHITECTURE.md`.
 - [ ] **README CHANGES section:** keep it current; each change needs a reason and its measured effect.
 - [ ] **User testing (5 external testers)** is run by the team. The app should be easy for a stranger:
   Setup without a file, demo personas, CSV upload.

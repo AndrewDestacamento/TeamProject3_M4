@@ -58,7 +58,9 @@ export interface Snapshot {
   insights: Insight[];
 }
 export interface Txn { id: string; date: string; description: string; merchant: string; amount: number; category: string;
-  source: "csv" | "chat" | "checkin" | "setup" | "demo"; approx: boolean; batch_id: string | null }
+  source: "csv" | "chat" | "checkin" | "setup" | "demo"; approx: boolean;
+  payment_method: "available_money" | "credit_card" | "cash_other" | "bank" | "demo";
+  affects_balance: boolean; batch_id: string | null }
 export interface Account { id: string; name: string; kind: "demo" | "personal"; tagline: string; emoji: string }
 export interface Schedule { id: string; kind: "bill" | "income"; name: string; amount: number | null; low: number | null; high: number | null;
   every: string; day_of_month: number | null; next_date: string | null; category: string | null; varies: boolean }
@@ -71,6 +73,12 @@ export interface Saved {
 }
 export interface Persona { id: string; name: string; tagline: string; description: string; emoji: string }
 export interface Category { id: string; label: string; kind: string }
+export interface DevelopmentLogStatus { enabled: boolean; active_path: string; has_active_log: boolean }
+export interface ConversationState {
+  question_key: string | null; question: string | null; choices: string[]; skipped: string[];
+  welcome_seen: boolean; conversation_started: boolean; guidance_complete: boolean;
+  history: { role: "user" | "assistant"; text: string; saved?: Saved; plan?: Plan }[];
+}
 
 export interface Plan {
   week_start: string; week_end: string; weekly_safe_to_spend: number; save_this_week: number;
@@ -113,7 +121,7 @@ const json = (method: string, data?: unknown): RequestInit => ({
 });
 
 export const api = {
-  conversation: () => request<{ question_key: string | null; question: string | null; choices: string[]; skipped: string[]; history: { role: "user" | "assistant"; text: string; saved?: Saved; plan?: Plan }[] }>("/api/conversation"),
+  conversation: () => request<ConversationState>("/api/conversation"),
   snapshot: () => request<Snapshot>("/api/snapshot"),
   accounts: () => request<{ active: string; accounts: Account[]; personas: Persona[] }>("/api/accounts"),
   setActive: (id: string) => request("/api/accounts/active", json("POST", { id })),
@@ -123,6 +131,9 @@ export const api = {
   setCategory: (id: string, category: string, apply_to_merchant = true) =>
     request<{ changed: number }>(`/api/transactions/${id}`, json("PATCH", { category, apply_to_merchant })),
   settings: () => request<Record<string, unknown> & { schedules: Schedule[] }>("/api/settings"),
+  developmentLogs: () => request<DevelopmentLogStatus>("/api/development-logs"),
+  archiveDevelopmentLogs: () => request<{ archived: { path: string; filename: string; turns: number; bytes: number } | null }>(
+    "/api/development-logs/archive", { method: "POST" }),
   deleteSchedule: (id: string) => request(`/api/schedules/${id}`, { method: "DELETE" }),
   deleteTxn: (id: string) => request(`/api/transactions/${id}`, { method: "DELETE" }),
   undo: (batch_id: string) => request<{ removed: number }>("/api/undo", json("POST", { batch_id })),

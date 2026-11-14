@@ -533,6 +533,7 @@ class BudgetWiseTeam:
 
         summary = store.batch_summary(account, batch)
         snap = finance.snapshot(account)
+        pending_money = store.load_settings(account).get("pending_money_event")
         yield {"type": "step", "agent": "Bookkeeper", "status": "done",
                "detail": f"Saved {summary['count']} item{'s' if summary['count'] != 1 else ''}" if summary["count"] else "Nothing saved yet"}
         if summary["count"]:
@@ -542,7 +543,10 @@ class BudgetWiseTeam:
                                                               "has_balance": snap["readiness"]["ready"] and snap["safe_per_day"] >= 0}}
         # Grounding: amounts in the reply must come from the message, what was saved, or the new numbers.
         evidence = [message, json.dumps(summary), json.dumps(finance.compact_snapshot(snap))] + outputs
-        if not final or guardrails.find_ungrounded_amounts(final, evidence):
+        if pending_money and pending_money.get("kind") == "payment_source":
+            final = "I have the purchase details. Choose the payment source below."
+            yield {"type": "replace", "text": final}
+        elif not final or guardrails.find_ungrounded_amounts(final, evidence):
             fixed = _saved_text(summary) if summary["count"] else (
                 final if final and not guardrails.find_ungrounded_amounts(final, evidence) else
                 "I couldn't save that. Try something like: \"spent $12 on lunch today\" or \"rent is $725 on the 1st\".")
@@ -556,7 +560,13 @@ class BudgetWiseTeam:
             store.save_settings(account, {"conversation_started": True})
             final = conversation.confirmation(summary)
             yield {"type": "replace", "text": final}
+        elif pending_money and pending_money.get("kind") == "payment_source":
+            # The staged purchase is intentionally not a saved transaction yet.
+            # Keep the code-owned prompt so the UI can render its standard buttons.
+            pass
         elif final:
+            # With no database write, never pass through a model-written success statement.
+            final = _no_write_text(final)
             yield {"type": "replace", "text": final}
         if checkin:
             store.record_checkin(account, checkin, message)
@@ -810,7 +820,9 @@ def _saved_text(summary: dict) -> str:
     spent = [t for t in tx if t["amount"] < 0]
     got = [t for t in tx if t["amount"] > 0]
     if spent:
-        parts.append(f"logged ${-sum(t['amount'] for t in spent):,.2f} of spending")
+        details = [f"${-t['amount']:,.2f} for {t['description']}" for t in spent]
+        joined = details[0] if len(details) == 1 else ", ".join(details[:-1]) + f" and {details[-1]}"
+        parts.append(f"logged {joined}")
     if got:
         parts.append(f"logged ${sum(t['amount'] for t in got):,.2f} of income")
     for s in summary["schedules"]:
@@ -820,6 +832,14 @@ def _saved_text(summary: dict) -> str:
     if summary.get("goal"):
         parts.append(f"saved your goal: {summary['goal']['name']}")
     return ("Got it: I " + ", ".join(parts) + ".") if parts else "Got it."
+
+
+def _no_write_text(model_text: str) -> str:
+    """A Bookkeeper without a batch write may ask one question, but may never claim success."""
+    if "?" in (model_text or ""):
+        return "Nothing was saved yet. " + model_text
+    return ("I didn’t save anything from that message yet. Include the amount and what it was for, "
+            "or rephrase it and I’ll try again.")
 
 
 def _greeting(snap: dict) -> str:

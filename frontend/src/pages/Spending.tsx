@@ -2,10 +2,10 @@ import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import * as Dropdown from "@radix-ui/react-dropdown-menu";
 import { toast } from "sonner";
-import { Check, Search, Trash2, X } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, Check, CircleDollarSign, Search, Sparkles, Trash2, X } from "lucide-react";
 import { api, type Txn } from "@/lib/api";
 import { CAT, catInfo, CatIcon } from "@/lib/categories";
-import { Section, Skeleton } from "@/components/Bits";
+import { Skeleton } from "@/components/Bits";
 import { LogBox } from "@/components/Logging";
 import { cn, day, money } from "@/lib/format";
 
@@ -97,13 +97,17 @@ export default function Spending() {
     for (const t of shown) g.set(t.date, [...(g.get(t.date) ?? []), t]);
     return [...g.entries()];
   }, [shown]);
+  const topCategory = byCat[0];
+  const net = income - spent;
+  const insight = snap?.insights[0];
 
   return (
-    <div className="space-y-7">
+    <div className="space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-[2rem] font-bold leading-tight">Spending</h1>
-          <p className="mt-1 text-muted">Everything from your bank file plus everything you told BudgetWise, sorted automatically. Change a category and it remembers that store.</p>
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-forest/75">Your money activity</p>
+          <h1 className="mt-1 text-[2rem] font-bold leading-tight">Activity</h1>
+          <p className="mt-1 max-w-2xl text-muted">See what came in, where money went, and what deserves attention.</p>
         </div>
         <div className="flex rounded-xl bg-sunken p-1" role="tablist" aria-label="Time period">
           {PERIODS.map((p) => (
@@ -115,45 +119,47 @@ export default function Spending() {
         </div>
       </div>
 
-      <Section title="Add something" aside="Type it the way you'd text a friend">
-        <LogBox placeholder="e.g. $12 lunch and $30 gas yesterday, or I made $300 in tips this week" />
-      </Section>
-
-      {/* Summary: totals plus one bar made of every category */}
-      <section className="panel p-5 sm:p-6">
-        <div className="num flex flex-wrap gap-x-10 gap-y-3">
-          <div><p className="text-[0.88rem] text-muted">Spent</p><p className="font-display text-[1.9rem] font-bold">{money(spent)}</p></div>
-          <div><p className="text-[0.88rem] text-muted">Came in</p><p className="font-display text-[1.9rem] font-bold text-forest">{money(income)}</p></div>
-          <div><p className="text-[0.88rem] text-muted">Transactions</p><p className="font-display text-[1.9rem] font-bold">{inRange.length}</p></div>
-        </div>
-        {spent > 0 && (
-          <div className="mt-5 flex h-3.5 overflow-hidden rounded-full bg-sunken" aria-hidden>
-            {byCat.map(([c, v]) => <div key={c} style={{ width: `${(v / spent) * 100}%`, background: catInfo(c).hue }} title={`${catInfo(c).label}: ${money(v)}`} />)}
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.55fr)_minmax(280px,0.75fr)]">
+        <section className="overflow-hidden rounded-3xl border border-line bg-surface shadow-sm">
+          <div className="grid divide-y divide-line sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+            <div className="p-5"><div className="flex items-center gap-2 text-sm text-muted"><ArrowDownRight size={17} className="text-berry" /> Spent</div><p className="num mt-1 font-display text-[1.8rem] font-bold">{money(spent)}</p></div>
+            <div className="p-5"><div className="flex items-center gap-2 text-sm text-muted"><ArrowUpRight size={17} className="text-forest" /> Came in</div><p className="num mt-1 font-display text-[1.8rem] font-bold text-forest">{money(income)}</p></div>
+            <div className="p-5"><div className="flex items-center gap-2 text-sm text-muted"><CircleDollarSign size={17} /> Net activity</div><p className={cn("num mt-1 font-display text-[1.8rem] font-bold", net >= 0 ? "text-forest" : "text-berry")}>{net >= 0 ? "+" : "−"}{money(Math.abs(net))}</p></div>
           </div>
-        )}
-        <div className="mt-4 flex flex-wrap gap-2">
-          {byCat.map(([c, v]) => (
-            <button key={c} onClick={() => setCat(cat === c ? null : c)} aria-pressed={cat === c}
-              className={cn("chip border border-line bg-surface text-muted hover:text-ink", cat === c && "border-ink/40 bg-sunken text-ink")}>
-              <span className="h-2 w-2 rounded-full" style={{ background: catInfo(c).hue }} />
-              {catInfo(c).label} <span className="num font-semibold text-ink">{money(v, true)}</span>
-            </button>
-          ))}
-          {cat && <button onClick={() => setCat(null)} className="chip text-muted hover:text-ink"><X size={14} /> Clear filter</button>}
-        </div>
-      </section>
+          <div className="border-t border-line px-5 py-4">
+            <div className="flex items-center justify-between gap-3"><p className="text-sm font-semibold">Where spending went</p><p className="num text-xs text-muted">{inRange.length} transactions</p></div>
+            {spent > 0 ? <>
+              <div className="mt-3 flex h-3 overflow-hidden rounded-full bg-sunken" aria-label="Spending by category">
+                {byCat.map(([c, v]) => <div key={c} style={{ width: `${(v / spent) * 100}%`, background: catInfo(c).hue }} title={`${catInfo(c).label}: ${money(v)}`} />)}
+              </div>
+              <div className="mt-3 flex flex-wrap gap-1.5">{byCat.slice(0, 5).map(([c, v]) => <button key={c} onClick={() => setCat(cat === c ? null : c)} aria-pressed={cat === c} className={cn("chip border border-line bg-surface text-muted hover:text-ink", cat === c && "border-forest bg-forest-soft text-forest")}><span className="h-2 w-2 rounded-full" style={{ background: catInfo(c).hue }} />{catInfo(c).label} <span className="num font-semibold text-ink">{money(v, true)}</span></button>)}</div>
+            </> : <p className="mt-2 text-sm text-muted">Add activity or import transactions to see a breakdown.</p>}
+          </div>
+        </section>
 
-      <div className="relative max-w-md">
-        <Search size={18} className="pointer-events-none absolute left-3.5 top-3 text-faint" />
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search stores, like Starbucks" className="field pl-10" aria-label="Search transactions" />
+        <section className="rounded-3xl border border-forest/20 bg-gradient-to-br from-forest-soft/70 to-surface p-5 shadow-sm">
+          <div className="flex items-center gap-2 text-forest"><Sparkles size={19} /><h2 className="font-bold">Worth noticing</h2></div>
+          {insight ? <><p className="mt-4 text-lg font-bold leading-snug">{insight.title}</p><p className="mt-2 text-sm leading-relaxed text-muted">{insight.detail}</p></> : topCategory ? <><p className="mt-4 text-lg font-bold leading-snug">{catInfo(topCategory[0]).label} is your largest category</p><p className="mt-2 text-sm leading-relaxed text-muted">It accounts for {Math.round((topCategory[1] / spent) * 100)}% of spending in this period. Keep logging activity and BudgetWise will identify more useful patterns.</p></> : <><p className="mt-4 text-lg font-bold">Your insights will appear here</p><p className="mt-2 text-sm leading-relaxed text-muted">About a week of activity or a bank CSV gives BudgetWise enough context to spot patterns.</p></>}
+        </section>
       </div>
 
+      <section className="rounded-2xl border border-line bg-surface p-4 shadow-sm sm:flex sm:items-start sm:gap-5">
+        <div className="mb-3 shrink-0 sm:mb-0 sm:w-48"><p className="font-bold">Add money activity</p><p className="mt-0.5 text-xs text-muted">Write it naturally. Estimates are fine.</p></div><div className="min-w-0 flex-1"><LogBox placeholder="e.g. $12 lunch and $30 gas yesterday, or I made $300 in tips" /></div>
+      </section>
+
+      <section className="overflow-hidden rounded-3xl border border-line bg-surface shadow-sm">
+        <div className="flex flex-col gap-3 border-b border-line p-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+          <div><h2 className="text-lg font-bold">Transactions</h2><p className="text-xs text-muted">Correct a category once and BudgetWise remembers that store.</p></div>
+          <div className="relative w-full sm:max-w-sm"><Search size={17} className="pointer-events-none absolute left-3.5 top-3 text-faint" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search stores" className="field py-2 pl-10" aria-label="Search transactions" /></div>
+        </div>
+        {cat && <div className="flex items-center gap-2 border-b border-line bg-forest-soft/35 px-5 py-2 text-sm"><span>Showing {catInfo(cat).label}</span><button onClick={() => setCat(null)} className="chip text-forest hover:bg-forest-soft"><X size={14} /> Clear</button></div>}
+
       {isLoading ? (
-        <div className="space-y-3">{Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-14" />)}</div>
+        <div className="space-y-3 p-5">{Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-14" />)}</div>
       ) : groups.length === 0 ? (
-        <p className="panel p-6 text-muted">No transactions match. Try a different period, category or search.</p>
+        <p className="p-6 text-muted">No transactions match. Try a different period, category or search.</p>
       ) : (
-        <div className="panel divide-y divide-line">
+        <div className="divide-y divide-line">
           {groups.map(([date, rows]) => (
             <div key={date}>
               <div className="flex items-center justify-between bg-sunken/50 px-5 py-2 text-[0.85rem] font-medium text-muted">
@@ -171,6 +177,7 @@ export default function Spending() {
                       </p>
                       <p className="truncate text-[0.78rem] text-faint">
                         {t.source === "chat" ? "You told BudgetWise" : t.source === "checkin" ? "Daily check-in" : t.description}
+                        {t.source === "chat" && ` · ${t.payment_method === "available_money" ? "Available money" : t.payment_method === "credit_card" ? "Credit card" : "Separate money"}`}
                       </p>
                     </div>
                     <div className="hidden sm:block"><CategoryPicker t={t} /></div>
@@ -185,6 +192,7 @@ export default function Spending() {
           ))}
         </div>
       )}
+      </section>
     </div>
   );
 }

@@ -5,7 +5,7 @@ from datetime import date
 
 import pytest
 from budgetwise import conversation, devlog, finance, store
-from budgetwise.agents import _partial_afford_text
+from budgetwise.agents import _no_write_text, _partial_afford_text, _saved_text
 
 
 @pytest.fixture(autouse=True)
@@ -58,6 +58,15 @@ def test_goal_balance_and_zero_savings_are_distinct_and_persistent():
     assert finance.snapshot(other)["goal"] is None
 
 
+def test_welcome_is_once_per_personal_workspace_and_never_shown_for_demo():
+    account = store.ensure_default_personal()
+    assert conversation.state(account)["welcome_seen"] is False
+    store.save_settings(account, {"welcome_seen": True})
+    assert conversation.state(account)["welcome_seen"] is True
+
+    assert conversation.state("demo-maya")["welcome_seen"] is True
+
+
 def test_unknown_data_never_supports_affordability_or_spending_plan():
     account = store.ensure_default_personal()
     say(account, "I have $500 in my account")
@@ -83,12 +92,17 @@ def test_skipping_does_not_invent_facts_and_does_not_repeat_question():
 def test_expense_with_relative_date_is_saved_once_and_undoable():
     account = store.ensure_default_personal()
     say(account, "I have $500")
-    _, saved = say(account, "Yesterday I spent about $40 on gas and groceries")
+    answer, saved = say(account, "Yesterday I spent about $40 on gas and groceries")
+    assert saved is None and "purchase details" in answer
+    assert conversation.state(account)["question"] == "How did you pay for that?"
+    answer, saved = say(account, "Paid from available money")
     rows = store.load_transactions(account)
     assert len(rows) == 1 and rows[0]["amount"] == -40
     assert str(rows[0]["date"]) == "2026-11-10"
     assert rows[0]["approx"]
-    assert finance.snapshot(account)["balance"] == 460
+    # A balance confirmed today already includes a purchase from yesterday.
+    assert finance.snapshot(account)["balance"] == 500
+    assert "before your latest balance check" in answer
     store.undo_batch(account, saved["batch_id"])
     assert finance.snapshot(account)["balance"] == 500
 
@@ -107,10 +121,139 @@ def test_fast_path_does_not_guess_ambiguous_or_multiple_statements():
 ])
 def test_multiple_purchases_are_all_saved_and_confirmed(text, names):
     account = store.ensure_default_personal()
+    store.save_settings(account, {"default_payment_method": "available_money"})
     answer, saved = say(account, text)
     assert saved["count"] == 2
     assert {t["description"] for t in saved["transactions"]} == names
     assert all(name in answer for name in names)
+
+
+def test_payment_source_controls_available_money_and_is_remembered():
+    account = store.ensure_default_personal()
+    say(account, "I have $500")
+    assert "purchase details" in say(account, "I just spent $20 on lunch")[0]
+    assert conversation.state(account)["question"] == "How did you pay for that?"
+    answer, saved = say(account, "Put it on a credit card")
+    assert saved["transactions"][0]["payment_method"] == "credit_card"
+    assert finance.snapshot(account)["balance"] == 500
+    assert "not changed" in answer
+    _, saved = say(account, "I spent $10 on coffee today")
+    assert saved["transactions"][0]["payment_method"] == "credit_card"
+    assert finance.snapshot(account)["balance"] == 500
+
+
+@pytest.mark.parametrize("reply,method,expected_balance", [
+    ("Checking account", "available_money", 475),
+    ("My debit card", "available_money", 475),
+    ("Credit card", "credit_card", 500),
+    ("I paid cash", "cash_other", 500),
+])
+def test_payment_source_accepts_natural_short_answers(reply, method, expected_balance):
+    account = store.ensure_default_personal()
+    say(account, "I have $500")
+    say(account, "I spent $25 on lunch today")
+    answer, saved = say(account, reply)
+    assert saved is not None
+    assert saved["transactions"][0]["payment_method"] == method
+    assert finance.snapshot(account)["balance"] == expected_balance
+    assert conversation.state(account)["question_key"] != "payment_source"
+
+
+def test_short_weekly_amount_is_saved_even_after_guided_setup_pauses():
+    account = store.ensure_default_personal()
+    store.save_settings(account, {"conversation_started": True, "conversation_guidance_paused": True})
+    answer, saved = say(account, "about $280 a week")
+    assert saved is not None
+    assert store.load_settings(account)["typical_weekly_spend"] == 280
+    assert "280.00" in answer
+
+
+def test_agent_confirmation_names_every_purchase_in_one_message():
+    account = store.ensure_default_personal()
+    store.save_settings(account, {"default_payment_method": "available_money"})
+    _, saved = say(account, "I spent $25 on lunch and $40 on gas")
+    confirmation = _saved_text(saved)
+    assert "$25.00 for Lunch" in confirmation
+    assert "$40.00 for Gas" in confirmation
+
+
+def test_model_cannot_claim_a_purchase_was_saved_without_a_database_write():
+    false_claim = "Got it—your $30 Target purchase came straight out of your debit card."
+    answer = _no_write_text(false_claim)
+    assert "didn’t save anything" in answer
+    assert "came straight out" not in answer
+
+
+@pytest.mark.parametrize("message,expected", [
+    ("spent 25 on lunch and 40 on gas today", [(25, "Lunch"), (40, "Gas")]),
+    ("spent $30 at target", [(30, "Target")]),
+    ("I spent 30 dollars at target", [(30, "Target")]),
+    ("bought coffee for 6", [(6, "Coffee")]),
+    ("spent 30 at target", [(30, "Target")]),
+])
+def test_common_purchase_phrasings_share_one_pending_payment_flow(message, expected):
+    account = store.ensure_default_personal()
+    say(account, "I have $500")
+    answer, saved = say(account, message)
+    assert saved is None
+    assert "purchase details" in answer
+    assert conversation.state(account)["question_key"] == "payment_source"
+    assert store.load_transactions(account) == []
+
+    answer, saved = say(account, "with my debit card")
+    assert saved is not None
+    actual = [(abs(t["amount"]), t["description"]) for t in saved["transactions"]]
+    assert sorted(actual) == sorted(expected)
+    assert all(description in answer for _, description in expected)
+    assert conversation.state(account)["question_key"] != "payment_source"
+
+
+def test_received_money_requires_deposit_confirmation():
+    account = store.ensure_default_personal()
+    say(account, "I have $100")
+    answer, saved = say(account, "I recieved 40 dollars for my birthday today")
+    assert saved is None and "income details" in answer
+    assert "available balance" in conversation.state(account)["question"]
+    answer, saved = say(account, "Yes, add it to available money")
+    assert saved["transactions"][0]["amount"] == 40
+    assert finance.snapshot(account)["balance"] == 140
+
+
+def test_ambiguous_past_bill_asks_paid_or_due_without_double_counting():
+    account = store.ensure_default_personal()
+    say(account, "I have $179")
+    answer, saved = say(account, "I had a cellphone bill of 30 dollars 3 days ago")
+    assert saved is None and "bill details" in answer
+    assert "paid, or is it still due" in conversation.state(account)["question"]
+    answer, saved = say(account, "Paid from available money")
+    assert saved["transactions"][0]["amount"] == -30
+    assert finance.snapshot(account)["balance"] == 179
+    assert "before your latest balance check" in answer
+
+
+def test_unsaved_model_claim_is_replaced():
+    answer = conversation.safe_unsaved_answer("Got it—recorded $40 birthday money.")
+    assert "didn’t change your records" in answer
+
+
+def test_weekly_balance_and_goal_checkins_are_purposeful_and_cumulative():
+    account = store.ensure_default_personal()
+    store.set_balance(account, 500, as_of="2026-11-01")
+    store.save_settings(account, {"conversation_started": True, "conversation_guidance_paused": True})
+    state = conversation.state(account)
+    assert state["question_key"] == "balance_check"
+    say(account, "Yes, that's close")
+    assert store.balance_note(account)["as_of"] == "2026-11-11"
+
+    say(account, "I want to save $300 in two months")
+    settings = store.load_settings(account)
+    goal = dict(settings["goal"])
+    goal["saved"], goal["saved_known"] = 100, True
+    goal["last_checkin"] = "2026-11-01"
+    store.save_settings(account, {"goal": goal, "conversation_guidance_paused": True})
+    assert conversation.state(account)["question_key"] == "goal_checkin"
+    say(account, "I saved 25 dollars")
+    assert finance.snapshot(account)["goal"]["saved"] == 125
 
 
 def test_partial_affordability_uses_known_balance_without_claiming_safety():
@@ -310,6 +453,8 @@ def test_guided_setup_stops_after_three_purposeful_answers():
     settings = store.load_settings(account)
     assert settings["conversation_question_streak"] == 3
     assert settings["conversation_guidance_paused"]
+    assert conversation.state(account)["guidance_complete"] is True
+    assert "more useful" in transition
 
 
 @pytest.mark.parametrize("reply", ["I'm not sure", "not right now", "maybe later", "I prefer not to share"])
@@ -329,7 +474,7 @@ def test_ignored_question_is_not_repeated_and_setup_can_be_resumed():
     before = conversation.state(account)
     answer, saved = say(account, "Hello")
     transition = conversation.complete_guided_turn(account, before, bool(saved))
-    assert "track spending" in answer
+    assert "spending" in answer
     assert transition == conversation.TRANSITION
     assert conversation.state(account)["question_key"] is None
     say(account, "continue setup")
@@ -360,3 +505,25 @@ def test_opt_in_development_log_is_structured_local_and_redacted(monkeypatch):
     assert "4111111111111111" not in rows[0]["message"]
     assert rows[0]["account"] != account
     assert rows[0]["error_reason"] == "Model timeout"
+
+
+def test_development_log_archive_moves_all_turns_and_starts_clean(monkeypatch):
+    monkeypatch.setenv("BUDGETWISE_DEV_LOG_CONVERSATIONS", "1")
+    account = store.ensure_default_personal()
+    before = conversation.state(account)
+    readiness = finance.snapshot(account)["readiness"]
+    for session in ("first", "second"):
+        devlog.log_turn(account=account, session_id=session, message="test", answer="ok", handler="quick",
+                        intent="guided", elapsed=0.01, before=before, after=before,
+                        readiness_before=readiness, readiness_after=readiness)
+    active = devlog.path()
+    archived = devlog.archive_current()
+    assert archived and archived["turns"] == 2
+    assert not active.exists()
+    target = store.ROOT / archived["path"]
+    assert target.exists() and len(target.read_text(encoding="utf-8").splitlines()) == 2
+
+    devlog.log_turn(account=account, session_id="third", message="new", answer="ok", handler="quick",
+                    intent="guided", elapsed=0.01, before=before, after=before,
+                    readiness_before=readiness, readiness_after=readiness)
+    assert active.exists() and len(active.read_text(encoding="utf-8").splitlines()) == 1

@@ -10,6 +10,7 @@ import json
 import os
 import re
 import threading
+from datetime import datetime
 from pathlib import Path
 
 from . import store
@@ -24,6 +25,41 @@ def enabled() -> bool:
 def path() -> Path:
     override = os.getenv("BUDGETWISE_DEV_LOG_PATH")
     return Path(override) if override else store.WORKSPACE / "dev_conversations.jsonl"
+
+
+def display_path(target: Path | None = None) -> str:
+    """A user-facing path without exposing more of the computer than necessary."""
+    target = target or path()
+    try:
+        return str(target.relative_to(store.ROOT)).replace("\\", "/")
+    except ValueError:
+        return str(target)
+
+
+def archive_current() -> dict | None:
+    """Atomically move the entire active JSONL log into a timestamped local archive.
+
+    The next logged turn recreates the active file. This intentionally archives every
+    workspace/session in the file so the UI never implies account-specific deletion.
+    """
+    if not enabled():
+        raise RuntimeError("Development conversation logging is not enabled")
+    source = path()
+    with _LOCK:
+        if not source.exists() or source.stat().st_size == 0:
+            return None
+        archive_dir = source.parent / "log_archive"
+        archive_dir.mkdir(parents=True, exist_ok=True)
+        stamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
+        target = archive_dir / f"{source.stem}_{stamp}{source.suffix}"
+        counter = 2
+        while target.exists():
+            target = archive_dir / f"{source.stem}_{stamp}_{counter}{source.suffix}"
+            counter += 1
+        source.replace(target)
+        turns = sum(1 for line in target.open("r", encoding="utf-8") if line.strip())
+        return {"path": display_path(target), "filename": target.name, "turns": turns,
+                "bytes": target.stat().st_size}
 
 
 def _safe_text(value: str) -> str:

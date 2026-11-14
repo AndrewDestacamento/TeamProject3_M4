@@ -8,6 +8,7 @@ The date is pinned so the demo personas always produce the same numbers.
 import asyncio
 import json
 import sys
+from datetime import date, timedelta
 from pathlib import Path
 
 import pytest
@@ -257,6 +258,20 @@ def test_nearby_payday_does_not_turn_rent_money_into_a_huge_weekly_plan():
     assert concert["verdict"] == "tight"
     assert concert["over_today"] is True
     assert plan["daily_limit"] <= 40  # the $280 typical week caps the general plan
+    assert plan["focus_category"] == "other"  # one lunch is not treated as a spending habit
+    assert plan["focus_label"] == "Everyday spending"
+
+
+def test_held_back_insight_never_claims_smaller_bills_exceed_larger_income():
+    snap = finance.snapshot("demo-jordan")
+    # Reproduce the wording bug: a reserve can still be needed for living costs even
+    # when expected income is larger than the bills after payday.
+    snap["next_cycle"] = {**snap["next_cycle"], "bills_total": 1000.0, "expected_income": 2100.0}
+    held = next((item for item in finance.insights(
+        snap, store.load_transactions("demo-jordan"), date.fromisoformat(TODAY)) if item["id"] == "held_back"), None)
+    assert held is not None
+    assert "more than" not in held["detail"]
+    assert "$1,000.00" in held["detail"]
 
 
 def test_ten_day_pay_window_also_reserves_living_costs_and_uses_fourteen_day_view():
@@ -303,6 +318,21 @@ def test_one_purchase_is_not_enough_to_claim_usual_spending_is_known():
     snap = finance.snapshot(acc)
     assert snap["readiness"]["spending_history_days"] == 7
     assert "spending" not in snap["readiness"]["missing"]
+
+
+def test_goal_cutting_insight_requires_a_real_pattern_not_one_purchase():
+    acc = _new_account()
+    store.save_settings(acc, {"goal": {"name": "Trip", "target": 500, "saved": 0, "saved_known": True,
+                                              "deadline": "2026-12-31"}})
+    store.add_transactions(acc, [{"date": TODAY, "description": "Lunch", "amount": -40,
+                                  "category": "dining"}], source="chat", batch_id="one")
+    assert not any(i["id"] == "goal_opportunity" for i in finance.snapshot(acc)["insights"])
+    for days_ago in range(1, 7):
+        day = (date.fromisoformat(TODAY) - timedelta(days=days_ago)).isoformat()
+        store.add_transactions(acc, [{"date": day, "description": "Coffee", "amount": -10,
+                                      "category": "dining"}], source="chat", batch_id=f"d{days_ago}")
+    insight = next(i for i in finance.snapshot(acc)["insights"] if i["id"] == "goal_opportunity")
+    assert "Dining & coffee" in insight["detail"] and "there" not in insight["detail"]
 
 
 def test_goal_stays_at_starter_pace_when_pay_schedule_has_no_amount():
@@ -368,6 +398,21 @@ def test_bookkeeper_tools_spread_validate_and_fix():
     ctx2 = bk.BookContext(acc, "b-chat-2", date(2026, 11, 10))
     assert "Updated 2" in _tool(bk.fix_last_entry, ctx2, {"category": "groceries"})
     assert {t["category"] for t in store.batch_summary(acc, "b-chat-1")["transactions"]} == {"groceries"}
+
+
+def test_bookkeeper_agent_can_only_stage_spending_until_user_selects_payment_source():
+    from budgetwise import bookkeeper as bk
+    acc = _new_account()
+    ctx = bk.BookContext(acc, "stage-only", date(2026, 11, 10))
+    exposed = {tool.name for tool in bk.TOOLS}
+    assert bk.prepare_spending.name in exposed
+    assert bk.log_spending.name not in exposed
+    result = _tool(bk.prepare_spending, ctx, {"items": [{"amount": 30, "what": "Target"}]})
+    assert "no transaction was saved yet" in result
+    assert store.load_transactions(acc) == []
+    pending = store.load_settings(acc)["pending_money_event"]
+    assert pending["kind"] == "payment_source"
+    assert pending["items"][0]["amount"] == 30
 
 
 def test_goal_starts_with_verified_pace_and_one_next_question():

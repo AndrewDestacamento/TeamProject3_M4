@@ -1,41 +1,33 @@
 # BudgetWise AI (Team 3, CEN 4930 M4)
 
-**Problem:** People with irregular income (students, part-time and gig workers, freelancers) can see their balance, but they can't tell how much they can safely spend today, whether they'll run short before payday, or what to change this week.
+**Problem:** People with irregular income—students, part-time and gig workers, and freelancers—can see their balance, but often cannot tell what is safe to spend, how to reach a savings goal, or what to change this week.
 
-**What BudgetWise does:** You tell it about your money, either by uploading your bank's CSV or just by typing ("spent about $20 on food", "I get paid every 2 weeks but it changes"). It keeps an organized record and answers those questions in seconds. A team of AI agents explains the numbers, saves what you tell it and builds a weekly plan, and Python calculates every dollar.
+**BudgetWise AI** is a goal-centered budgeting assistant that remembers and organizes what a user shares. A user can type naturally—"I spent about $20 on food," "rent is $900 on the first," or "I get paid every two weeks but it changes"—or import a bank CSV. BudgetWise tracks income, spending, bills, balances, and goals; then produces grounded advice, safe-to-spend guidance, and practical weekly plans. Users can start with very little information and add or correct details whenever they want.
 
-![BudgetWise home screen](docs/screenshots/today.png)
+The AI is used for language understanding, personalized explanations, planning strategy, and categorizing unfamiliar merchants. **Deterministic Python code calculates every dollar amount**, and SQLite preserves the user's financial picture across visits. That makes BudgetWise more useful than a one-off chatbot conversation: it maintains a structured, correctable workspace and updates its guidance as the user's real situation changes.
 
-> Working on the code (teammates or AI coding assistants)? Start with [AGENTS.md](AGENTS.md) for the project history, architecture, money rules and open tasks, and [docs/PROJECT_GUIDE.md](docs/PROJECT_GUIDE.md) for the course requirements.
+> New to the project? Read the short [M4 project overview](docs/PROJECT_OVERVIEW.md), then use
+> [AGENTS.md](AGENTS.md) for detailed engineering rules and [docs/PROJECT_GUIDE.md](docs/PROJECT_GUIDE.md)
+> for the course requirements.
 
 ## What you can do
 - **Tell it in plain words.** For example: "spent like $40 the last couple days on gas", "I made $300 in tips this week", "rent is $725 on the 1st", "I have $410 right now" or "that was groceries actually". The Bookkeeper agent saves and organizes it, shows exactly what it saved, and **Undo** removes it with one tap.
-- **Start without a bank file.** Five quick questions (balance, how you get paid, bills, a normal week, a goal) are enough to start. Each day the home screen asks "What did you spend today?" with one-tap answers.
+- **Keep one useful available-money estimate.** BudgetWise asks whether a purchase came from that pool, a credit card, or somewhere else. Credit-card and cash activity still count toward spending patterns but do not silently change the available-money number. A transaction dated before the latest balance check is not counted twice.
+- **Stay on track with light weekly check-ins.** About once a week, BudgetWise can confirm the available-money estimate and ask how much was added toward the active goal. It updates the remaining weekly pace instead of restarting setup.
+- **Start with as much or as little as you want.** The guided conversation asks one useful question at a time, but every question can be skipped. Once there is enough context, it stops setup and invites the user to log activity or ask for advice.
 - **See what's safe to spend today.** BudgetWise checks the next 30 days of conservative pay, recurring bills, usual living costs and your cushion, then spreads today's amount across at least two weeks. The "runway" shows upcoming bills and paychecks.
-- **Ask anything.** For example: "Can I afford a $60 dinner on Friday?", "Where did my money go this month?", or "Will I run short before payday?". Each answer shows which agent did what and confirms that every number was checked.
+- **Ask for useful advice.** For example: "Can I afford a $60 dinner on Friday?", "Where did my money go this month?", or "Will I run short before payday?" Every amount is checked against saved data and Python calculations before it is shown.
 - **Get a weekly plan.** It sets a daily limit, a cap on one category and an amount to save. The Critic agent reviews the plan, and nothing is saved until you click **Start this plan**. Next week, BudgetWise checks how it went.
 - **Upload your bank's CSV for exact numbers.** It reads exports from Chase, Bank of America, Capital One, Wells Fargo and most others. Upload a new file each week into the same account: rows it already has are skipped, and your estimates for those dates are replaced by the exact bank rows. Bills and paydays are detected, and anything you told BudgetWise takes priority. Your data stays on your computer.
-- **Try demo people.** **Maya** (student barista), **Jordan** (rideshare driver) and **Priya** (freelance designer) each have a different kind of irregular income.
+- **Try examples without mixing data.** **Maya** (student barista), **Jordan** (rideshare driver), and **Priya** (freelance designer) each have a separate fake workspace showing consistent use.
 
 ## How it works
 
-```mermaid
-flowchart LR
-  U([User]) --> UI[React web app]
-  UI -- "HTTP + SSE stream" --> API[FastAPI server<br/>app.py]
-  API --> G{{Input guardrail<br/>scope, privacy, injection}}
-  G --> R{Router<br/>code, not a model}
-  R -- "money question" --> AN[Analyst agent<br/>ReAct]
-  R -- "can I afford $X" --> ME[Money engine] --> AN
-  R -- "weekly plan" --> PL[Planner agent<br/>chain of thought] --> CR[Critic agent<br/>score 1-10]
-  R -- "I spent / I made / rent is..." --> BK[Bookkeeper agent<br/>saves to the ledger] --> DB[(SQLite ledger)]
-  CR -- "score below 7: revise once" --> PL
-  AN & PL <-- MCP stdio --> T[MCP tool server<br/>mcp_server.py]
-  T --> ME2[(Money engine<br/>budgetwise/finance.py)] --> DB
-  T --> KB[(ChromaDB guides)]
-  AN --> GR{{Grounding check<br/>every $ must match data}}
-  UP[CSV upload] --> RU[Keyword rules] --> CA[Categorizer agent<br/>unknown stores only]
-```
+![BudgetWise AI agent architecture](docs/architecture.png)
+
+*Source: [`docs/architecture.html`](docs/architecture.html) — open it in a browser and screenshot at 1520x950 to regenerate.*
+
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the complete request flow, module map, data boundaries, and updated M4 diagram.
 
 | Agent | Job | Pattern (chapter) |
 |---|---|---|
@@ -58,31 +50,59 @@ flowchart LR
 | Hosting agents behind an API, streamed with SSE (Ch 8) | `app.py`, following the `chapter_08/01z` pattern |
 | Human in the loop, allowlists, identity, secrets (Ch 8) | Plans are saved only when you click Start, and every Bookkeeper save can be undone. Each agent sees only its own tools. The Bookkeeper's tools get the account from the app, never from the model. The API key stays on the server |
 
-## Setup and run (Windows PowerShell)
-1. Install **Python 3.11 or newer**. If `chromadb` won't install on the newest Python, use Python 3.12.
-2. Download the code and open the folder:
+## Setup and run
+
+> These setup helpers and commands are written and tested for **Windows PowerShell**. Mac and Linux users can still run the Python application, but should create and activate their virtual environment using their platform's normal commands.
+
+### Windows quick start
+
+Requirements: **Git**, **Python 3.11 or newer** (Python 3.12 is recommended), an internet connection for the first setup, and an NRP API key from the instructor. Node is not required unless you are editing the React interface.
+
+1. Clone the M4 branch and enter the project:
+
    ```powershell
-   git clone https://github.com/erFig/TeamProject3_M4.git
+   git clone --branch m4-upgrade --single-branch https://github.com/erFig/TeamProject3_M4.git
    cd TeamProject3_M4
    ```
-3. Create a virtual environment and install the packages:
-   ```powershell
-   python -m venv venv
-   venv\Scripts\activate
-   python -m pip install -r requirements.txt
-   ```
-4. Copy `.env.example` to `.env` and paste your NRP token. Never commit `.env`.
-5. Start the app and open **http://localhost:8000**:
-   ```powershell
-   uvicorn app:app --port 8000
-   ```
-   On Windows, don't add `--reload`: it switches Python to an event loop that can't start the MCP tool server.
 
-The first start downloads ChromaDB's small embedding model (about 80 MB) once. You don't need Node: the built web app is already in `frontend/dist`.
+2. Run the Windows setup helper. It creates `venv`, installs Python packages, and copies `.env.example` to `.env` without overwriting an existing file:
+
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File .\scripts\setup_windows.ps1
+   ```
+
+3. Open `.env` and replace `your_nrp_api_key_here` with your own NRP key:
+
+   ```powershell
+   notepad .env
+   ```
+
+4. Start BudgetWise, then open **http://127.0.0.1:8000**:
+
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File .\scripts\start_windows.ps1
+   ```
+
+   Press `Ctrl+C` in that terminal to stop the server. Do **not** add `--reload` on Windows; it uses an event loop that cannot start the MCP stdio tool server correctly.
+
+The first start can take longer because ChromaDB downloads a small embedding model once. Later starts reuse the local copy. The built React app is committed in `frontend/dist`, so teammates do not need Node for normal use.
+
+### Manual Windows setup
+
+If you prefer not to run the helper scripts:
+
+```powershell
+py -3 -m venv venv
+.\venv\Scripts\python.exe -m pip install --upgrade pip
+.\venv\Scripts\python.exe -m pip install -r requirements.txt
+Copy-Item .env.example .env
+notepad .env
+.\venv\Scripts\python.exe -m uvicorn app:app --host 127.0.0.1 --port 8000
+```
 
 **Other ways to run it**
 - Terminal version: `python agent.py "Can I afford a $60 dinner on Friday?"`, `python agent.py --plan`, or `python agent.py` for chat mode.
-- Editing the UI (needs Node 18+): run `cd frontend`, `npm install`, then `npm run dev` (opens on :5173 and talks to the Python server on :8000). Run `npm run build` when you're done.
+- Editing the UI (needs Node 18+): run `cd frontend`, `npm install`, then `npm run dev` (port 5173, proxying API requests to port 8000). Run `npm run build` before committing and include the changed `frontend/dist` files.
 - Regenerating the demo data: `python scripts/make_demo_data.py`.
 
 ## Project structure
@@ -95,20 +115,24 @@ budgetwise/
   finance.py            Money engine: safe-to-spend, bills, paydays, forecast, insights, plans
   agents.py             Router, Analyst, Planner, Critic, Categorizer, streaming
   bookkeeper.py         Bookkeeper agent and its save/fix/undo tools
+  conversation.py       Guided questions, quick replies, persistent history and loop prevention
+  devlog.py             Opt-in private development conversation logging
   importer.py           Reads any bank's CSV export
   categories.py         Categories and keyword rules
   knowledge.py          ChromaDB search over knowledge/*.md
   store.py              SQLite ledger in data/workspace/budgetwise.db (git-ignored)
-frontend/               React + Vite + Tailwind + Recharts (built copy in frontend/dist)
+frontend/               React + Vite + Tailwind + Recharts (built copy committed in frontend/dist)
 data/personas/          Demo people (fake data, dates relative to today)
 data/samples/           Sample bank CSV for trying the upload
 knowledge/              Budgeting guides (Penn State Extension, CFPB)
 tests/                  Unit tests (no model calls)
+docs/ARCHITECTURE.md    Current M4 system diagram and request flow
+docs/PROJECT_OVERVIEW.md Product purpose, M3-to-M4 changes, agent roles, and testing/logging handoff
 docs/m3/                M3 architecture and evaluation, kept for reference
 ```
 
 ## Tests
-- `python -m pytest` runs **68 checks with no model calls**: the money math, the CSV importer, the categorizer rules, the router, the guardrails, the ledger (logging, balance, undo, CSV merge), the Bookkeeper's tools, and the MCP server over the real protocol.
+- `python -m pytest` runs **99 checks with no model calls**: money math, natural payment-source replies and balance reconciliation, weekly check-ins, first-use state, local log archiving, the CSV importer, categorizer rules, routing, conversation progression and loop prevention, guardrails, the ledger, Bookkeeper tools, and the MCP server over the real protocol.
 
 ## Reviewing development conversations
 
@@ -121,17 +145,28 @@ blocks and latency. It does not contain uploaded CSV rows, and obvious account/c
 Run `python scripts/review_conversations.py` for a quick summary of sessions, latency and questions that did
 not advance. Treat the JSONL file as private test data: do not commit, publish or share it without consent.
 
+When logging is enabled, Settings shows a **Development conversation logging is on** notice. Choose
+**Archive current log** to atomically move every session in the active file into
+`data/workspace/log_archive/` with a timestamp. The next logged message starts a clean active file. Archives
+remain local and Git-ignored; review one later with
+`python scripts/review_conversations.py --path <archived-jsonl-path>`, then delete it manually when it is no
+longer needed. The developer section is hidden when logging is disabled.
+
 ## CHANGES (since M3)
 | Change | Why | Effect |
 |---|---|---|
-| **Web app** (React) replaces the command line: Today dashboard with payday runway, Spending, Weekly plan, Ask, Accounts | M3 could only be used from a terminal, and testers need something they can actually use | Usable by people who don't code |
+| **Conversation-first React workspace** replaces the command line: Home, Activity, Plan, Settings and isolated examples | M3 could only be used from a terminal, and early web prototypes felt fragmented | A user can log information, ask for advice and see the current money picture in one place |
 | **One server that stays running**, so the MCP server and ChromaDB load once at startup | In M3 every question relaunched the tool server and reloaded the embedding model | Startup cost is paid once (about 2 s) instead of on every question |
 | **Pre-computed snapshot** handed to the agents, and **routing done in code** instead of a handoff | In M3 a plan question took about 11 model calls and 22,000 tokens | Simple questions now take about 2 to 5 s with 0 or 1 tool calls. Plans take about 11 to 15 s |
-| **Streaming answers** and a live agent timeline (SSE) | The M3 demo showed a long blank wait | You see progress right away |
+| **SSE response channel** with a clear loading state and safe calculated fallback | The M3 demo showed a long blank wait and model latency varies | The interface stays responsive and never exposes partial, unverified financial text |
 | **Real data**: CSV import for most banks, plus automatic detection of recurring bills, paydays and income swings | M3 used one fixed sample file with a frozen date | Works on a real bank export. Demo dates now follow today |
 | **Bookkeeper agent: tell it in plain words** ("spent about $40 the last couple days", "I get paid every 2 weeks but it changes"), with a confirmation card and Undo | Most students and gig workers won't download a bank file every day, but they will type a sentence | The app stays current between uploads, and it works with no bank file at all |
 | **SQLite ledger** replaces JSON files: every entry records where it came from (bank, chat, check-in) and whether it's an estimate | Many small saves need to be safe and undoable | Exact bank rows replace estimates for the same dates, and re-uploading a file never double-counts |
-| **Setup without a bank file** (5 questions) and a **daily check-in** ("What did you spend today?") | New users need value in minutes, and the daily number needs fresh input | Works from day one, and one tap keeps today's number accurate |
+| **Available-money reconciliation** records payment method separately from spending | A credit-card purchase, cash gift, old bill, and checking purchase should not all change today's bank balance the same way | Spending stays complete while only verified movements change the planning pool; older activity is not double-counted after a balance check |
+| **Weekly balance and goal check-ins** | People forget automatic transactions and savings transfers | BudgetWise periodically confirms the estimate, records cumulative goal progress, and recalculates the remaining pace without repeating setup |
+| **Optional guided setup** with deterministic quick replies, skip memory and loop prevention | Users need value quickly without being forced through a long questionnaire | The app asks one purposeful question at a time, stops after enough context and accepts any financial fact whenever the user shares it |
+| **Persistent conversation summary** and opt-in development logs | Long transcripts were awkward after refresh and repeated-question failures were hard to diagnose | Returning users see where they left off; consented test sessions can be reviewed without committing private data |
+| **Timestamped development-log archives** visible only when logging is enabled | Repeated test runs need to remain comparable without one ever-growing active file | A developer can preserve a complete testing period, start a clean log, and manually remove private archives later |
 | **30-day cash-flow safe-to-spend**: protects recurring bills, usual living costs and a cushion; daily amounts use at least a 14-day window | A payday tomorrow previously made nearly the whole balance look spendable | Regression cases with payday tomorrow and in 10 days no longer create a huge daily or weekly allowance |
 | **Critic agent** (1-10 score; code approves at 7 or higher, otherwise one revision) | M3 planned this for M4 (Ch 7) | Each plan arrives with a score |
 | **Categorizer agent** with keyword rules first and a cache | Ch 4 cost ladder: the cheapest check first | Most rows are sorted by rules, and only unknown store names go to the model |
@@ -143,6 +178,6 @@ not advance. Treat the JSONL file as private test data: do not commit, publish o
 1. **NRP response times vary.** Most answers take 2 to 5 seconds, but the same plan sometimes takes 25 seconds or more when the model is busy. After 45 seconds an agent shows the calculated numbers instead.
 2. **Recurring-bill detection needs history.** It needs at least two payments on a regular schedule (weekly, every 2 weeks or monthly), so upload two or three months of transactions.
 3. **One person, one computer.** Data is stored in a local SQLite file, with no login or live bank connection (a weekly CSV upload is the bridge; a bank connection such as Plaid would be the next step).
-6. **Estimates are only as good as the guess.** "About $40" is saved as $40.00 and marked as an estimate until a bank file replaces it.
-4. **The input guardrail uses keywords**, so it can block a harmless question like "sales tax" and miss reworded ones.
-5. **The model's advice text can still be generic.** The numbers are verified, but the wording of a tip isn't.
+4. **Estimates are only as good as the guess.** "About $40" is saved as $40.00 and marked as an estimate until a bank file replaces it.
+5. **The input guardrail uses keywords**, so it can block a harmless question like "sales tax" and miss reworded ones.
+6. **The model's advice text can still be generic.** The numbers are verified, but the wording of a tip isn't.

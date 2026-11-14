@@ -622,8 +622,9 @@ def insights(snap: dict, txns, as_of: date) -> list[dict]:
     if snap["held_back_for_next_cycle"] > 0:
         nc = snap["next_cycle"]
         out.append({"id": "held_back", "severity": "medium", "icon": "shield",
-                    "title": f"${nc['held_back']:,.2f} set aside for bills after payday",
-                    "detail": f"Bills of ${nc['bills_total']:,.2f} are due soon after payday, more than the ${nc['expected_income']:,.2f} you're likely to earn by then."})
+                    "title": f"${nc['held_back']:,.2f} protected for after payday",
+                    "detail": f"BudgetWise is protecting part of your available money because ${nc['bills_total']:,.2f} "
+                              f"in bills is due after payday and everyday costs continue between paychecks."})
     for row in snap["month"]["categories"]:
         if row["category"] in FLEXIBLE and row["category"] != "other" and row["change"] >= 25 and (row["change_pct"] or 100) >= 25:
             title = (f"{row['label']} is up {row['change_pct']}% this month" if row["change_pct"] is not None
@@ -645,14 +646,21 @@ def insights(snap: dict, txns, as_of: date) -> list[dict]:
                     "detail": f"{snap['subscriptions']['count']} recurring services. Cancelling one you rarely use is the easiest saving."})
     g = snap["goal"]
     if g and g["remaining"] > 0:
-        optional = [r for r in snap["spending_last_30_days"] if r["category"] in {"dining", "entertainment", "shopping", "subscriptions", "personal"} and r["amount"] >= 20]
+        recent_counts = defaultdict(int)
+        for txn in txns:
+            if txn["amount"] < 0 and txn["date"] >= as_of - timedelta(days=29):
+                recent_counts[txn["category"]] += 1
+        optional = [r for r in snap["spending_last_30_days"]
+                    if snap["readiness"]["spending_history_days"] >= 7
+                    and r["category"] in {"dining", "entertainment", "shopping", "subscriptions", "personal"}
+                    and r["amount"] >= 20 and recent_counts[r["category"]] >= 3]
         if optional:
             top = max(optional, key=lambda r: r["amount"])
             weekly_cut = _r(top["amount"] * 0.20 * 7 / 30)
             share = round(100 * weekly_cut / g["needed_per_week"]) if g["needed_per_week"] else 0
             out.append({"id": "goal_opportunity", "severity": "good", "icon": "target",
                         "title": f"{top['label']} could help fund {g['name']}",
-                        "detail": f"You spent ${top['amount']:,.2f} there in the last 30 days. Cutting about 20% would free roughly ${weekly_cut:,.2f} a week—about {share}% of your weekly goal pace. Only choose this if it feels realistic.",
+                        "detail": f"You logged ${top['amount']:,.2f} in {top['label']} over the last 30 days. Cutting about 20% would free roughly ${weekly_cut:,.2f} a week—about {share}% of your weekly goal pace. Only choose this if it feels realistic.",
                         "category": top["category"]})
     if g and g["fits"] is False and g["remaining"] > 0:
         out.append({"id": "goal_pace", "severity": "medium", "icon": "target",
@@ -764,11 +772,18 @@ def build_weekly_plan(account_id: str | None, save_this_week: float, focus_categ
         return {"error": "cut_percent must be between 0 and 50"}
     last30 = spending_by_category(txns, as_of - timedelta(days=29), as_of)
     focus = str(focus_category).strip().lower()
-    options = [c for c in last30 if c in FLEXIBLE]
+    history_days = len({t["date"] for t in txns if t["amount"] < 0 and t["category"] in FLEXIBLE})
+    category_entries = defaultdict(int)
+    for txn in txns:
+        if txn["amount"] < 0 and txn["date"] >= as_of - timedelta(days=29):
+            category_entries[txn["category"]] += 1
+    # A single purchase is not a spending habit. Use a category-specific cap only after
+    # the same evidence threshold as dashboard insights: a week of history and 3 entries.
+    options = [c for c in last30 if c in FLEXIBLE and history_days >= 7 and category_entries[c] >= 3]
     if not options:
         focus = "other"
     elif focus not in options:
-        return {"error": f"focus_category must be one of: {', '.join(options)}"}
+        focus = max(options, key=lambda category: last30[category])
     typical_weekly = _r(snap["typical_daily_spending"] * 7)
     allowance = _r(min(weekly_safe - save_this_week, typical_weekly or weekly_safe))
     weekly_avg = typical_weekly if not options else _r(last30[focus] * 7 / 30)

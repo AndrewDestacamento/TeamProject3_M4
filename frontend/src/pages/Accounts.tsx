@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ArrowRight, Check, Download, FileSpreadsheet, Loader2, Lock, PencilLine, Trash2, UploadCloud, X } from "lucide-react";
+import { Archive, ArrowRight, Check, Download, FileSpreadsheet, Loader2, Lock, PencilLine, Sparkles, Trash2, UploadCloud, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { api } from "@/lib/api";
 import { useChat } from "@/lib/chat";
@@ -125,7 +125,7 @@ function Uploader() {
             </label>
           )}
           <label className="block">
-            <span className="mb-1.5 block text-[0.9rem] font-medium">Balance right now</span>
+            <span className="mb-1.5 block text-[0.9rem] font-medium">Available money right now</span>
             <input className="field num" inputMode="decimal" value={balance} onChange={(e) => setBalance(e.target.value)} placeholder="e.g. 842.17" />
             <span className="mt-1 block text-[0.8rem] text-muted">{preview.balance !== null ? "Taken from your file. Change it if it's different today." : "Check your banking app and type it in."}</span>
           </label>
@@ -165,8 +165,11 @@ function Uploader() {
 
 function SettingsForm() {
   const qc = useQueryClient();
+  const nav = useNavigate();
   const { data: snap } = useQuery({ queryKey: ["snapshot"], queryFn: api.snapshot });
   const { data: settings } = useQuery({ queryKey: ["settings"], queryFn: api.settings });
+  const { data: devLogs } = useQuery({ queryKey: ["development-logs"], queryFn: api.developmentLogs });
+  const [archiving, setArchiving] = useState(false);
   const [f, setF] = useState<Record<string, string>>({});
   useEffect(() => {
     if (!settings) return;
@@ -203,9 +206,33 @@ function SettingsForm() {
     }
   };
 
+  const archiveLogs = async () => {
+    setArchiving(true);
+    try {
+      const result = await api.archiveDevelopmentLogs();
+      await qc.invalidateQueries({ queryKey: ["development-logs"] });
+      if (result.archived) toast.success(`Archived ${result.archived.turns} conversation turns to ${result.archived.filename}`);
+      else toast.info("There are no active conversation logs to archive yet.");
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setArchiving(false);
+    }
+  };
+
+  const replayWelcome = async () => {
+    await api.saveSettings({ welcome_seen: false });
+    await qc.invalidateQueries({ queryKey: ["conversation"] });
+    nav("/");
+  };
+
   const told = settings?.schedules ?? [];
   return (
     <div className="space-y-5">
+      {snap?.account.kind === "personal" && <div className="flex flex-col gap-3 rounded-2xl border border-line bg-sunken/45 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex gap-3"><Sparkles className="mt-0.5 shrink-0 text-forest" size={20} /><div><p className="font-semibold">BudgetWise introduction</p><p className="mt-0.5 text-[0.84rem] text-muted">Review the two short screens explaining goals, natural-language tracking, imports, and privacy choices.</p></div></div>
+        <button className="btn-ghost shrink-0 text-sm" onClick={() => void replayWelcome()}>Replay introduction</button>
+      </div>}
       <label className="block"><span className="mb-1.5 block text-[0.9rem] font-medium">What should BudgetWise help you with?</span><input className="field" value={f.useCase ?? ""} onChange={set("useCase")} placeholder="For example: help me cut back on eating out" /><span className="mt-1 block text-[0.8rem] text-muted">Optional. You can change this as your priorities change.</span></label>
       {told.length > 0 && (
         <div>
@@ -224,7 +251,8 @@ function SettingsForm() {
         </div>
       )}
       <div className="grid gap-4 sm:grid-cols-3">
-        <label><span className="mb-1.5 block text-[0.9rem] font-medium">Current balance</span><input className="field num" inputMode="decimal" value={f.balance ?? ""} onChange={set("balance")} /></label>
+        <label><span className="mb-1.5 block text-[0.9rem] font-medium">Available money</span><input className="field num" inputMode="decimal" value={f.balance ?? ""} onChange={set("balance")} />
+          <span className="mt-1 block text-[0.8rem] text-muted">The checking or cash pool you want this plan to use</span></label>
         <label><span className="mb-1.5 block text-[0.9rem] font-medium">Cushion to keep</span><input className="field num" inputMode="decimal" value={f.buffer ?? ""} onChange={set("buffer")} />
           <span className="mt-1 block text-[0.8rem] text-muted">Never counted as spendable</span></label>
         <label><span className="mb-1.5 block text-[0.9rem] font-medium">Next payday</span><input className="field" type="date" value={f.payday ?? ""} onChange={set("payday")} />
@@ -236,6 +264,22 @@ function SettingsForm() {
         <label><span className="mb-1.5 block text-[0.9rem] font-medium">Saved so far</span><input className="field num" inputMode="decimal" value={f.goalSaved ?? ""} onChange={set("goalSaved")} /></label>
         <label><span className="mb-1.5 block text-[0.9rem] font-medium">By</span><input className="field" type="date" value={f.goalDeadline ?? ""} onChange={set("goalDeadline")} /></label>
       </div>
+      {devLogs?.enabled && (
+        <div className="rounded-2xl border border-marigold/30 bg-marigold-soft/45 p-4 sm:flex sm:items-center sm:justify-between sm:gap-5">
+          <div className="flex gap-3">
+            <Archive className="mt-0.5 shrink-0 text-marigold" size={20} />
+            <div>
+              <p className="font-semibold">Development conversation logging is on</p>
+              <p className="mt-1 text-[0.84rem] text-muted">Logs can contain conversation and financial text from every local workspace. Archiving moves the complete active log to a timestamped file and starts a new one with the next message.</p>
+              <p className="num mt-1.5 break-all text-[0.76rem] text-faint">Active file: {devLogs.active_path}</p>
+            </div>
+          </div>
+          <button className="btn-ghost mt-3 shrink-0 sm:mt-0" onClick={archiveLogs} disabled={archiving || !devLogs.has_active_log}>
+            {archiving ? <Loader2 size={17} className="animate-spin" /> : <Archive size={17} />}
+            {devLogs.has_active_log ? "Archive current log" : "No active log yet"}
+          </button>
+        </div>
+      )}
       <button className="btn-primary" onClick={save}>Save changes</button>
     </div>
   );

@@ -56,7 +56,8 @@ CREATE TABLE IF NOT EXISTS accounts (
 CREATE TABLE IF NOT EXISTS transactions (
   id TEXT PRIMARY KEY, account_id TEXT NOT NULL, date TEXT NOT NULL, description TEXT NOT NULL,
   merchant TEXT, amount_cents INTEGER NOT NULL, category TEXT NOT NULL, source TEXT NOT NULL,
-  approx INTEGER NOT NULL DEFAULT 0, note TEXT, batch_id TEXT, created_at TEXT NOT NULL,
+  approx INTEGER NOT NULL DEFAULT 0, payment_method TEXT NOT NULL DEFAULT 'available_money',
+  affects_balance INTEGER NOT NULL DEFAULT 1, note TEXT, batch_id TEXT, created_at TEXT NOT NULL,
   replaced_by TEXT, deleted INTEGER NOT NULL DEFAULT 0);
 CREATE INDEX IF NOT EXISTS tx_account_date ON transactions(account_id, date);
 CREATE TABLE IF NOT EXISTS schedules (
@@ -88,8 +89,17 @@ def today() -> date:
     return date.fromisoformat(pinned) if pinned else date.today()
 
 
+_last_timestamp = ""
+
+
 def now() -> str:
-    return datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")
+    """A sortable timestamp that never moves backward within this process."""
+    global _last_timestamp
+    value = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")
+    if value <= _last_timestamp:
+        value = (datetime.fromisoformat(_last_timestamp) + timedelta(microseconds=1)).strftime("%Y-%m-%dT%H:%M:%S.%f")
+    _last_timestamp = value
+    return value
 
 
 def cents(x: float) -> int:
@@ -118,6 +128,12 @@ def db() -> sqlite3.Connection:
     if key not in _ready:
         con.execute("PRAGMA journal_mode=WAL")
         con.executescript(SCHEMA)
+        # Forward-only migrations keep existing local workspaces usable without a reset.
+        columns = {r["name"] for r in con.execute("PRAGMA table_info(transactions)")}
+        if "payment_method" not in columns:
+            con.execute("ALTER TABLE transactions ADD COLUMN payment_method TEXT NOT NULL DEFAULT 'available_money'")
+        if "affects_balance" not in columns:
+            con.execute("ALTER TABLE transactions ADD COLUMN affects_balance INTEGER NOT NULL DEFAULT 1")
         con.commit()
         _ready.add(key)
     return con
@@ -280,8 +296,12 @@ def set_balance(account_id: str, amount: float, source: str = "chat", batch_id: 
 
 
 def current_balance(account_id: str) -> float:
-    """Latest balance statement, plus every entry the user logged after it.
-    An entry counts if it was logged after the statement, or is dated after the statement's day."""
+    """Latest available-money statement plus later entries that actually move that pool.
+
+    A purchase entered later but dated before the latest balance check is already reflected in
+    that check, so adding it again would double-count it. Same-day entries only count when they
+    were logged after the balance statement was created.
+    """
     rows = _q("SELECT * FROM balances WHERE account_id=? AND deleted=0 ORDER BY created_at DESC LIMIT 1", (account_id,))
     if rows:
         anchor_c, as_of, created = rows[0]["balance_cents"], rows[0]["as_of"], rows[0]["created_at"]
@@ -293,7 +313,9 @@ def current_balance(account_id: str) -> float:
     placeholders = ",".join("?" * len(LOGGED_SOURCES))
     moved = _q(f"""SELECT COALESCE(SUM(amount_cents), 0) AS s FROM transactions
                    WHERE account_id=? AND deleted=0 AND replaced_by IS NULL AND source IN ({placeholders})
-                   AND (created_at > ? OR date > ?)""", (account_id, *LOGGED_SOURCES, created, as_of))[0]["s"]
+                   AND affects_balance=1
+                   AND (date > ? OR (date = ? AND created_at > ?))""",
+               (account_id, *LOGGED_SOURCES, as_of, as_of, created))[0]["s"]
     return dollars(anchor_c + moved)
 
 
@@ -308,7 +330,9 @@ def balance_note(account_id: str) -> dict:
 def _row_to_txn(r) -> dict:
     return {"id": r["id"], "date": r["date"], "description": r["description"], "merchant": r["merchant"],
             "amount": dollars(r["amount_cents"]), "category": r["category"], "source": r["source"],
-            "approx": bool(r["approx"]), "batch_id": r["batch_id"]}
+            "approx": bool(r["approx"]), "payment_method": r["payment_method"],
+            "affects_balance": bool(r["affects_balance"]), "batch_id": r["batch_id"],
+            "created_at": r["created_at"]}
 
 
 def load_transactions(account_id: str) -> list[dict]:
@@ -320,7 +344,8 @@ def load_transactions(account_id: str) -> list[dict]:
         p = _persona(account_id[5:]) or {"transactions": []}
         t0 = today()
         rows = [{**t, "date": (t0 - timedelta(days=t["days_ago"])).isoformat(), "source": "demo", "approx": False,
-                 "merchant": None, "batch_id": None} for t in p["transactions"]]
+                 "merchant": None, "payment_method": "demo", "affects_balance": False,
+                 "created_at": "0", "batch_id": None} for t in p["transactions"]]
     rows += [_row_to_txn(r) for r in _q(
         "SELECT * FROM transactions WHERE account_id=? AND deleted=0 AND replaced_by IS NULL", (account_id,))]
     overrides = {r["txn_id"]: r["category"] for r in _q("SELECT txn_id, category FROM overrides WHERE account_id=?", (account_id,))}
@@ -332,23 +357,29 @@ def load_transactions(account_id: str) -> list[dict]:
             "merchant": t.get("merchant") or pretty_merchant(t["description"]),
             "merchant_key": merchant_key(t["description"]), "amount": round(float(t["amount"]), 2),
             "category": cat if cat in CATEGORIES else "other", "source": t.get("source", "csv"),
-            "approx": bool(t.get("approx")), "batch_id": t.get("batch_id"),
+            "approx": bool(t.get("approx")), "payment_method": t.get("payment_method", "bank"),
+            "affects_balance": bool(t.get("affects_balance", False)), "batch_id": t.get("batch_id"),
         })
     out.sort(key=lambda r: (r["date"], r["id"]), reverse=True)
     return out
 
 
 def add_transactions(account_id: str, entries: list[dict], source: str, batch_id: str | None = None) -> list[dict]:
-    """Save entries: each {date, description, amount, category, approx?, merchant?, note?}."""
+    """Save entries, including whether each one moves the tracked available-money pool."""
     created = now()
     rows = []
     for e in entries:
         tid = new_id("t")
         rows.append((tid, account_id, e["date"], e["description"][:120], e.get("merchant"), cents(e["amount"]),
-                     e["category"], source, 1 if e.get("approx") else 0, e.get("note"), batch_id, created))
+                     e["category"], source, 1 if e.get("approx") else 0,
+                     e.get("payment_method", "bank" if source == "csv" else "available_money"),
+                     1 if e.get("affects_balance", source in LOGGED_SOURCES) else 0,
+                     e.get("note"), batch_id, created))
     _xmany("""INSERT INTO transactions(id, account_id, date, description, merchant, amount_cents, category, source,
-              approx, note, batch_id, created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""", rows)
-    return [{"id": r[0], "date": r[2], "description": r[3], "amount": dollars(r[5]), "category": r[6], "approx": bool(r[8])}
+              approx, payment_method, affects_balance, note, batch_id, created_at)
+              VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", rows)
+    return [{"id": r[0], "date": r[2], "description": r[3], "amount": dollars(r[5]), "category": r[6],
+             "approx": bool(r[8]), "payment_method": r[9], "affects_balance": bool(r[10])}
             for r in rows]
 
 
@@ -409,6 +440,13 @@ def batch_summary(account_id: str, batch_id: str) -> dict:
     """What one chat message saved (for the confirmation card)."""
     txns = [_row_to_txn(r) for r in _q("SELECT * FROM transactions WHERE account_id=? AND batch_id=? AND deleted=0 ORDER BY date DESC",
                                         (account_id, batch_id))]
+    anchors = _q("SELECT as_of, created_at FROM balances WHERE account_id=? AND deleted=0 ORDER BY created_at DESC LIMIT 1",
+                 (account_id,))
+    anchor = anchors[0] if anchors else None
+    for txn in txns:
+        txn["moves_available_money"] = bool(txn["affects_balance"] and (
+            not anchor or txn["date"] > anchor["as_of"] or
+            (txn["date"] == anchor["as_of"] and txn["created_at"] > anchor["created_at"])))
     scheds = [schedule_dict(r) for r in _q("SELECT * FROM schedules WHERE account_id=? AND batch_id=? AND deleted=0", (account_id, batch_id))]
     bals = [{"balance": dollars(r["balance_cents"]), "as_of": r["as_of"]}
             for r in _q("SELECT * FROM balances WHERE account_id=? AND batch_id=? AND deleted=0", (account_id, batch_id))]

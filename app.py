@@ -147,12 +147,28 @@ class SettingsIn(BaseModel):
     use_case: str | None = Field(None, max_length=80)
     onboarding_complete: bool | None = None
     bills_reviewed: bool | None = None
+    welcome_seen: bool | None = None
 
 
 @app.get("/api/settings")
 def get_settings():
     acc = store.active_account_id()
     return {**store.load_settings(acc), "schedules": store.schedules(acc)}
+
+
+@app.get("/api/development-logs")
+def development_logs():
+    """Expose only safe status metadata; never expose log contents or environment values."""
+    return {"enabled": devlog.enabled(), "active_path": devlog.display_path(),
+            "has_active_log": devlog.path().exists() and devlog.path().stat().st_size > 0}
+
+
+@app.post("/api/development-logs/archive")
+def archive_development_logs():
+    if not devlog.enabled():
+        raise HTTPException(404, "Development conversation logging is not enabled.")
+    archived = devlog.archive_current()
+    return {"archived": archived}
 
 
 @app.delete("/api/schedules/{schedule_id}")
@@ -366,6 +382,11 @@ async def chat(body: ChatIn):
                 if not check.blocked:
                     answer = ev.get("answer", "")
                     replacement_needed = False
+                    if not saved:
+                        safe_answer = conversation.safe_unsaved_answer(answer)
+                        if safe_answer != answer:
+                            answer = safe_answer
+                            replacement_needed = True
                     if ev.get("intent") == "log":
                         topic = (current.get("clarification_for") if current.get("question_key") == "clarification"
                                  else current.get("question_key"))
@@ -402,6 +423,7 @@ def chat_reset(session_id: str):
     team.memory.reset(session_id)
     store.save_settings(store.active_account_id(), {"conversation_history": [],
                                                      "conversation_pending_intent": None,
+                                                     "pending_money_event": None,
                                                      "pending_clarification": None,
                                                      "pending_clarification_key": None})
     return {"ok": True}
