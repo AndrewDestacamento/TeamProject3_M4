@@ -1,4 +1,5 @@
 """Regression tests for the first-use journey; no model or real user data."""
+
 import asyncio
 import json
 from datetime import date
@@ -109,16 +110,22 @@ def test_expense_with_relative_date_is_saved_once_and_undoable():
 
 def test_fast_path_does_not_guess_ambiguous_or_multiple_statements():
     account = store.ensure_default_personal()
-    for text in ("I have $500 but $100 is my roommate's", "I want to save $500 in two months and spent $20 today"):
+    for text in (
+        "I have $500 but $100 is my roommate's",
+        "I want to save $500 in two months and spent $20 today",
+    ):
         assert asyncio.run(conversation.quick_reply(text, account)) is None
     assert not store.load_transactions(account)
     assert not finance.snapshot(account)["balance_info"]["as_of"]
 
 
-@pytest.mark.parametrize("text,names", [
-    ("I spent $25 on lunch and $40 on gas", {"Lunch", "Gas"}),
-    ("I spent 60 at Target and 15 on Chipotle", {"Target", "Chipotle"}),
-])
+@pytest.mark.parametrize(
+    "text,names",
+    [
+        ("I spent $25 on lunch and $40 on gas", {"Lunch", "Gas"}),
+        ("I spent 60 at Target and 15 on Chipotle", {"Target", "Chipotle"}),
+    ],
+)
 def test_multiple_purchases_are_all_saved_and_confirmed(text, names):
     account = store.ensure_default_personal()
     store.save_settings(account, {"default_payment_method": "available_money"})
@@ -142,12 +149,15 @@ def test_payment_source_controls_available_money_and_is_remembered():
     assert finance.snapshot(account)["balance"] == 500
 
 
-@pytest.mark.parametrize("reply,method,expected_balance", [
-    ("Checking account", "available_money", 475),
-    ("My debit card", "available_money", 475),
-    ("Credit card", "credit_card", 500),
-    ("I paid cash", "cash_other", 500),
-])
+@pytest.mark.parametrize(
+    "reply,method,expected_balance",
+    [
+        ("Checking account", "available_money", 475),
+        ("My debit card", "available_money", 475),
+        ("Credit card", "credit_card", 500),
+        ("I paid cash", "cash_other", 500),
+    ],
+)
 def test_payment_source_accepts_natural_short_answers(reply, method, expected_balance):
     account = store.ensure_default_personal()
     say(account, "I have $500")
@@ -161,7 +171,9 @@ def test_payment_source_accepts_natural_short_answers(reply, method, expected_ba
 
 def test_short_weekly_amount_is_saved_even_after_guided_setup_pauses():
     account = store.ensure_default_personal()
-    store.save_settings(account, {"conversation_started": True, "conversation_guidance_paused": True})
+    store.save_settings(
+        account, {"conversation_started": True, "conversation_guidance_paused": True}
+    )
     answer, saved = say(account, "about $280 a week")
     assert saved is not None
     assert store.load_settings(account)["typical_weekly_spend"] == 280
@@ -178,19 +190,24 @@ def test_agent_confirmation_names_every_purchase_in_one_message():
 
 
 def test_model_cannot_claim_a_purchase_was_saved_without_a_database_write():
-    false_claim = "Got it—your $30 Target purchase came straight out of your debit card."
+    false_claim = (
+        "Got it—your $30 Target purchase came straight out of your debit card."
+    )
     answer = _no_write_text(false_claim)
     assert "didn’t save anything" in answer
     assert "came straight out" not in answer
 
 
-@pytest.mark.parametrize("message,expected", [
-    ("spent 25 on lunch and 40 on gas today", [(25, "Lunch"), (40, "Gas")]),
-    ("spent $30 at target", [(30, "Target")]),
-    ("I spent 30 dollars at target", [(30, "Target")]),
-    ("bought coffee for 6", [(6, "Coffee")]),
-    ("spent 30 at target", [(30, "Target")]),
-])
+@pytest.mark.parametrize(
+    "message,expected",
+    [
+        ("spent 25 on lunch and 40 on gas today", [(25, "Lunch"), (40, "Gas")]),
+        ("spent $30 at target", [(30, "Target")]),
+        ("I spent 30 dollars at target", [(30, "Target")]),
+        ("bought coffee for 6", [(6, "Coffee")]),
+        ("spent 30 at target", [(30, "Target")]),
+    ],
+)
 def test_common_purchase_phrasings_share_one_pending_payment_flow(message, expected):
     account = store.ensure_default_personal()
     say(account, "I have $500")
@@ -239,7 +256,9 @@ def test_unsaved_model_claim_is_replaced():
 def test_weekly_balance_and_goal_checkins_are_purposeful_and_cumulative():
     account = store.ensure_default_personal()
     store.set_balance(account, 500, as_of="2026-11-01")
-    store.save_settings(account, {"conversation_started": True, "conversation_guidance_paused": True})
+    store.save_settings(
+        account, {"conversation_started": True, "conversation_guidance_paused": True}
+    )
     state = conversation.state(account)
     assert state["question_key"] == "balance_check"
     say(account, "Yes, that's close")
@@ -274,16 +293,28 @@ def test_confirmations_repeat_schedule_details_and_only_mention_goals_when_prese
 
     account = store.ensure_default_personal()
     ctx = bk.BookContext(account, "details", date(2026, 11, 11))
-    bill_call = ToolContext(context=ctx, tool_name=bk.set_bill.name, tool_call_id="bill",
-                            tool_arguments=json.dumps({"name": "Rent", "amount": 1000, "every": "monthly", "day_of_month": 1}))
+    bill_call = ToolContext(
+        context=ctx,
+        tool_name=bk.set_bill.name,
+        tool_call_id="bill",
+        tool_arguments=json.dumps(
+            {"name": "Rent", "amount": 1000, "every": "monthly", "day_of_month": 1}
+        ),
+    )
     asyncio.run(bk.set_bill.on_invoke_tool(bill_call, bill_call.tool_arguments))
     answer = conversation.confirmation(store.batch_summary(account, "details"))
     assert "Rent" in answer and "$1,000.00 monthly on the 1st" in answer
 
     balance_ctx = bk.BookContext(account, "balance-only", date(2026, 11, 11))
-    balance_call = ToolContext(context=balance_ctx, tool_name=bk.set_balance.name, tool_call_id="balance",
-                               tool_arguments=json.dumps({"amount": 100}))
-    asyncio.run(bk.set_balance.on_invoke_tool(balance_call, balance_call.tool_arguments))
+    balance_call = ToolContext(
+        context=balance_ctx,
+        tool_name=bk.set_balance.name,
+        tool_call_id="balance",
+        tool_arguments=json.dumps({"amount": 100}),
+    )
+    asyncio.run(
+        bk.set_balance.on_invoke_tool(balance_call, balance_call.tool_arguments)
+    )
     answer = conversation.confirmation(store.batch_summary(account, "balance-only"))
     assert "set aside for your goal" not in answer
 
@@ -291,7 +322,9 @@ def test_confirmations_repeat_schedule_details_and_only_mention_goals_when_prese
 def test_saved_pay_frequency_is_not_asked_for_again():
     account = store.ensure_default_personal()
     store.set_balance(account, 500)
-    store.add_schedule(account, "income", "Paycheck", "biweekly", next_date="2026-11-13", varies=True)
+    store.add_schedule(
+        account, "income", "Paycheck", "biweekly", next_date="2026-11-13", varies=True
+    )
     store.save_settings(account, {"conversation_started": True})
     state = conversation.state(account)
     assert state["question_key"] == "income"
@@ -301,7 +334,9 @@ def test_saved_pay_frequency_is_not_asked_for_again():
 def test_readiness_requires_bill_review_not_only_one_saved_bill():
     account = store.ensure_default_personal()
     say(account, "I have $500")
-    store.add_schedule(account, "income", "Paycheck", "biweekly", amount=600, next_date="2026-11-13")
+    store.add_schedule(
+        account, "income", "Paycheck", "biweekly", amount=600, next_date="2026-11-13"
+    )
     store.add_schedule(account, "bill", "Phone", "monthly", amount=30, day_of_month=12)
     store.save_settings(account, {"typical_weekly_spend": 100})
     assert finance.snapshot(account)["readiness"]["missing"] == ["bills"]
@@ -310,7 +345,9 @@ def test_readiness_requires_bill_review_not_only_one_saved_bill():
 
 
 def test_calendar_months_and_week_pace_are_calculated_in_python():
-    assert conversation.relative_date("in one month", date(2026, 1, 31)) == date(2026, 2, 28)
+    assert conversation.relative_date("in one month", date(2026, 1, 31)) == date(
+        2026, 2, 28
+    )
     account = store.ensure_default_personal()
     say(account, "I want to save $500 in four weeks")
     g = finance.snapshot(account)["goal"]
@@ -337,7 +374,9 @@ def test_starter_plan_is_immediate_and_honest_with_minimal_information():
 
 def test_goal_name_named_date_and_saved_confirmation_are_natural():
     account = store.ensure_default_personal()
-    answer, saved = say(account, "I want to save $500 by december 13 for an orlando trip")
+    answer, saved = say(
+        account, "I want to save $500 by december 13 for an orlando trip"
+    )
     assert saved["goal"]["name"] == "Orlando trip"
     assert saved["goal"]["deadline"] == "2026-12-13"
     assert "Orlando trip" in answer
@@ -378,10 +417,18 @@ def test_complete_goal_with_month_uses_same_fast_month_end_rule():
 def test_deferred_bill_clarification_is_not_immediately_repeated():
     account = store.ensure_default_personal()
     store.set_balance(account, 500)
-    store.add_schedule(account, "income", "Paycheck", "biweekly", amount=600, next_date="2026-11-13")
-    store.save_settings(account, {"conversation_started": True, "typical_weekly_spend": 100,
-                                  "pending_clarification": "What are the amount and due date?",
-                                  "pending_clarification_key": "bills"})
+    store.add_schedule(
+        account, "income", "Paycheck", "biweekly", amount=600, next_date="2026-11-13"
+    )
+    store.save_settings(
+        account,
+        {
+            "conversation_started": True,
+            "typical_weekly_spend": 100,
+            "pending_clarification": "What are the amount and due date?",
+            "pending_clarification_key": "bills",
+        },
+    )
     assert conversation.state(account)["question_key"] == "clarification"
     say(account, "Skip for now")
     state = conversation.state(account)
@@ -392,28 +439,42 @@ def test_deferred_bill_clarification_is_not_immediately_repeated():
 def test_natural_defer_language_marks_bill_topic_without_model_call():
     account = store.ensure_default_personal()
     store.set_balance(account, 500)
-    store.add_schedule(account, "income", "Paycheck", "biweekly", amount=600, next_date="2026-11-13")
-    store.save_settings(account, {"conversation_started": True, "typical_weekly_spend": 100})
+    store.add_schedule(
+        account, "income", "Paycheck", "biweekly", amount=600, next_date="2026-11-13"
+    )
+    store.save_settings(
+        account, {"conversation_started": True, "typical_weekly_spend": 100}
+    )
     assert conversation.state(account)["question_key"] == "bills"
     answer, _ = say(account, "my bills vary i will let you know when it happens")
     assert "without asking again" in answer
     assert conversation.state(account)["question_key"] is None
 
 
-@pytest.mark.parametrize("reply", [
-    "I will let you know my bills",
-    "I meant I will let you know my bills later on or as I get them",
-    "I'll add them as they come up",
-    "I’ll add bills as they come up",
-])
+@pytest.mark.parametrize(
+    "reply",
+    [
+        "I will let you know my bills",
+        "I meant I will let you know my bills later on or as I get them",
+        "I'll add them as they come up",
+        "I’ll add bills as they come up",
+    ],
+)
 def test_bill_deferral_is_understood_in_different_word_orders(reply):
     account = store.ensure_default_personal()
     store.set_balance(account, 500)
-    store.add_schedule(account, "income", "Paycheck", "biweekly", amount=600, next_date="2026-11-13")
-    store.save_settings(account, {"conversation_started": True, "typical_weekly_spend": 100})
+    store.add_schedule(
+        account, "income", "Paycheck", "biweekly", amount=600, next_date="2026-11-13"
+    )
+    store.save_settings(
+        account, {"conversation_started": True, "typical_weekly_spend": 100}
+    )
     state = conversation.state(account)
     assert state["question_key"] == "bills"
-    assert state["choices"] == ["I’ll add bills as they come up", "I don’t have regular bills"]
+    assert state["choices"] == [
+        "I’ll add bills as they come up",
+        "I don’t have regular bills",
+    ]
     answer, _ = say(account, reply)
     assert "without asking again" in answer
     state = conversation.state(account)
@@ -424,8 +485,12 @@ def test_bill_deferral_is_understood_in_different_word_orders(reply):
 def test_no_regular_bills_is_clear_and_completes_bill_review():
     account = store.ensure_default_personal()
     store.set_balance(account, 500)
-    store.add_schedule(account, "income", "Paycheck", "biweekly", amount=600, next_date="2026-11-13")
-    store.save_settings(account, {"conversation_started": True, "typical_weekly_spend": 100})
+    store.add_schedule(
+        account, "income", "Paycheck", "biweekly", amount=600, next_date="2026-11-13"
+    )
+    store.save_settings(
+        account, {"conversation_started": True, "typical_weekly_spend": 100}
+    )
     answer, _ = say(account, "I don't have regular bills")
     assert "won’t plan for regular bills" in answer
     assert store.load_settings(account)["bills_reviewed"]
@@ -457,7 +522,9 @@ def test_guided_setup_stops_after_three_purposeful_answers():
     assert "more useful" in transition
 
 
-@pytest.mark.parametrize("reply", ["I'm not sure", "not right now", "maybe later", "I prefer not to share"])
+@pytest.mark.parametrize(
+    "reply", ["I'm not sure", "not right now", "maybe later", "I prefer not to share"]
+)
 def test_uncertainty_gracefully_ends_setup_instead_of_switching_topics(reply):
     account = store.ensure_default_personal()
     say(account, "I want to save $500 in two months for a trip")
@@ -484,7 +551,10 @@ def test_ignored_question_is_not_repeated_and_setup_can_be_resumed():
 def test_only_one_clarification_is_allowed_for_each_topic():
     account = store.ensure_default_personal()
     say(account, "I want to save $500 in two months for a trip")
-    assert conversation.set_clarification(account, "saved") == conversation.CLARIFICATIONS["saved"]
+    assert (
+        conversation.set_clarification(account, "saved")
+        == conversation.CLARIFICATIONS["saved"]
+    )
     assert conversation.state(account)["question_key"] == "clarification"
     assert conversation.set_clarification(account, "saved") is None
     assert conversation.state(account)["question_key"] is None
@@ -495,11 +565,24 @@ def test_opt_in_development_log_is_structured_local_and_redacted(monkeypatch):
     account = store.ensure_default_personal()
     before = conversation.state(account)
     readiness = finance.snapshot(account)["readiness"]
-    devlog.log_turn(account=account, session_id="test-session", message="card 4111111111111111 balance $100",
-                    answer="Saved $100", handler="quick", intent="guided", elapsed=0.012,
-                    before=before, after=before, readiness_before=readiness, readiness_after=readiness,
-                    error_reason="Model timeout")
-    rows = [json.loads(line) for line in devlog.path().read_text(encoding="utf-8").splitlines()]
+    devlog.log_turn(
+        account=account,
+        session_id="test-session",
+        message="card 4111111111111111 balance $100",
+        answer="Saved $100",
+        handler="quick",
+        intent="guided",
+        elapsed=0.012,
+        before=before,
+        after=before,
+        readiness_before=readiness,
+        readiness_after=readiness,
+        error_reason="Model timeout",
+    )
+    rows = [
+        json.loads(line)
+        for line in devlog.path().read_text(encoding="utf-8").splitlines()
+    ]
     assert rows[0]["session_id"] == "test-session"
     assert rows[0]["handler"] == "quick"
     assert "4111111111111111" not in rows[0]["message"]
@@ -513,9 +596,19 @@ def test_development_log_archive_moves_all_turns_and_starts_clean(monkeypatch):
     before = conversation.state(account)
     readiness = finance.snapshot(account)["readiness"]
     for session in ("first", "second"):
-        devlog.log_turn(account=account, session_id=session, message="test", answer="ok", handler="quick",
-                        intent="guided", elapsed=0.01, before=before, after=before,
-                        readiness_before=readiness, readiness_after=readiness)
+        devlog.log_turn(
+            account=account,
+            session_id=session,
+            message="test",
+            answer="ok",
+            handler="quick",
+            intent="guided",
+            elapsed=0.01,
+            before=before,
+            after=before,
+            readiness_before=readiness,
+            readiness_after=readiness,
+        )
     active = devlog.path()
     archived = devlog.archive_current()
     assert archived and archived["turns"] == 2
@@ -523,7 +616,17 @@ def test_development_log_archive_moves_all_turns_and_starts_clean(monkeypatch):
     target = store.ROOT / archived["path"]
     assert target.exists() and len(target.read_text(encoding="utf-8").splitlines()) == 2
 
-    devlog.log_turn(account=account, session_id="third", message="new", answer="ok", handler="quick",
-                    intent="guided", elapsed=0.01, before=before, after=before,
-                    readiness_before=readiness, readiness_after=readiness)
+    devlog.log_turn(
+        account=account,
+        session_id="third",
+        message="new",
+        answer="ok",
+        handler="quick",
+        intent="guided",
+        elapsed=0.01,
+        before=before,
+        after=before,
+        readiness_before=readiness,
+        readiness_after=readiness,
+    )
     assert active.exists() and len(active.read_text(encoding="utf-8").splitlines()) == 1

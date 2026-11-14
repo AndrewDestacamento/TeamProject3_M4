@@ -3,6 +3,7 @@
 Enable with BUDGETWISE_DEV_LOG_CONVERSATIONS=1. Logs stay inside the git-ignored
 workspace and may contain financial conversation text, so never publish them.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -19,7 +20,12 @@ _LOCK = threading.Lock()
 
 
 def enabled() -> bool:
-    return os.getenv("BUDGETWISE_DEV_LOG_CONVERSATIONS", "").strip().lower() in {"1", "true", "yes", "on"}
+    return os.getenv("BUDGETWISE_DEV_LOG_CONVERSATIONS", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
 
 
 def path() -> Path:
@@ -58,8 +64,12 @@ def archive_current() -> dict | None:
             counter += 1
         source.replace(target)
         turns = sum(1 for line in target.open("r", encoding="utf-8") if line.strip())
-        return {"path": display_path(target), "filename": target.name, "turns": turns,
-                "bytes": target.stat().st_size}
+        return {
+            "path": display_path(target),
+            "filename": target.name,
+            "turns": turns,
+            "bytes": target.stat().st_size,
+        }
 
 
 def _safe_text(value: str) -> str:
@@ -76,13 +86,30 @@ def _saved_shape(saved: dict | None) -> dict:
         kinds.append("goal")
     if saved.get("typical_weekly_spend") is not None:
         kinds.append("typical_spending")
-    return {"count": saved.get("count", 0), "kinds": kinds, "batch_id": saved.get("batch_id")}
+    return {
+        "count": saved.get("count", 0),
+        "kinds": kinds,
+        "batch_id": saved.get("batch_id"),
+    }
 
 
-def log_turn(*, account: str, session_id: str, message: str, answer: str, handler: str,
-             intent: str | None, elapsed: float, before: dict, after: dict, readiness_before: dict,
-             readiness_after: dict, saved: dict | None = None, blocked: str | None = None,
-             error_reason: str | None = None) -> None:
+def log_turn(
+    *,
+    account: str,
+    session_id: str,
+    message: str,
+    answer: str,
+    handler: str,
+    intent: str | None,
+    elapsed: float,
+    before: dict,
+    after: dict,
+    readiness_before: dict,
+    readiness_after: dict,
+    saved: dict | None = None,
+    blocked: str | None = None,
+    error_reason: str | None = None,
+) -> None:
     """Append one self-contained JSON event. Logging must never break the app."""
     if not enabled():
         return
@@ -99,12 +126,24 @@ def log_turn(*, account: str, session_id: str, message: str, answer: str, handle
         "blocked": blocked,
         "error_reason": _safe_text(error_reason) if error_reason else None,
         "saved": _saved_shape(saved),
-        "question_before": {"key": before.get("question_key"), "text": before.get("question")},
-        "question_after": {"key": after.get("question_key"), "text": after.get("question")},
+        "question_before": {
+            "key": before.get("question_key"),
+            "text": before.get("question"),
+        },
+        "question_after": {
+            "key": after.get("question_key"),
+            "text": after.get("question"),
+        },
         "statuses_before": before.get("statuses", {}),
         "statuses_after": after.get("statuses", {}),
-        "readiness_before": {"ready": readiness_before.get("ready"), "missing": readiness_before.get("missing", [])},
-        "readiness_after": {"ready": readiness_after.get("ready"), "missing": readiness_after.get("missing", [])},
+        "readiness_before": {
+            "ready": readiness_before.get("ready"),
+            "missing": readiness_before.get("missing", []),
+        },
+        "readiness_after": {
+            "ready": readiness_after.get("ready"),
+            "missing": readiness_after.get("missing", []),
+        },
     }
     try:
         target = path()

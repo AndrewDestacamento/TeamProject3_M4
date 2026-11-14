@@ -53,15 +53,15 @@ OUT_OF_SCOPE_MESSAGE = (
     "savings goals and weekly plans. It does not give {topic} advice. For that, please talk to a "
     "licensed professional."
 )
-SENSITIVE_MESSAGE = (
-    "Please don't share your {what}. BudgetWise never needs it. Your message was not sent to the AI model."
-)
+SENSITIVE_MESSAGE = "Please don't share your {what}. BudgetWise never needs it. Your message was not sent to the AI model."
 
 # Direct prompt injection (Chapter 8): attempts to override the agent's instructions.
 INJECTION = [
     r"ignore (all |any |the |your )?(previous|prior|above) (instructions|rules|prompts?)",
     r"(reveal|show|print|repeat) (me )?(your|the) (system )?(prompt|instructions)",
-    r"you are now (?!able)", r"\bjailbreak\b", r"developer mode",
+    r"you are now (?!able)",
+    r"\bjailbreak\b",
+    r"developer mode",
 ]
 INJECTION_MESSAGE = (
     "I can't change how I work, but I'm happy to help with your budget: spending, bills, "
@@ -122,9 +122,12 @@ def find_ungrounded_amounts(answer: str, evidence: list[str]) -> list[str]:
     """Return the dollar amounts in the answer that do not appear in any tool result
     (or in the user's own question). An empty list means the answer is grounded.
     Amounts with cents must match exactly. A whole-dollar amount ("$27") is accepted when it
-    is a value from the evidence rounded to the dollar (27.40 -> $27), since people talk that way."""
+    is a value from the evidence rounded to the dollar (27.40 -> $27), since people talk that way.
+    """
     allowed = evidence_numbers(evidence)
-    rounded = {v.quantize(Decimal("1")) for v in allowed} | {v.to_integral_value(rounding="ROUND_FLOOR") for v in allowed}
+    rounded = {v.quantize(Decimal("1")) for v in allowed} | {
+        v.to_integral_value(rounding="ROUND_FLOOR") for v in allowed
+    }
     bad = []
     for whole, cents in _MONEY.findall(answer):
         shown = f"${whole}{cents}"
@@ -141,7 +144,8 @@ def find_ungrounded_amounts(answer: str, evidence: list[str]) -> list[str]:
 def sanitize_for_model(text: str, limit: int = 80) -> str:
     """Untrusted text (bank descriptions from an uploaded file) goes to the Categorizer model.
     Keep only characters a real statement line uses and cap the length, so a planted
-    "ignore your instructions" line cannot smuggle in much (Chapter 8, indirect injection)."""
+    "ignore your instructions" line cannot smuggle in much (Chapter 8, indirect injection).
+    """
     cleaned = re.sub(r"[^A-Za-z0-9 &'*#.,/@+-]", " ", str(text))
     cleaned = re.sub(r"\s+", " ", cleaned).strip()
     return cleaned[:limit]

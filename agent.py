@@ -33,7 +33,9 @@ def show(ev: dict, quiet: bool) -> None:
         print(f"{GREY}  [{ev['agent']}] {ev['status']}: {ev['detail']}{RESET}")
     elif ev["type"] == "tool":
         if ev["status"] == "running":
-            print(f"{GREY}  [{ev['agent']}] Action: {ev['name']}({json.dumps(ev.get('args', {}))}){RESET}")
+            print(
+                f"{GREY}  [{ev['agent']}] Action: {ev['name']}({json.dumps(ev.get('args', {}))}){RESET}"
+            )
         else:
             print(f"{GREY}  [{ev['agent']}] Observation: {ev.get('summary')}{RESET}")
     elif ev["type"] == "check":
@@ -45,7 +47,9 @@ async def ask(team: BudgetWiseTeam, question: str, sid: str, quiet: bool) -> Non
     async for ev in team.chat(question, sid):
         if ev["type"] == "done":
             answer = ev["answer"]
-            print(f"\n{GREEN}BudgetWise:{RESET} {answer}\n{GREY}({ev['elapsed']}s, route: {ev['intent']}){RESET}\n")
+            print(
+                f"\n{GREEN}BudgetWise:{RESET} {answer}\n{GREY}({ev['elapsed']}s, route: {ev['intent']}){RESET}\n"
+            )
         elif ev["type"] == "card" and ev["kind"] == "plan":
             print_plan(ev["data"])
         else:
@@ -54,19 +58,25 @@ async def ask(team: BudgetWiseTeam, question: str, sid: str, quiet: bool) -> Non
 
 def print_plan(p: dict) -> None:
     print(f"\n{YELLOW}Weekly plan ({p['week_start']} to {p['week_end']}){RESET}")
-    print(f"  Daily limit: ${p['daily_limit']:,.2f}   {p['focus_label']} cap: ${p['focus_category_cap']:,.2f}   Save: ${p['save_this_week']:,.2f}")
+    print(
+        f"  Daily limit: ${p['daily_limit']:,.2f}   {p['focus_label']} cap: ${p['focus_category_cap']:,.2f}   Save: ${p['save_this_week']:,.2f}"
+    )
     print(f"  {p['headline']}")
     for w in p["why"]:
         print(f"   - {w}")
     print(f"  Today: {p['today_action']}")
-    print(f"  Critic: {p['critic']['score']}/10, {p['critic']['verdict']} ({p['critic']['feedback']})")
+    print(
+        f"  Critic: {p['critic']['score']}/10, {p['critic']['verdict']} ({p['critic']['feedback']})"
+    )
 
 
 async def main() -> None:
     ap = argparse.ArgumentParser(description="BudgetWise agent team in the terminal")
     ap.add_argument("question", nargs="*")
     ap.add_argument("--plan", action="store_true", help="build this week's plan")
-    ap.add_argument("--account", help="account id, e.g. demo-maya, demo-jordan, demo-priya")
+    ap.add_argument(
+        "--account", help="account id, e.g. demo-maya, demo-jordan, demo-priya"
+    )
     ap.add_argument("--quiet", action="store_true", help="hide the step log")
     args = ap.parse_args()
     if args.account:
@@ -74,7 +84,9 @@ async def main() -> None:
 
     team = BudgetWiseTeam()
     await team.start()
-    print(f"{GREY}BudgetWise · model {MODEL} · account {store.active_account_id()}{RESET}")
+    print(
+        f"{GREY}BudgetWise · model {MODEL} · account {store.active_account_id()}{RESET}"
+    )
     try:
         sid = uuid.uuid4().hex
         if args.plan:

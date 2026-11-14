@@ -31,14 +31,23 @@ def chunks() -> list[dict]:
                 title = line[2:].strip()
             elif line.startswith("## "):
                 if section:
-                    mine.append({"source": path.name, "title": title, "section": section, "body": body})
+                    mine.append(
+                        {
+                            "source": path.name,
+                            "title": title,
+                            "section": section,
+                            "body": body,
+                        }
+                    )
                 section, body = line[3:].strip(), []
             elif line.startswith("Sources:"):
-                sources = line[len("Sources:"):].strip()
+                sources = line[len("Sources:") :].strip()
             elif line.strip():
                 body.append(line.strip())
         if section:
-            mine.append({"source": path.name, "title": title, "section": section, "body": body})
+            mine.append(
+                {"source": path.name, "title": title, "section": section, "body": body}
+            )
         for c in mine:
             c["sources"] = sources
             c["text"] = f"{c['title']} - {c['section']}: " + " ".join(c["body"])
@@ -55,19 +64,31 @@ def _open_collection():
     from chromadb.config import Settings
 
     cs = chunks()
-    fingerprint = hashlib.sha256("".join(c["text"] + c["sources"] for c in cs).encode()).hexdigest()[:16]
-    client = chromadb.PersistentClient(path=str(CHROMA_DIR), settings=Settings(anonymized_telemetry=False))
+    fingerprint = hashlib.sha256(
+        "".join(c["text"] + c["sources"] for c in cs).encode()
+    ).hexdigest()[:16]
+    client = chromadb.PersistentClient(
+        path=str(CHROMA_DIR), settings=Settings(anonymized_telemetry=False)
+    )
     try:
         col = client.get_collection(COLLECTION)
-        if (col.metadata or {}).get("fingerprint") == fingerprint and col.count() == len(cs):
+        if (col.metadata or {}).get(
+            "fingerprint"
+        ) == fingerprint and col.count() == len(cs):
             _collection = col
             return col
         client.delete_collection(COLLECTION)
     except Exception:
         pass
     col = client.create_collection(COLLECTION, metadata={"fingerprint": fingerprint})
-    col.add(ids=[f"{c['source']}#{i}" for i, c in enumerate(cs)], documents=[c["text"] for c in cs],
-            metadatas=[{"source": c["source"], "section": c["section"], "sources": c["sources"]} for c in cs])
+    col.add(
+        ids=[f"{c['source']}#{i}" for i, c in enumerate(cs)],
+        documents=[c["text"] for c in cs],
+        metadatas=[
+            {"source": c["source"], "section": c["section"], "sources": c["sources"]}
+            for c in cs
+        ],
+    )
     _collection = col
     return col
 
@@ -89,8 +110,15 @@ def _keyword_search(query: str, top_k: int) -> list[dict]:
         text_words = set(re.findall(r"[a-z]{3,}", c["text"].lower()))
         scored.append((len(words & text_words), c))
     scored.sort(key=lambda x: -x[0])
-    return [{"source_file": c["source"], "section": c["section"], "text": c["text"],
-             "original_sources": c["sources"]} for s, c in scored[:top_k]]
+    return [
+        {
+            "source_file": c["source"],
+            "section": c["section"],
+            "text": c["text"],
+            "original_sources": c["sources"],
+        }
+        for s, c in scored[:top_k]
+    ]
 
 
 def search(query: str, top_k: int = 2) -> dict:
@@ -101,8 +129,15 @@ def search(query: str, top_k: int = 2) -> dict:
     try:
         col = _open_collection()
         res = col.query(query_texts=[query], n_results=min(top_k, col.count()))
-        results = [{"source_file": m["source"], "section": m["section"], "text": d, "original_sources": m["sources"]}
-                   for d, m in zip(res["documents"][0], res["metadatas"][0])]
+        results = [
+            {
+                "source_file": m["source"],
+                "section": m["section"],
+                "text": d,
+                "original_sources": m["sources"],
+            }
+            for d, m in zip(res["documents"][0], res["metadatas"][0])
+        ]
         method = "vector"
     except Exception:  # noqa: BLE001
         results, method = _keyword_search(query, top_k), "keyword"
