@@ -1,1045 +1,1045 @@
 {
- "id": "priya",
- "name": "Priya",
- "emoji": "\ud83c\udfa8",
- "tagline": "Freelance graphic designer",
- "description": "Self-employed designer paid by clients whenever invoices clear, from $600 to $2,400 at a time. Some months are great, some are thin, and the bills don't wait.",
- "settings": {
-  "current_balance": 2386.7,
-  "savings_buffer": 300.0,
-  "goal": {
-   "name": "New laptop",
-   "target": 1400.0,
-   "saved": 520.0,
-   "deadline_days": 75
-  }
- },
- "plan_history": [
-  {
-   "start_days_ago": 7,
-   "daily_limit": 60.0,
-   "focus_category": "dining",
-   "focus_category_cap": 90.0,
-   "save_this_week": 60.0,
-   "summary": "Keep spending under $60/day, cap dining at $90, save $60."
-  }
- ],
- "transactions": [
-  {
-   "id": "priya-0000",
-   "days_ago": 0,
-   "description": "SQ *BREW HAUS COFFEE",
-   "amount": -5.75,
-   "category": "dining"
-  },
-  {
-   "id": "priya-0001",
-   "days_ago": 1,
-   "description": "SUSHI TOMI",
-   "amount": -12.91,
-   "category": "dining"
-  },
-  {
-   "id": "priya-0002",
-   "days_ago": 2,
-   "description": "BEST BUY 00001234",
-   "amount": -249.99,
-   "category": "shopping"
-  },
-  {
-   "id": "priya-0003",
-   "days_ago": 2,
-   "description": "PARKMOBILE NAPLES",
-   "amount": -19.06,
-   "category": "transport"
-  },
-  {
-   "id": "priya-0004",
-   "days_ago": 2,
-   "description": "TARGET 00021455",
-   "amount": -50.24,
-   "category": "shopping"
-  },
-  {
-   "id": "priya-0005",
-   "days_ago": 3,
-   "description": "LA FITNESS MONTHLY DUES",
-   "amount": -39.99,
-   "category": "health"
-  },
-  {
-   "id": "priya-0006",
-   "days_ago": 3,
-   "description": "TRADER JOE'S #712",
-   "amount": -81.07,
-   "category": "groceries"
-  },
-  {
-   "id": "priya-0007",
-   "days_ago": 4,
-   "description": "TST* HOPS N GRAIN",
-   "amount": -27.09,
-   "category": "dining"
-  },
-  {
-   "id": "priya-0008",
-   "days_ago": 5,
-   "description": "FIGMA MONTHLY",
-   "amount": -15.0,
-   "category": "subscriptions"
-  },
-  {
-   "id": "priya-0009",
-   "days_ago": 6,
-   "description": "STRIPE TRANSFER ST-K8J2 PRIYA DESIGN",
-   "amount": 1850.0,
-   "category": "income"
-  },
-  {
-   "id": "priya-0010",
-   "days_ago": 6,
-   "description": "SWEETGREEN NAPLES",
-   "amount": -9.91,
-   "category": "dining"
-  },
-  {
-   "id": "priya-0011",
-   "days_ago": 8,
-   "description": "SUSHI TOMI",
-   "amount": -37.71,
-   "category": "dining"
-  },
-  {
-   "id": "priya-0012",
-   "days_ago": 9,
-   "description": "ETSY.COM",
-   "amount": -94.87,
-   "category": "shopping"
-  },
-  {
-   "id": "priya-0013",
-   "days_ago": 9,
-   "description": "FPL ELECTRIC BILL PAYMENT",
-   "amount": -123.94,
-   "category": "utilities"
-  },
-  {
-   "id": "priya-0014",
-   "days_ago": 10,
-   "description": "EVENTBRITE*ART WALK",
-   "amount": -34.92,
-   "category": "entertainment"
-  },
-  {
-   "id": "priya-0015",
-   "days_ago": 10,
-   "description": "HULU 877-8244858",
-   "amount": -9.99,
-   "category": "subscriptions"
-  },
-  {
-   "id": "priya-0016",
-   "days_ago": 10,
-   "description": "PARKMOBILE NAPLES",
-   "amount": -28.35,
-   "category": "transport"
-  },
-  {
-   "id": "priya-0017",
-   "days_ago": 10,
-   "description": "TRADER JOE'S #712",
-   "amount": -95.79,
-   "category": "groceries"
-  },
-  {
-   "id": "priya-0018",
-   "days_ago": 11,
-   "description": "UBER *EATS PENDING",
-   "amount": -26.51,
-   "category": "dining"
-  },
-  {
-   "id": "priya-0019",
-   "days_ago": 12,
-   "description": "PAYPAL TRANSFER IN UPWORK",
-   "amount": 316.88,
-   "category": "income"
-  },
-  {
-   "id": "priya-0020",
-   "days_ago": 14,
-   "description": "STARBUCKS STORE 08821",
-   "amount": -38.73,
-   "category": "dining"
-  },
-  {
-   "id": "priya-0021",
-   "days_ago": 14,
-   "description": "XFINITY INTERNET",
-   "amount": -65.0,
-   "category": "utilities"
-  },
-  {
-   "id": "priya-0022",
-   "days_ago": 16,
-   "description": "AMAZON.COM*RT4KL2",
-   "amount": -35.62,
-   "category": "shopping"
-  },
-  {
-   "id": "priya-0023",
-   "days_ago": 16,
-   "description": "PUBLIX #1432 FORT MYERS FL",
-   "amount": -118.5,
-   "category": "groceries"
-  },
-  {
-   "id": "priya-0024",
-   "days_ago": 17,
-   "description": "NELNET STUDENT LOAN PMT",
-   "amount": -183.0,
-   "category": "debt_payment"
-  },
-  {
-   "id": "priya-0025",
-   "days_ago": 18,
-   "description": "PARKMOBILE NAPLES",
-   "amount": -30.47,
-   "category": "transport"
-  },
-  {
-   "id": "priya-0026",
-   "days_ago": 18,
-   "description": "SHAKE SHACK 1882",
-   "amount": -46.86,
-   "category": "dining"
-  },
-  {
-   "id": "priya-0027",
-   "days_ago": 19,
-   "description": "SEACREST PROPERTY MGMT RENT",
-   "amount": -980.0,
-   "category": "housing"
-  },
-  {
-   "id": "priya-0028",
-   "days_ago": 19,
-   "description": "STRIPE TRANSFER ST-K8J2 PRIYA DESIGN",
-   "amount": 640.0,
-   "category": "income"
-  },
-  {
-   "id": "priya-0029",
-   "days_ago": 21,
-   "description": "SEPHORA #1122",
-   "amount": -21.42,
-   "category": "personal"
-  },
-  {
-   "id": "priya-0030",
-   "days_ago": 21,
-   "description": "SHAKE SHACK 1882",
-   "amount": -23.82,
-   "category": "dining"
-  },
-  {
-   "id": "priya-0031",
-   "days_ago": 22,
-   "description": "ADOBE *CREATIVE CLOUD",
-   "amount": -59.99,
-   "category": "subscriptions"
-  },
-  {
-   "id": "priya-0032",
-   "days_ago": 24,
-   "description": "STARBUCKS STORE 08821",
-   "amount": -39.79,
-   "category": "dining"
-  },
-  {
-   "id": "priya-0033",
-   "days_ago": 24,
-   "description": "UBER *TRIP HELP.UBER.COM",
-   "amount": -29.08,
-   "category": "transport"
-  },
-  {
-   "id": "priya-0034",
-   "days_ago": 24,
-   "description": "WHOLE FOODS MKT 10552",
-   "amount": -71.54,
-   "category": "groceries"
-  },
-  {
-   "id": "priya-0035",
-   "days_ago": 27,
-   "description": "TST* HOPS N GRAIN",
-   "amount": -28.42,
-   "category": "dining"
-  },
-  {
-   "id": "priya-0036",
-   "days_ago": 28,
-   "description": "FLORIDA BLUE INSURANCE PREMIUM",
-   "amount": -212.4,
-   "category": "insurance"
-  },
-  {
-   "id": "priya-0037",
-   "days_ago": 30,
-   "description": "AMAZON.COM*RT4KL2",
-   "amount": -51.34,
-   "category": "shopping"
-  },
-  {
-   "id": "priya-0038",
-   "days_ago": 30,
-   "description": "SHAKE SHACK 1882",
-   "amount": -40.69,
-   "category": "dining"
-  },
-  {
-   "id": "priya-0039",
-   "days_ago": 30,
-   "description": "TRADER JOE'S #712",
-   "amount": -101.05,
-   "category": "groceries"
-  },
-  {
-   "id": "priya-0040",
-   "days_ago": 32,
-   "description": "UBER *TRIP HELP.UBER.COM",
-   "amount": -25.49,
-   "category": "transport"
-  },
-  {
-   "id": "priya-0041",
-   "days_ago": 33,
-   "description": "EVENTBRITE*ART WALK",
-   "amount": -41.38,
-   "category": "entertainment"
-  },
-  {
-   "id": "priya-0042",
-   "days_ago": 33,
-   "description": "LA FITNESS MONTHLY DUES",
-   "amount": -39.99,
-   "category": "health"
-  },
-  {
-   "id": "priya-0043",
-   "days_ago": 33,
-   "description": "SQ *BREW HAUS COFFEE",
-   "amount": -25.96,
-   "category": "dining"
-  },
-  {
-   "id": "priya-0044",
-   "days_ago": 33,
-   "description": "STRIPE TRANSFER ST-K8J2 PRIYA DESIGN",
-   "amount": 2275.0,
-   "category": "income"
-  },
-  {
-   "id": "priya-0045",
-   "days_ago": 35,
-   "description": "FIGMA MONTHLY",
-   "amount": -15.0,
-   "category": "subscriptions"
-  },
-  {
-   "id": "priya-0046",
-   "days_ago": 35,
-   "description": "UBER *EATS PENDING",
-   "amount": -40.25,
-   "category": "dining"
-  },
-  {
-   "id": "priya-0047",
-   "days_ago": 36,
-   "description": "HOME DEPOT #6331",
-   "amount": -70.3,
-   "category": "shopping"
-  },
-  {
-   "id": "priya-0048",
-   "days_ago": 39,
-   "description": "FPL ELECTRIC BILL PAYMENT",
-   "amount": -135.65,
-   "category": "utilities"
-  },
-  {
-   "id": "priya-0049",
-   "days_ago": 39,
-   "description": "STARBUCKS STORE 08821",
-   "amount": -19.91,
-   "category": "dining"
-  },
-  {
-   "id": "priya-0050",
-   "days_ago": 39,
-   "description": "TRADER JOE'S #712",
-   "amount": -74.14,
-   "category": "groceries"
-  },
-  {
-   "id": "priya-0051",
-   "days_ago": 40,
-   "description": "HULU 877-8244858",
-   "amount": -9.99,
-   "category": "subscriptions"
-  },
-  {
-   "id": "priya-0052",
-   "days_ago": 40,
-   "description": "SHELL OIL 57442365",
-   "amount": -30.98,
-   "category": "transport"
-  },
-  {
-   "id": "priya-0053",
-   "days_ago": 42,
-   "description": "PAYPAL TRANSFER IN UPWORK",
-   "amount": 331.74,
-   "category": "income"
-  },
-  {
-   "id": "priya-0054",
-   "days_ago": 42,
-   "description": "SUSHI TOMI",
-   "amount": -27.59,
-   "category": "dining"
-  },
-  {
-   "id": "priya-0055",
-   "days_ago": 43,
-   "description": "SEPHORA #1122",
-   "amount": -50.39,
-   "category": "personal"
-  },
-  {
-   "id": "priya-0056",
-   "days_ago": 44,
-   "description": "XFINITY INTERNET",
-   "amount": -65.0,
-   "category": "utilities"
-  },
-  {
-   "id": "priya-0057",
-   "days_ago": 46,
-   "description": "PUBLIX #1432 FORT MYERS FL",
-   "amount": -73.44,
-   "category": "groceries"
-  },
-  {
-   "id": "priya-0058",
-   "days_ago": 46,
-   "description": "STARBUCKS STORE 08821",
-   "amount": -45.92,
-   "category": "dining"
-  },
-  {
-   "id": "priya-0059",
-   "days_ago": 47,
-   "description": "NELNET STUDENT LOAN PMT",
-   "amount": -183.0,
-   "category": "debt_payment"
-  },
-  {
-   "id": "priya-0060",
-   "days_ago": 47,
-   "description": "STRIPE TRANSFER ST-K8J2 PRIYA DESIGN",
-   "amount": 980.0,
-   "category": "income"
-  },
-  {
-   "id": "priya-0061",
-   "days_ago": 48,
-   "description": "PARKMOBILE NAPLES",
-   "amount": -16.94,
-   "category": "transport"
-  },
-  {
-   "id": "priya-0062",
-   "days_ago": 49,
-   "description": "SEACREST PROPERTY MGMT RENT",
-   "amount": -980.0,
-   "category": "housing"
-  },
-  {
-   "id": "priya-0063",
-   "days_ago": 49,
-   "description": "TST* HOPS N GRAIN",
-   "amount": -12.57,
-   "category": "dining"
-  },
-  {
-   "id": "priya-0064",
-   "days_ago": 51,
-   "description": "HOME DEPOT #6331",
-   "amount": -67.96,
-   "category": "shopping"
-  },
-  {
-   "id": "priya-0065",
-   "days_ago": 52,
-   "description": "ADOBE *CREATIVE CLOUD",
-   "amount": -59.99,
-   "category": "subscriptions"
-  },
-  {
-   "id": "priya-0066",
-   "days_ago": 52,
-   "description": "TST* HOPS N GRAIN",
-   "amount": -26.25,
-   "category": "dining"
-  },
-  {
-   "id": "priya-0067",
-   "days_ago": 54,
-   "description": "AMC THEATRES 2231",
-   "amount": -18.67,
-   "category": "entertainment"
-  },
-  {
-   "id": "priya-0068",
-   "days_ago": 54,
-   "description": "TRADER JOE'S #712",
-   "amount": -109.74,
-   "category": "groceries"
-  },
-  {
-   "id": "priya-0069",
-   "days_ago": 55,
-   "description": "UBER *EATS PENDING",
-   "amount": -28.25,
-   "category": "dining"
-  },
-  {
-   "id": "priya-0070",
-   "days_ago": 57,
-   "description": "PARKMOBILE NAPLES",
-   "amount": -11.81,
-   "category": "transport"
-  },
-  {
-   "id": "priya-0071",
-   "days_ago": 58,
-   "description": "FLORIDA BLUE INSURANCE PREMIUM",
-   "amount": -212.4,
-   "category": "insurance"
-  },
-  {
-   "id": "priya-0072",
-   "days_ago": 58,
-   "description": "HOME DEPOT #6331",
-   "amount": -67.22,
-   "category": "shopping"
-  },
-  {
-   "id": "priya-0073",
-   "days_ago": 58,
-   "description": "TST* HOPS N GRAIN",
-   "amount": -25.88,
-   "category": "dining"
-  },
-  {
-   "id": "priya-0074",
-   "days_ago": 59,
-   "description": "TRADER JOE'S #712",
-   "amount": -66.13,
-   "category": "groceries"
-  },
-  {
-   "id": "priya-0075",
-   "days_ago": 61,
-   "description": "STRIPE TRANSFER ST-K8J2 PRIYA DESIGN",
-   "amount": 1420.0,
-   "category": "income"
-  },
-  {
-   "id": "priya-0076",
-   "days_ago": 61,
-   "description": "UBER *EATS PENDING",
-   "amount": -18.9,
-   "category": "dining"
-  },
-  {
-   "id": "priya-0077",
-   "days_ago": 63,
-   "description": "LA FITNESS MONTHLY DUES",
-   "amount": -39.99,
-   "category": "health"
-  },
-  {
-   "id": "priya-0078",
-   "days_ago": 64,
-   "description": "SHAKE SHACK 1882",
-   "amount": -9.57,
-   "category": "dining"
-  },
-  {
-   "id": "priya-0079",
-   "days_ago": 65,
-   "description": "FIGMA MONTHLY",
-   "amount": -15.0,
-   "category": "subscriptions"
-  },
-  {
-   "id": "priya-0080",
-   "days_ago": 65,
-   "description": "UBER *TRIP HELP.UBER.COM",
-   "amount": -11.92,
-   "category": "transport"
-  },
-  {
-   "id": "priya-0081",
-   "days_ago": 66,
-   "description": "PUBLIX #1432 FORT MYERS FL",
-   "amount": -68.82,
-   "category": "groceries"
-  },
-  {
-   "id": "priya-0082",
-   "days_ago": 66,
-   "description": "SEPHORA #1122",
-   "amount": -63.11,
-   "category": "personal"
-  },
-  {
-   "id": "priya-0083",
-   "days_ago": 67,
-   "description": "SUSHI TOMI",
-   "amount": -26.57,
-   "category": "dining"
-  },
-  {
-   "id": "priya-0084",
-   "days_ago": 69,
-   "description": "FPL ELECTRIC BILL PAYMENT",
-   "amount": -136.53,
-   "category": "utilities"
-  },
-  {
-   "id": "priya-0085",
-   "days_ago": 70,
-   "description": "HULU 877-8244858",
-   "amount": -9.99,
-   "category": "subscriptions"
-  },
-  {
-   "id": "priya-0086",
-   "days_ago": 70,
-   "description": "SHAKE SHACK 1882",
-   "amount": -28.55,
-   "category": "dining"
-  },
-  {
-   "id": "priya-0087",
-   "days_ago": 72,
-   "description": "PAYPAL TRANSFER IN UPWORK",
-   "amount": 376.08,
-   "category": "income"
-  },
-  {
-   "id": "priya-0088",
-   "days_ago": 72,
-   "description": "TRADER JOE'S #712",
-   "amount": -57.94,
-   "category": "groceries"
-  },
-  {
-   "id": "priya-0089",
-   "days_ago": 73,
-   "description": "SHELL OIL 57442365",
-   "amount": -20.53,
-   "category": "transport"
-  },
-  {
-   "id": "priya-0090",
-   "days_ago": 74,
-   "description": "SEPHORA #1122",
-   "amount": -41.97,
-   "category": "personal"
-  },
-  {
-   "id": "priya-0091",
-   "days_ago": 74,
-   "description": "STARBUCKS STORE 08821",
-   "amount": -30.34,
-   "category": "dining"
-  },
-  {
-   "id": "priya-0092",
-   "days_ago": 74,
-   "description": "XFINITY INTERNET",
-   "amount": -65.0,
-   "category": "utilities"
-  },
-  {
-   "id": "priya-0093",
-   "days_ago": 77,
-   "description": "NELNET STUDENT LOAN PMT",
-   "amount": -183.0,
-   "category": "debt_payment"
-  },
-  {
-   "id": "priya-0094",
-   "days_ago": 77,
-   "description": "TST* HOPS N GRAIN",
-   "amount": -46.84,
-   "category": "dining"
-  },
-  {
-   "id": "priya-0095",
-   "days_ago": 78,
-   "description": "AMC THEATRES 2231",
-   "amount": -56.26,
-   "category": "entertainment"
-  },
-  {
-   "id": "priya-0096",
-   "days_ago": 78,
-   "description": "STRIPE TRANSFER ST-K8J2 PRIYA DESIGN",
-   "amount": 2400.0,
-   "category": "income"
-  },
-  {
-   "id": "priya-0097",
-   "days_ago": 79,
-   "description": "SEACREST PROPERTY MGMT RENT",
-   "amount": -980.0,
-   "category": "housing"
-  },
-  {
-   "id": "priya-0098",
-   "days_ago": 79,
-   "description": "TRADER JOE'S #712",
-   "amount": -94.27,
-   "category": "groceries"
-  },
-  {
-   "id": "priya-0099",
-   "days_ago": 80,
-   "description": "SHELL OIL 57442365",
-   "amount": -20.03,
-   "category": "transport"
-  },
-  {
-   "id": "priya-0100",
-   "days_ago": 80,
-   "description": "SWEETGREEN NAPLES",
-   "amount": -20.28,
-   "category": "dining"
-  },
-  {
-   "id": "priya-0101",
-   "days_ago": 82,
-   "description": "ADOBE *CREATIVE CLOUD",
-   "amount": -59.99,
-   "category": "subscriptions"
-  },
-  {
-   "id": "priya-0102",
-   "days_ago": 82,
-   "description": "HOME DEPOT #6331",
-   "amount": -68.13,
-   "category": "shopping"
-  },
-  {
-   "id": "priya-0103",
-   "days_ago": 83,
-   "description": "SWEETGREEN NAPLES",
-   "amount": -42.13,
-   "category": "dining"
-  },
-  {
-   "id": "priya-0104",
-   "days_ago": 86,
-   "description": "SUSHI TOMI",
-   "amount": -44.21,
-   "category": "dining"
-  },
-  {
-   "id": "priya-0105",
-   "days_ago": 86,
-   "description": "WHOLE FOODS MKT 10552",
-   "amount": -87.97,
-   "category": "groceries"
-  },
-  {
-   "id": "priya-0106",
-   "days_ago": 87,
-   "description": "PARKMOBILE NAPLES",
-   "amount": -17.77,
-   "category": "transport"
-  },
-  {
-   "id": "priya-0107",
-   "days_ago": 88,
-   "description": "FLORIDA BLUE INSURANCE PREMIUM",
-   "amount": -212.4,
-   "category": "insurance"
-  },
-  {
-   "id": "priya-0108",
-   "days_ago": 89,
-   "description": "SUSHI TOMI",
-   "amount": -22.68,
-   "category": "dining"
-  },
-  {
-   "id": "priya-0109",
-   "days_ago": 89,
-   "description": "TARGET 00021455",
-   "amount": -65.22,
-   "category": "shopping"
-  },
-  {
-   "id": "priya-0110",
-   "days_ago": 92,
-   "description": "STRIPE TRANSFER ST-K8J2 PRIYA DESIGN",
-   "amount": 760.0,
-   "category": "income"
-  },
-  {
-   "id": "priya-0111",
-   "days_ago": 92,
-   "description": "TRADER JOE'S #712",
-   "amount": -77.61,
-   "category": "groceries"
-  },
-  {
-   "id": "priya-0112",
-   "days_ago": 92,
-   "description": "UBER *EATS PENDING",
-   "amount": -37.8,
-   "category": "dining"
-  },
-  {
-   "id": "priya-0113",
-   "days_ago": 93,
-   "description": "LA FITNESS MONTHLY DUES",
-   "amount": -39.99,
-   "category": "health"
-  },
-  {
-   "id": "priya-0114",
-   "days_ago": 94,
-   "description": "SHELL OIL 57442365",
-   "amount": -32.14,
-   "category": "transport"
-  },
-  {
-   "id": "priya-0115",
-   "days_ago": 95,
-   "description": "ETSY.COM",
-   "amount": -84.73,
-   "category": "shopping"
-  },
-  {
-   "id": "priya-0116",
-   "days_ago": 95,
-   "description": "FIGMA MONTHLY",
-   "amount": -15.0,
-   "category": "subscriptions"
-  },
-  {
-   "id": "priya-0117",
-   "days_ago": 95,
-   "description": "SWEETGREEN NAPLES",
-   "amount": -21.69,
-   "category": "dining"
-  },
-  {
-   "id": "priya-0118",
-   "days_ago": 98,
-   "description": "STARBUCKS STORE 08821",
-   "amount": -36.89,
-   "category": "dining"
-  },
-  {
-   "id": "priya-0119",
-   "days_ago": 99,
-   "description": "FPL ELECTRIC BILL PAYMENT",
-   "amount": -101.14,
-   "category": "utilities"
-  },
-  {
-   "id": "priya-0120",
-   "days_ago": 100,
-   "description": "EVENTBRITE*ART WALK",
-   "amount": -59.26,
-   "category": "entertainment"
-  },
-  {
-   "id": "priya-0121",
-   "days_ago": 100,
-   "description": "HULU 877-8244858",
-   "amount": -9.99,
-   "category": "subscriptions"
-  },
-  {
-   "id": "priya-0122",
-   "days_ago": 100,
-   "description": "WHOLE FOODS MKT 10552",
-   "amount": -89.11,
-   "category": "groceries"
-  },
-  {
-   "id": "priya-0123",
-   "days_ago": 101,
-   "description": "SUSHI TOMI",
-   "amount": -22.69,
-   "category": "dining"
-  },
-  {
-   "id": "priya-0124",
-   "days_ago": 102,
-   "description": "PAYPAL TRANSFER IN UPWORK",
-   "amount": 246.55,
-   "category": "income"
-  },
-  {
-   "id": "priya-0125",
-   "days_ago": 102,
-   "description": "SHELL OIL 57442365",
-   "amount": -28.13,
-   "category": "transport"
-  },
-  {
-   "id": "priya-0126",
-   "days_ago": 103,
-   "description": "SEPHORA #1122",
-   "amount": -44.92,
-   "category": "personal"
-  },
-  {
-   "id": "priya-0127",
-   "days_ago": 104,
-   "description": "SWEETGREEN NAPLES",
-   "amount": -21.15,
-   "category": "dining"
-  },
-  {
-   "id": "priya-0128",
-   "days_ago": 104,
-   "description": "XFINITY INTERNET",
-   "amount": -65.0,
-   "category": "utilities"
-  },
-  {
-   "id": "priya-0129",
-   "days_ago": 106,
-   "description": "STRIPE TRANSFER ST-K8J2 PRIYA DESIGN",
-   "amount": 1650.0,
-   "category": "income"
-  },
-  {
-   "id": "priya-0130",
-   "days_ago": 107,
-   "description": "NELNET STUDENT LOAN PMT",
-   "amount": -183.0,
-   "category": "debt_payment"
-  },
-  {
-   "id": "priya-0131",
-   "days_ago": 107,
-   "description": "PUBLIX #1432 FORT MYERS FL",
-   "amount": -117.6,
-   "category": "groceries"
-  },
-  {
-   "id": "priya-0132",
-   "days_ago": 108,
-   "description": "SUSHI TOMI",
-   "amount": -16.14,
-   "category": "dining"
-  },
-  {
-   "id": "priya-0133",
-   "days_ago": 109,
-   "description": "PARKMOBILE NAPLES",
-   "amount": -20.42,
-   "category": "transport"
-  },
-  {
-   "id": "priya-0134",
-   "days_ago": 109,
-   "description": "SEACREST PROPERTY MGMT RENT",
-   "amount": -980.0,
-   "category": "housing"
-  },
-  {
-   "id": "priya-0135",
-   "days_ago": 110,
-   "description": "ETSY.COM",
-   "amount": -75.79,
-   "category": "shopping"
-  },
-  {
-   "id": "priya-0136",
-   "days_ago": 111,
-   "description": "STARBUCKS STORE 08821",
-   "amount": -15.47,
-   "category": "dining"
-  },
-  {
-   "id": "priya-0137",
-   "days_ago": 112,
-   "description": "ADOBE *CREATIVE CLOUD",
-   "amount": -59.99,
-   "category": "subscriptions"
-  },
-  {
-   "id": "priya-0138",
-   "days_ago": 114,
-   "description": "WHOLE FOODS MKT 10552",
-   "amount": -98.93,
-   "category": "groceries"
-  },
-  {
-   "id": "priya-0139",
-   "days_ago": 115,
-   "description": "STARBUCKS STORE 08821",
-   "amount": -35.42,
-   "category": "dining"
-  },
-  {
-   "id": "priya-0140",
-   "days_ago": 116,
-   "description": "PARKMOBILE NAPLES",
-   "amount": -9.21,
-   "category": "transport"
-  },
-  {
-   "id": "priya-0141",
-   "days_ago": 118,
-   "description": "AMAZON.COM*RT4KL2",
-   "amount": -29.53,
-   "category": "shopping"
-  },
-  {
-   "id": "priya-0142",
-   "days_ago": 118,
-   "description": "FLORIDA BLUE INSURANCE PREMIUM",
-   "amount": -212.4,
-   "category": "insurance"
-  },
-  {
-   "id": "priya-0143",
-   "days_ago": 118,
-   "description": "STRIPE TRANSFER ST-K8J2 PRIYA DESIGN",
-   "amount": 1200.0,
-   "category": "income"
-  },
-  {
-   "id": "priya-0144",
-   "days_ago": 118,
-   "description": "TST* HOPS N GRAIN",
-   "amount": -16.47,
-   "category": "dining"
-  }
- ],
- "order": 2
+  "id": "priya",
+  "name": "Priya",
+  "emoji": "\ud83c\udfa8",
+  "tagline": "Freelance graphic designer",
+  "description": "Self-employed designer paid by clients whenever invoices clear, from $600 to $2,400 at a time. Some months are great, some are thin, and the bills don't wait.",
+  "settings": {
+    "current_balance": 2386.7,
+    "savings_buffer": 300.0,
+    "goal": {
+      "name": "New laptop",
+      "target": 1400.0,
+      "saved": 520.0,
+      "deadline_days": 75
+    }
+  },
+  "plan_history": [
+    {
+      "start_days_ago": 7,
+      "daily_limit": 60.0,
+      "focus_category": "dining",
+      "focus_category_cap": 90.0,
+      "save_this_week": 60.0,
+      "summary": "Keep spending under $60/day, cap dining at $90, save $60."
+    }
+  ],
+  "transactions": [
+    {
+      "id": "priya-0000",
+      "days_ago": 0,
+      "description": "SQ *BREW HAUS COFFEE",
+      "amount": -5.75,
+      "category": "dining"
+    },
+    {
+      "id": "priya-0001",
+      "days_ago": 1,
+      "description": "SUSHI TOMI",
+      "amount": -12.91,
+      "category": "dining"
+    },
+    {
+      "id": "priya-0002",
+      "days_ago": 2,
+      "description": "BEST BUY 00001234",
+      "amount": -249.99,
+      "category": "shopping"
+    },
+    {
+      "id": "priya-0003",
+      "days_ago": 2,
+      "description": "PARKMOBILE NAPLES",
+      "amount": -19.06,
+      "category": "transport"
+    },
+    {
+      "id": "priya-0004",
+      "days_ago": 2,
+      "description": "TARGET 00021455",
+      "amount": -50.24,
+      "category": "shopping"
+    },
+    {
+      "id": "priya-0005",
+      "days_ago": 3,
+      "description": "LA FITNESS MONTHLY DUES",
+      "amount": -39.99,
+      "category": "health"
+    },
+    {
+      "id": "priya-0006",
+      "days_ago": 3,
+      "description": "TRADER JOE'S #712",
+      "amount": -81.07,
+      "category": "groceries"
+    },
+    {
+      "id": "priya-0007",
+      "days_ago": 4,
+      "description": "TST* HOPS N GRAIN",
+      "amount": -27.09,
+      "category": "dining"
+    },
+    {
+      "id": "priya-0008",
+      "days_ago": 5,
+      "description": "FIGMA MONTHLY",
+      "amount": -15.0,
+      "category": "subscriptions"
+    },
+    {
+      "id": "priya-0009",
+      "days_ago": 6,
+      "description": "STRIPE TRANSFER ST-K8J2 PRIYA DESIGN",
+      "amount": 1850.0,
+      "category": "income"
+    },
+    {
+      "id": "priya-0010",
+      "days_ago": 6,
+      "description": "SWEETGREEN NAPLES",
+      "amount": -9.91,
+      "category": "dining"
+    },
+    {
+      "id": "priya-0011",
+      "days_ago": 8,
+      "description": "SUSHI TOMI",
+      "amount": -37.71,
+      "category": "dining"
+    },
+    {
+      "id": "priya-0012",
+      "days_ago": 9,
+      "description": "ETSY.COM",
+      "amount": -94.87,
+      "category": "shopping"
+    },
+    {
+      "id": "priya-0013",
+      "days_ago": 9,
+      "description": "FPL ELECTRIC BILL PAYMENT",
+      "amount": -123.94,
+      "category": "utilities"
+    },
+    {
+      "id": "priya-0014",
+      "days_ago": 10,
+      "description": "EVENTBRITE*ART WALK",
+      "amount": -34.92,
+      "category": "entertainment"
+    },
+    {
+      "id": "priya-0015",
+      "days_ago": 10,
+      "description": "HULU 877-8244858",
+      "amount": -9.99,
+      "category": "subscriptions"
+    },
+    {
+      "id": "priya-0016",
+      "days_ago": 10,
+      "description": "PARKMOBILE NAPLES",
+      "amount": -28.35,
+      "category": "transport"
+    },
+    {
+      "id": "priya-0017",
+      "days_ago": 10,
+      "description": "TRADER JOE'S #712",
+      "amount": -95.79,
+      "category": "groceries"
+    },
+    {
+      "id": "priya-0018",
+      "days_ago": 11,
+      "description": "UBER *EATS PENDING",
+      "amount": -26.51,
+      "category": "dining"
+    },
+    {
+      "id": "priya-0019",
+      "days_ago": 12,
+      "description": "PAYPAL TRANSFER IN UPWORK",
+      "amount": 316.88,
+      "category": "income"
+    },
+    {
+      "id": "priya-0020",
+      "days_ago": 14,
+      "description": "STARBUCKS STORE 08821",
+      "amount": -38.73,
+      "category": "dining"
+    },
+    {
+      "id": "priya-0021",
+      "days_ago": 14,
+      "description": "XFINITY INTERNET",
+      "amount": -65.0,
+      "category": "utilities"
+    },
+    {
+      "id": "priya-0022",
+      "days_ago": 16,
+      "description": "AMAZON.COM*RT4KL2",
+      "amount": -35.62,
+      "category": "shopping"
+    },
+    {
+      "id": "priya-0023",
+      "days_ago": 16,
+      "description": "PUBLIX #1432 FORT MYERS FL",
+      "amount": -118.5,
+      "category": "groceries"
+    },
+    {
+      "id": "priya-0024",
+      "days_ago": 17,
+      "description": "NELNET STUDENT LOAN PMT",
+      "amount": -183.0,
+      "category": "debt_payment"
+    },
+    {
+      "id": "priya-0025",
+      "days_ago": 18,
+      "description": "PARKMOBILE NAPLES",
+      "amount": -30.47,
+      "category": "transport"
+    },
+    {
+      "id": "priya-0026",
+      "days_ago": 18,
+      "description": "SHAKE SHACK 1882",
+      "amount": -46.86,
+      "category": "dining"
+    },
+    {
+      "id": "priya-0027",
+      "days_ago": 19,
+      "description": "SEACREST PROPERTY MGMT RENT",
+      "amount": -980.0,
+      "category": "housing"
+    },
+    {
+      "id": "priya-0028",
+      "days_ago": 19,
+      "description": "STRIPE TRANSFER ST-K8J2 PRIYA DESIGN",
+      "amount": 640.0,
+      "category": "income"
+    },
+    {
+      "id": "priya-0029",
+      "days_ago": 21,
+      "description": "SEPHORA #1122",
+      "amount": -21.42,
+      "category": "personal"
+    },
+    {
+      "id": "priya-0030",
+      "days_ago": 21,
+      "description": "SHAKE SHACK 1882",
+      "amount": -23.82,
+      "category": "dining"
+    },
+    {
+      "id": "priya-0031",
+      "days_ago": 22,
+      "description": "ADOBE *CREATIVE CLOUD",
+      "amount": -59.99,
+      "category": "subscriptions"
+    },
+    {
+      "id": "priya-0032",
+      "days_ago": 24,
+      "description": "STARBUCKS STORE 08821",
+      "amount": -39.79,
+      "category": "dining"
+    },
+    {
+      "id": "priya-0033",
+      "days_ago": 24,
+      "description": "UBER *TRIP HELP.UBER.COM",
+      "amount": -29.08,
+      "category": "transport"
+    },
+    {
+      "id": "priya-0034",
+      "days_ago": 24,
+      "description": "WHOLE FOODS MKT 10552",
+      "amount": -71.54,
+      "category": "groceries"
+    },
+    {
+      "id": "priya-0035",
+      "days_ago": 27,
+      "description": "TST* HOPS N GRAIN",
+      "amount": -28.42,
+      "category": "dining"
+    },
+    {
+      "id": "priya-0036",
+      "days_ago": 28,
+      "description": "FLORIDA BLUE INSURANCE PREMIUM",
+      "amount": -212.4,
+      "category": "insurance"
+    },
+    {
+      "id": "priya-0037",
+      "days_ago": 30,
+      "description": "AMAZON.COM*RT4KL2",
+      "amount": -51.34,
+      "category": "shopping"
+    },
+    {
+      "id": "priya-0038",
+      "days_ago": 30,
+      "description": "SHAKE SHACK 1882",
+      "amount": -40.69,
+      "category": "dining"
+    },
+    {
+      "id": "priya-0039",
+      "days_ago": 30,
+      "description": "TRADER JOE'S #712",
+      "amount": -101.05,
+      "category": "groceries"
+    },
+    {
+      "id": "priya-0040",
+      "days_ago": 32,
+      "description": "UBER *TRIP HELP.UBER.COM",
+      "amount": -25.49,
+      "category": "transport"
+    },
+    {
+      "id": "priya-0041",
+      "days_ago": 33,
+      "description": "EVENTBRITE*ART WALK",
+      "amount": -41.38,
+      "category": "entertainment"
+    },
+    {
+      "id": "priya-0042",
+      "days_ago": 33,
+      "description": "LA FITNESS MONTHLY DUES",
+      "amount": -39.99,
+      "category": "health"
+    },
+    {
+      "id": "priya-0043",
+      "days_ago": 33,
+      "description": "SQ *BREW HAUS COFFEE",
+      "amount": -25.96,
+      "category": "dining"
+    },
+    {
+      "id": "priya-0044",
+      "days_ago": 33,
+      "description": "STRIPE TRANSFER ST-K8J2 PRIYA DESIGN",
+      "amount": 2275.0,
+      "category": "income"
+    },
+    {
+      "id": "priya-0045",
+      "days_ago": 35,
+      "description": "FIGMA MONTHLY",
+      "amount": -15.0,
+      "category": "subscriptions"
+    },
+    {
+      "id": "priya-0046",
+      "days_ago": 35,
+      "description": "UBER *EATS PENDING",
+      "amount": -40.25,
+      "category": "dining"
+    },
+    {
+      "id": "priya-0047",
+      "days_ago": 36,
+      "description": "HOME DEPOT #6331",
+      "amount": -70.3,
+      "category": "shopping"
+    },
+    {
+      "id": "priya-0048",
+      "days_ago": 39,
+      "description": "FPL ELECTRIC BILL PAYMENT",
+      "amount": -135.65,
+      "category": "utilities"
+    },
+    {
+      "id": "priya-0049",
+      "days_ago": 39,
+      "description": "STARBUCKS STORE 08821",
+      "amount": -19.91,
+      "category": "dining"
+    },
+    {
+      "id": "priya-0050",
+      "days_ago": 39,
+      "description": "TRADER JOE'S #712",
+      "amount": -74.14,
+      "category": "groceries"
+    },
+    {
+      "id": "priya-0051",
+      "days_ago": 40,
+      "description": "HULU 877-8244858",
+      "amount": -9.99,
+      "category": "subscriptions"
+    },
+    {
+      "id": "priya-0052",
+      "days_ago": 40,
+      "description": "SHELL OIL 57442365",
+      "amount": -30.98,
+      "category": "transport"
+    },
+    {
+      "id": "priya-0053",
+      "days_ago": 42,
+      "description": "PAYPAL TRANSFER IN UPWORK",
+      "amount": 331.74,
+      "category": "income"
+    },
+    {
+      "id": "priya-0054",
+      "days_ago": 42,
+      "description": "SUSHI TOMI",
+      "amount": -27.59,
+      "category": "dining"
+    },
+    {
+      "id": "priya-0055",
+      "days_ago": 43,
+      "description": "SEPHORA #1122",
+      "amount": -50.39,
+      "category": "personal"
+    },
+    {
+      "id": "priya-0056",
+      "days_ago": 44,
+      "description": "XFINITY INTERNET",
+      "amount": -65.0,
+      "category": "utilities"
+    },
+    {
+      "id": "priya-0057",
+      "days_ago": 46,
+      "description": "PUBLIX #1432 FORT MYERS FL",
+      "amount": -73.44,
+      "category": "groceries"
+    },
+    {
+      "id": "priya-0058",
+      "days_ago": 46,
+      "description": "STARBUCKS STORE 08821",
+      "amount": -45.92,
+      "category": "dining"
+    },
+    {
+      "id": "priya-0059",
+      "days_ago": 47,
+      "description": "NELNET STUDENT LOAN PMT",
+      "amount": -183.0,
+      "category": "debt_payment"
+    },
+    {
+      "id": "priya-0060",
+      "days_ago": 47,
+      "description": "STRIPE TRANSFER ST-K8J2 PRIYA DESIGN",
+      "amount": 980.0,
+      "category": "income"
+    },
+    {
+      "id": "priya-0061",
+      "days_ago": 48,
+      "description": "PARKMOBILE NAPLES",
+      "amount": -16.94,
+      "category": "transport"
+    },
+    {
+      "id": "priya-0062",
+      "days_ago": 49,
+      "description": "SEACREST PROPERTY MGMT RENT",
+      "amount": -980.0,
+      "category": "housing"
+    },
+    {
+      "id": "priya-0063",
+      "days_ago": 49,
+      "description": "TST* HOPS N GRAIN",
+      "amount": -12.57,
+      "category": "dining"
+    },
+    {
+      "id": "priya-0064",
+      "days_ago": 51,
+      "description": "HOME DEPOT #6331",
+      "amount": -67.96,
+      "category": "shopping"
+    },
+    {
+      "id": "priya-0065",
+      "days_ago": 52,
+      "description": "ADOBE *CREATIVE CLOUD",
+      "amount": -59.99,
+      "category": "subscriptions"
+    },
+    {
+      "id": "priya-0066",
+      "days_ago": 52,
+      "description": "TST* HOPS N GRAIN",
+      "amount": -26.25,
+      "category": "dining"
+    },
+    {
+      "id": "priya-0067",
+      "days_ago": 54,
+      "description": "AMC THEATRES 2231",
+      "amount": -18.67,
+      "category": "entertainment"
+    },
+    {
+      "id": "priya-0068",
+      "days_ago": 54,
+      "description": "TRADER JOE'S #712",
+      "amount": -109.74,
+      "category": "groceries"
+    },
+    {
+      "id": "priya-0069",
+      "days_ago": 55,
+      "description": "UBER *EATS PENDING",
+      "amount": -28.25,
+      "category": "dining"
+    },
+    {
+      "id": "priya-0070",
+      "days_ago": 57,
+      "description": "PARKMOBILE NAPLES",
+      "amount": -11.81,
+      "category": "transport"
+    },
+    {
+      "id": "priya-0071",
+      "days_ago": 58,
+      "description": "FLORIDA BLUE INSURANCE PREMIUM",
+      "amount": -212.4,
+      "category": "insurance"
+    },
+    {
+      "id": "priya-0072",
+      "days_ago": 58,
+      "description": "HOME DEPOT #6331",
+      "amount": -67.22,
+      "category": "shopping"
+    },
+    {
+      "id": "priya-0073",
+      "days_ago": 58,
+      "description": "TST* HOPS N GRAIN",
+      "amount": -25.88,
+      "category": "dining"
+    },
+    {
+      "id": "priya-0074",
+      "days_ago": 59,
+      "description": "TRADER JOE'S #712",
+      "amount": -66.13,
+      "category": "groceries"
+    },
+    {
+      "id": "priya-0075",
+      "days_ago": 61,
+      "description": "STRIPE TRANSFER ST-K8J2 PRIYA DESIGN",
+      "amount": 1420.0,
+      "category": "income"
+    },
+    {
+      "id": "priya-0076",
+      "days_ago": 61,
+      "description": "UBER *EATS PENDING",
+      "amount": -18.9,
+      "category": "dining"
+    },
+    {
+      "id": "priya-0077",
+      "days_ago": 63,
+      "description": "LA FITNESS MONTHLY DUES",
+      "amount": -39.99,
+      "category": "health"
+    },
+    {
+      "id": "priya-0078",
+      "days_ago": 64,
+      "description": "SHAKE SHACK 1882",
+      "amount": -9.57,
+      "category": "dining"
+    },
+    {
+      "id": "priya-0079",
+      "days_ago": 65,
+      "description": "FIGMA MONTHLY",
+      "amount": -15.0,
+      "category": "subscriptions"
+    },
+    {
+      "id": "priya-0080",
+      "days_ago": 65,
+      "description": "UBER *TRIP HELP.UBER.COM",
+      "amount": -11.92,
+      "category": "transport"
+    },
+    {
+      "id": "priya-0081",
+      "days_ago": 66,
+      "description": "PUBLIX #1432 FORT MYERS FL",
+      "amount": -68.82,
+      "category": "groceries"
+    },
+    {
+      "id": "priya-0082",
+      "days_ago": 66,
+      "description": "SEPHORA #1122",
+      "amount": -63.11,
+      "category": "personal"
+    },
+    {
+      "id": "priya-0083",
+      "days_ago": 67,
+      "description": "SUSHI TOMI",
+      "amount": -26.57,
+      "category": "dining"
+    },
+    {
+      "id": "priya-0084",
+      "days_ago": 69,
+      "description": "FPL ELECTRIC BILL PAYMENT",
+      "amount": -136.53,
+      "category": "utilities"
+    },
+    {
+      "id": "priya-0085",
+      "days_ago": 70,
+      "description": "HULU 877-8244858",
+      "amount": -9.99,
+      "category": "subscriptions"
+    },
+    {
+      "id": "priya-0086",
+      "days_ago": 70,
+      "description": "SHAKE SHACK 1882",
+      "amount": -28.55,
+      "category": "dining"
+    },
+    {
+      "id": "priya-0087",
+      "days_ago": 72,
+      "description": "PAYPAL TRANSFER IN UPWORK",
+      "amount": 376.08,
+      "category": "income"
+    },
+    {
+      "id": "priya-0088",
+      "days_ago": 72,
+      "description": "TRADER JOE'S #712",
+      "amount": -57.94,
+      "category": "groceries"
+    },
+    {
+      "id": "priya-0089",
+      "days_ago": 73,
+      "description": "SHELL OIL 57442365",
+      "amount": -20.53,
+      "category": "transport"
+    },
+    {
+      "id": "priya-0090",
+      "days_ago": 74,
+      "description": "SEPHORA #1122",
+      "amount": -41.97,
+      "category": "personal"
+    },
+    {
+      "id": "priya-0091",
+      "days_ago": 74,
+      "description": "STARBUCKS STORE 08821",
+      "amount": -30.34,
+      "category": "dining"
+    },
+    {
+      "id": "priya-0092",
+      "days_ago": 74,
+      "description": "XFINITY INTERNET",
+      "amount": -65.0,
+      "category": "utilities"
+    },
+    {
+      "id": "priya-0093",
+      "days_ago": 77,
+      "description": "NELNET STUDENT LOAN PMT",
+      "amount": -183.0,
+      "category": "debt_payment"
+    },
+    {
+      "id": "priya-0094",
+      "days_ago": 77,
+      "description": "TST* HOPS N GRAIN",
+      "amount": -46.84,
+      "category": "dining"
+    },
+    {
+      "id": "priya-0095",
+      "days_ago": 78,
+      "description": "AMC THEATRES 2231",
+      "amount": -56.26,
+      "category": "entertainment"
+    },
+    {
+      "id": "priya-0096",
+      "days_ago": 78,
+      "description": "STRIPE TRANSFER ST-K8J2 PRIYA DESIGN",
+      "amount": 2400.0,
+      "category": "income"
+    },
+    {
+      "id": "priya-0097",
+      "days_ago": 79,
+      "description": "SEACREST PROPERTY MGMT RENT",
+      "amount": -980.0,
+      "category": "housing"
+    },
+    {
+      "id": "priya-0098",
+      "days_ago": 79,
+      "description": "TRADER JOE'S #712",
+      "amount": -94.27,
+      "category": "groceries"
+    },
+    {
+      "id": "priya-0099",
+      "days_ago": 80,
+      "description": "SHELL OIL 57442365",
+      "amount": -20.03,
+      "category": "transport"
+    },
+    {
+      "id": "priya-0100",
+      "days_ago": 80,
+      "description": "SWEETGREEN NAPLES",
+      "amount": -20.28,
+      "category": "dining"
+    },
+    {
+      "id": "priya-0101",
+      "days_ago": 82,
+      "description": "ADOBE *CREATIVE CLOUD",
+      "amount": -59.99,
+      "category": "subscriptions"
+    },
+    {
+      "id": "priya-0102",
+      "days_ago": 82,
+      "description": "HOME DEPOT #6331",
+      "amount": -68.13,
+      "category": "shopping"
+    },
+    {
+      "id": "priya-0103",
+      "days_ago": 83,
+      "description": "SWEETGREEN NAPLES",
+      "amount": -42.13,
+      "category": "dining"
+    },
+    {
+      "id": "priya-0104",
+      "days_ago": 86,
+      "description": "SUSHI TOMI",
+      "amount": -44.21,
+      "category": "dining"
+    },
+    {
+      "id": "priya-0105",
+      "days_ago": 86,
+      "description": "WHOLE FOODS MKT 10552",
+      "amount": -87.97,
+      "category": "groceries"
+    },
+    {
+      "id": "priya-0106",
+      "days_ago": 87,
+      "description": "PARKMOBILE NAPLES",
+      "amount": -17.77,
+      "category": "transport"
+    },
+    {
+      "id": "priya-0107",
+      "days_ago": 88,
+      "description": "FLORIDA BLUE INSURANCE PREMIUM",
+      "amount": -212.4,
+      "category": "insurance"
+    },
+    {
+      "id": "priya-0108",
+      "days_ago": 89,
+      "description": "SUSHI TOMI",
+      "amount": -22.68,
+      "category": "dining"
+    },
+    {
+      "id": "priya-0109",
+      "days_ago": 89,
+      "description": "TARGET 00021455",
+      "amount": -65.22,
+      "category": "shopping"
+    },
+    {
+      "id": "priya-0110",
+      "days_ago": 92,
+      "description": "STRIPE TRANSFER ST-K8J2 PRIYA DESIGN",
+      "amount": 760.0,
+      "category": "income"
+    },
+    {
+      "id": "priya-0111",
+      "days_ago": 92,
+      "description": "TRADER JOE'S #712",
+      "amount": -77.61,
+      "category": "groceries"
+    },
+    {
+      "id": "priya-0112",
+      "days_ago": 92,
+      "description": "UBER *EATS PENDING",
+      "amount": -37.8,
+      "category": "dining"
+    },
+    {
+      "id": "priya-0113",
+      "days_ago": 93,
+      "description": "LA FITNESS MONTHLY DUES",
+      "amount": -39.99,
+      "category": "health"
+    },
+    {
+      "id": "priya-0114",
+      "days_ago": 94,
+      "description": "SHELL OIL 57442365",
+      "amount": -32.14,
+      "category": "transport"
+    },
+    {
+      "id": "priya-0115",
+      "days_ago": 95,
+      "description": "ETSY.COM",
+      "amount": -84.73,
+      "category": "shopping"
+    },
+    {
+      "id": "priya-0116",
+      "days_ago": 95,
+      "description": "FIGMA MONTHLY",
+      "amount": -15.0,
+      "category": "subscriptions"
+    },
+    {
+      "id": "priya-0117",
+      "days_ago": 95,
+      "description": "SWEETGREEN NAPLES",
+      "amount": -21.69,
+      "category": "dining"
+    },
+    {
+      "id": "priya-0118",
+      "days_ago": 98,
+      "description": "STARBUCKS STORE 08821",
+      "amount": -36.89,
+      "category": "dining"
+    },
+    {
+      "id": "priya-0119",
+      "days_ago": 99,
+      "description": "FPL ELECTRIC BILL PAYMENT",
+      "amount": -101.14,
+      "category": "utilities"
+    },
+    {
+      "id": "priya-0120",
+      "days_ago": 100,
+      "description": "EVENTBRITE*ART WALK",
+      "amount": -59.26,
+      "category": "entertainment"
+    },
+    {
+      "id": "priya-0121",
+      "days_ago": 100,
+      "description": "HULU 877-8244858",
+      "amount": -9.99,
+      "category": "subscriptions"
+    },
+    {
+      "id": "priya-0122",
+      "days_ago": 100,
+      "description": "WHOLE FOODS MKT 10552",
+      "amount": -89.11,
+      "category": "groceries"
+    },
+    {
+      "id": "priya-0123",
+      "days_ago": 101,
+      "description": "SUSHI TOMI",
+      "amount": -22.69,
+      "category": "dining"
+    },
+    {
+      "id": "priya-0124",
+      "days_ago": 102,
+      "description": "PAYPAL TRANSFER IN UPWORK",
+      "amount": 246.55,
+      "category": "income"
+    },
+    {
+      "id": "priya-0125",
+      "days_ago": 102,
+      "description": "SHELL OIL 57442365",
+      "amount": -28.13,
+      "category": "transport"
+    },
+    {
+      "id": "priya-0126",
+      "days_ago": 103,
+      "description": "SEPHORA #1122",
+      "amount": -44.92,
+      "category": "personal"
+    },
+    {
+      "id": "priya-0127",
+      "days_ago": 104,
+      "description": "SWEETGREEN NAPLES",
+      "amount": -21.15,
+      "category": "dining"
+    },
+    {
+      "id": "priya-0128",
+      "days_ago": 104,
+      "description": "XFINITY INTERNET",
+      "amount": -65.0,
+      "category": "utilities"
+    },
+    {
+      "id": "priya-0129",
+      "days_ago": 106,
+      "description": "STRIPE TRANSFER ST-K8J2 PRIYA DESIGN",
+      "amount": 1650.0,
+      "category": "income"
+    },
+    {
+      "id": "priya-0130",
+      "days_ago": 107,
+      "description": "NELNET STUDENT LOAN PMT",
+      "amount": -183.0,
+      "category": "debt_payment"
+    },
+    {
+      "id": "priya-0131",
+      "days_ago": 107,
+      "description": "PUBLIX #1432 FORT MYERS FL",
+      "amount": -117.6,
+      "category": "groceries"
+    },
+    {
+      "id": "priya-0132",
+      "days_ago": 108,
+      "description": "SUSHI TOMI",
+      "amount": -16.14,
+      "category": "dining"
+    },
+    {
+      "id": "priya-0133",
+      "days_ago": 109,
+      "description": "PARKMOBILE NAPLES",
+      "amount": -20.42,
+      "category": "transport"
+    },
+    {
+      "id": "priya-0134",
+      "days_ago": 109,
+      "description": "SEACREST PROPERTY MGMT RENT",
+      "amount": -980.0,
+      "category": "housing"
+    },
+    {
+      "id": "priya-0135",
+      "days_ago": 110,
+      "description": "ETSY.COM",
+      "amount": -75.79,
+      "category": "shopping"
+    },
+    {
+      "id": "priya-0136",
+      "days_ago": 111,
+      "description": "STARBUCKS STORE 08821",
+      "amount": -15.47,
+      "category": "dining"
+    },
+    {
+      "id": "priya-0137",
+      "days_ago": 112,
+      "description": "ADOBE *CREATIVE CLOUD",
+      "amount": -59.99,
+      "category": "subscriptions"
+    },
+    {
+      "id": "priya-0138",
+      "days_ago": 114,
+      "description": "WHOLE FOODS MKT 10552",
+      "amount": -98.93,
+      "category": "groceries"
+    },
+    {
+      "id": "priya-0139",
+      "days_ago": 115,
+      "description": "STARBUCKS STORE 08821",
+      "amount": -35.42,
+      "category": "dining"
+    },
+    {
+      "id": "priya-0140",
+      "days_ago": 116,
+      "description": "PARKMOBILE NAPLES",
+      "amount": -9.21,
+      "category": "transport"
+    },
+    {
+      "id": "priya-0141",
+      "days_ago": 118,
+      "description": "AMAZON.COM*RT4KL2",
+      "amount": -29.53,
+      "category": "shopping"
+    },
+    {
+      "id": "priya-0142",
+      "days_ago": 118,
+      "description": "FLORIDA BLUE INSURANCE PREMIUM",
+      "amount": -212.4,
+      "category": "insurance"
+    },
+    {
+      "id": "priya-0143",
+      "days_ago": 118,
+      "description": "STRIPE TRANSFER ST-K8J2 PRIYA DESIGN",
+      "amount": 1200.0,
+      "category": "income"
+    },
+    {
+      "id": "priya-0144",
+      "days_ago": 118,
+      "description": "TST* HOPS N GRAIN",
+      "amount": -16.47,
+      "category": "dining"
+    }
+  ],
+  "order": 2
 }

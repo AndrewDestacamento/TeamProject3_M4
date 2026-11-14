@@ -6,7 +6,7 @@ This document describes the current `m4-upgrade` implementation. The language mo
 
 ![BudgetWise AI agent architecture](architecture.png)
 
-*Source: [`architecture.html`](architecture.html) — open it in a browser and screenshot at 1520x950 to regenerate.*
+_Source: [`architecture.html`](architecture.html) — open it in a browser and screenshot at 1520x950 to regenerate._
 
 Bookkeeper, Analyst, Planner, Critic, and Categorizer are the five agent roles. The conversation controller, router, guardrails, and money engine
 are deterministic application code. This keeps common inputs fast and prevents the language model from
@@ -25,29 +25,29 @@ controlling account selection or financial arithmetic.
 
 ## Agent responsibilities
 
-| Agent | Responsibility | Access |
-|---|---|---|
-| Analyst | Answers questions about spending, income, affordability, and financial patterns | Read-only MCP tools and budgeting-guide search |
-| Planner | Chooses a seven-day savings and spending strategy | `build_weekly_plan`; Python recomputes authoritative values |
-| Critic | Scores plans for grounding, realism, and clear actions | Plan facts only; code makes the approve/revise decision |
-| Bookkeeper | Converts natural language into spending, income, bills, pay schedules, balances, goals, fixes, and undo batches | Allowlisted SQLite write tools |
-| Categorizer | Labels only CSV merchants not matched by deterministic keyword rules | Sanitized merchant descriptions in batches |
+| Agent       | Responsibility                                                                                                  | Access                                                      |
+| ----------- | --------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| Analyst     | Answers questions about spending, income, affordability, and financial patterns                                 | Read-only MCP tools and budgeting-guide search              |
+| Planner     | Chooses a seven-day savings and spending strategy                                                               | `build_weekly_plan`; Python recomputes authoritative values |
+| Critic      | Scores plans for grounding, realism, and clear actions                                                          | Plan facts only; code makes the approve/revise decision     |
+| Bookkeeper  | Converts natural language into spending, income, bills, pay schedules, balances, goals, fixes, and undo batches | Allowlisted SQLite write tools                              |
+| Categorizer | Labels only CSV merchants not matched by deterministic keyword rules                                            | Sanitized merchant descriptions in batches                  |
 
 ## Main modules
 
-| Path | Role |
-|---|---|
-| `app.py` | FastAPI lifecycle, REST/SSE endpoints, account context, and React static serving |
+| Path                         | Role                                                                                           |
+| ---------------------------- | ---------------------------------------------------------------------------------------------- |
+| `app.py`                     | FastAPI lifecycle, REST/SSE endpoints, account context, and React static serving               |
 | `budgetwise/conversation.py` | Persistent guided conversation state, quick replies, question progression, and loop prevention |
-| `budgetwise/agents.py` | Router plus Analyst, Planner, Critic, and Categorizer orchestration |
-| `budgetwise/bookkeeper.py` | Bookkeeper agent and allowlisted write tools |
-| `budgetwise/finance.py` | Safe-to-spend, 30-day cash flow, goal pace, insights, affordability, and plan math |
-| `budgetwise/store.py` | SQLite ledger, settings, plans, account selection, and undo batches |
-| `mcp_server.py` | Six read/calculation tools exposed over MCP stdio |
-| `budgetwise/importer.py` | Bank CSV parsing, duplicate handling, and estimate replacement |
-| `guardrails.py` | Input, payload, sanitization, and output-grounding checks |
-| `budgetwise/devlog.py` | Opt-in local development conversation logging |
-| `frontend/src/` | React workspace: Home conversation, Activity, Plan, Settings, and separate examples |
+| `budgetwise/agents.py`       | Router plus Analyst, Planner, Critic, and Categorizer orchestration                            |
+| `budgetwise/bookkeeper.py`   | Bookkeeper agent and allowlisted write tools                                                   |
+| `budgetwise/finance.py`      | Safe-to-spend, 30-day cash flow, goal pace, insights, affordability, and plan math             |
+| `budgetwise/store.py`        | SQLite ledger, settings, plans, account selection, and undo batches                            |
+| `mcp_server.py`              | Six read/calculation tools exposed over MCP stdio                                              |
+| `budgetwise/importer.py`     | Bank CSV parsing, duplicate handling, and estimate replacement                                 |
+| `guardrails.py`              | Input, payload, sanitization, and output-grounding checks                                      |
+| `budgetwise/devlog.py`       | Opt-in local development conversation logging                                                  |
+| `frontend/src/`              | React workspace: Home conversation, Activity, Plan, Settings, and separate examples            |
 
 ## Data and privacy boundaries
 

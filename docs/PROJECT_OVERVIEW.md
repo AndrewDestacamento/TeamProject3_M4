@@ -30,16 +30,16 @@ every dollar amount. Grounding checks prevent unverified financial numbers from 
 
 ## What changed from M3
 
-| M3 | M4 prototype |
-|---|---|
-| Command-line demonstration using fixed sample data | React and FastAPI application usable with personal or isolated example data |
-| Analyst and Planner agents | Analyst, Planner, Critic, Bookkeeper, and Categorizer agents |
-| JSON-style memory and one sample CSV | SQLite ledger, natural-language updates, Undo, and broad CSV import support |
-| Slow model-led handoffs and routing | Deterministic router and quick replies for common inputs |
-| Plans were generated but not reviewed in the product | Critic scores plans; the user chooses whether to start one |
-| Limited protection around generated numbers | Python money engine plus output grounding for every displayed amount |
-| No polished first-use journey | Optional two-screen introduction and bounded conversational setup |
-| No practical development conversation review | Opt-in structured logs, review script, and timestamped local archives |
+| M3                                                   | M4 prototype                                                                |
+| ---------------------------------------------------- | --------------------------------------------------------------------------- |
+| Command-line demonstration using fixed sample data   | React and FastAPI application usable with personal or isolated example data |
+| Analyst and Planner agents                           | Analyst, Planner, Critic, Bookkeeper, and Categorizer agents                |
+| JSON-style memory and one sample CSV                 | SQLite ledger, natural-language updates, Undo, and broad CSV import support |
+| Slow model-led handoffs and routing                  | Deterministic router and quick replies for common inputs                    |
+| Plans were generated but not reviewed in the product | Critic scores plans; the user chooses whether to start one                  |
+| Limited protection around generated numbers          | Python money engine plus output grounding for every displayed amount        |
+| No polished first-use journey                        | Optional two-screen introduction and bounded conversational setup           |
+| No practical development conversation review         | Opt-in structured logs, review script, and timestamped local archives       |
 
 ## Agent responsibilities
 

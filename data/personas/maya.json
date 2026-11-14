@@ -1,1143 +1,1143 @@
 {
- "id": "maya",
- "name": "Maya",
- "emoji": "\u2615",
- "tagline": "Student and part-time barista",
- "description": "College junior who works 15-25 hours a week at a coffee shop. Her paycheck changes with her hours, rent is split with a roommate, and dining out creeps up fast.",
- "settings": {
-  "current_balance": 296.4,
-  "savings_buffer": 75.0,
-  "goal": {
-   "name": "Spring textbooks fund",
-   "target": 400.0,
-   "saved": 135.0,
-   "deadline_days": 63
-  }
- },
- "plan_history": [
-  {
-   "start_days_ago": 7,
-   "daily_limit": 32.0,
-   "focus_category": "dining",
-   "focus_category_cap": 55.0,
-   "save_this_week": 20.0,
-   "summary": "Keep spending under $32/day, cap dining at $55, save $20."
-  }
- ],
- "transactions": [
-  {
-   "id": "maya-0000",
-   "days_ago": 0,
-   "description": "PUBLIX #1432 FORT MYERS FL",
-   "amount": -18.32,
-   "category": "groceries"
-  },
-  {
-   "id": "maya-0001",
-   "days_ago": 0,
-   "description": "STARBUCKS STORE 08821",
-   "amount": -6.45,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0002",
-   "days_ago": 1,
-   "description": "PANERA BREAD #601",
-   "amount": -14.8,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0003",
-   "days_ago": 2,
-   "description": "CHIPOTLE 2291",
-   "amount": -27.78,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0004",
-   "days_ago": 3,
-   "description": "STARBUCKS STORE 08821",
-   "amount": -27.59,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0005",
-   "days_ago": 3,
-   "description": "TICKETMASTER",
-   "amount": -96.5,
-   "category": "entertainment"
-  },
-  {
-   "id": "maya-0006",
-   "days_ago": 3,
-   "description": "TRADER JOE'S #712",
-   "amount": -56.32,
-   "category": "groceries"
-  },
-  {
-   "id": "maya-0007",
-   "days_ago": 4,
-   "description": "DUNKIN #348812",
-   "amount": -15.48,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0008",
-   "days_ago": 4,
-   "description": "SHEIN.COM",
-   "amount": -15.38,
-   "category": "shopping"
-  },
-  {
-   "id": "maya-0009",
-   "days_ago": 4,
-   "description": "VENMO CASHOUT",
-   "amount": 71.18,
-   "category": "other"
-  },
-  {
-   "id": "maya-0010",
-   "days_ago": 6,
-   "description": "CHIPOTLE 2291",
-   "amount": -21.99,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0011",
-   "days_ago": 6,
-   "description": "FPL ELECTRIC BILL PAYMENT",
-   "amount": -58.27,
-   "category": "utilities"
-  },
-  {
-   "id": "maya-0012",
-   "days_ago": 7,
-   "description": "DUNKIN #348812",
-   "amount": -24.21,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0013",
-   "days_ago": 7,
-   "description": "RACETRAC 2471",
-   "amount": -39.38,
-   "category": "transport"
-  },
-  {
-   "id": "maya-0014",
-   "days_ago": 8,
-   "description": "SQ *GOLDEN BOBA TEA",
-   "amount": -17.01,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0015",
-   "days_ago": 8,
-   "description": "STARBUCKS CORP PAYROLL DIR DEP",
-   "amount": 603.1,
-   "category": "income"
-  },
-  {
-   "id": "maya-0016",
-   "days_ago": 9,
-   "description": "CHIPOTLE 2291",
-   "amount": -18.97,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0017",
-   "days_ago": 9,
-   "description": "TICKETMASTER",
-   "amount": -16.71,
-   "category": "entertainment"
-  },
-  {
-   "id": "maya-0018",
-   "days_ago": 9,
-   "description": "ZELLE PAYMENT TO RIVERSIDE APTS RENT",
-   "amount": -725.0,
-   "category": "housing"
-  },
-  {
-   "id": "maya-0019",
-   "days_ago": 10,
-   "description": "ALDI 72031 FORT MYERS",
-   "amount": -43.01,
-   "category": "groceries"
-  },
-  {
-   "id": "maya-0020",
-   "days_ago": 11,
-   "description": "CHIPOTLE 2291",
-   "amount": -18.02,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0021",
-   "days_ago": 12,
-   "description": "TJ MAXX #1188",
-   "amount": -18.64,
-   "category": "shopping"
-  },
-  {
-   "id": "maya-0022",
-   "days_ago": 13,
-   "description": "PLANET FITNESS CLUB FEES",
-   "amount": -24.99,
-   "category": "health"
-  },
-  {
-   "id": "maya-0023",
-   "days_ago": 14,
-   "description": "SQ *GOLDEN BOBA TEA",
-   "amount": -12.4,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0024",
-   "days_ago": 15,
-   "description": "WAWA 5232",
-   "amount": -37.5,
-   "category": "transport"
-  },
-  {
-   "id": "maya-0025",
-   "days_ago": 16,
-   "description": "CHICK-FIL-A #03312",
-   "amount": -18.96,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0026",
-   "days_ago": 17,
-   "description": "ALDI 72031 FORT MYERS",
-   "amount": -73.89,
-   "category": "groceries"
-  },
-  {
-   "id": "maya-0027",
-   "days_ago": 18,
-   "description": "NETFLIX.COM",
-   "amount": -15.49,
-   "category": "subscriptions"
-  },
-  {
-   "id": "maya-0028",
-   "days_ago": 18,
-   "description": "SQ *GOLDEN BOBA TEA",
-   "amount": -18.46,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0029",
-   "days_ago": 21,
-   "description": "APPLE.COM/BILL ICLOUD",
-   "amount": -2.99,
-   "category": "subscriptions"
-  },
-  {
-   "id": "maya-0030",
-   "days_ago": 21,
-   "description": "DUNKIN #348812",
-   "amount": -26.09,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0031",
-   "days_ago": 21,
-   "description": "SHEIN.COM",
-   "amount": -32.37,
-   "category": "shopping"
-  },
-  {
-   "id": "maya-0032",
-   "days_ago": 22,
-   "description": "RACETRAC 2471",
-   "amount": -35.49,
-   "category": "transport"
-  },
-  {
-   "id": "maya-0033",
-   "days_ago": 22,
-   "description": "STARBUCKS CORP PAYROLL DIR DEP",
-   "amount": 641.85,
-   "category": "income"
-  },
-  {
-   "id": "maya-0034",
-   "days_ago": 23,
-   "description": "CHICK-FIL-A #03312",
-   "amount": -15.61,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0035",
-   "days_ago": 23,
-   "description": "PUBLIX #1432 FORT MYERS FL",
-   "amount": -53.9,
-   "category": "groceries"
-  },
-  {
-   "id": "maya-0036",
-   "days_ago": 25,
-   "description": "SPOTIFY USA",
-   "amount": -11.99,
-   "category": "subscriptions"
-  },
-  {
-   "id": "maya-0037",
-   "days_ago": 26,
-   "description": "SQ *GOLDEN BOBA TEA",
-   "amount": -14.77,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0038",
-   "days_ago": 27,
-   "description": "MINT MOBILE 800-683-7392",
-   "amount": -45.0,
-   "category": "utilities"
-  },
-  {
-   "id": "maya-0039",
-   "days_ago": 28,
-   "description": "CHIPOTLE 2291",
-   "amount": -29.75,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0040",
-   "days_ago": 28,
-   "description": "TICKETMASTER",
-   "amount": -41.31,
-   "category": "entertainment"
-  },
-  {
-   "id": "maya-0041",
-   "days_ago": 29,
-   "description": "SHEIN.COM",
-   "amount": -45.78,
-   "category": "shopping"
-  },
-  {
-   "id": "maya-0042",
-   "days_ago": 30,
-   "description": "PUBLIX #1432 FORT MYERS FL",
-   "amount": -49.62,
-   "category": "groceries"
-  },
-  {
-   "id": "maya-0043",
-   "days_ago": 31,
-   "description": "UBER *EATS PENDING",
-   "amount": -29.14,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0044",
-   "days_ago": 31,
-   "description": "WAWA 5232",
-   "amount": -42.93,
-   "category": "transport"
-  },
-  {
-   "id": "maya-0045",
-   "days_ago": 33,
-   "description": "SQ *GOLDEN BOBA TEA",
-   "amount": -22.8,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0046",
-   "days_ago": 34,
-   "description": "VENMO CASHOUT",
-   "amount": 56.41,
-   "category": "other"
-  },
-  {
-   "id": "maya-0047",
-   "days_ago": 35,
-   "description": "SQ *GOLDEN BOBA TEA",
-   "amount": -14.01,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0048",
-   "days_ago": 36,
-   "description": "FPL ELECTRIC BILL PAYMENT",
-   "amount": -51.26,
-   "category": "utilities"
-  },
-  {
-   "id": "maya-0049",
-   "days_ago": 36,
-   "description": "PUBLIX #1432 FORT MYERS FL",
-   "amount": -42.32,
-   "category": "groceries"
-  },
-  {
-   "id": "maya-0050",
-   "days_ago": 36,
-   "description": "STARBUCKS CORP PAYROLL DIR DEP",
-   "amount": 603.1,
-   "category": "income"
-  },
-  {
-   "id": "maya-0051",
-   "days_ago": 36,
-   "description": "UBER *EATS PENDING",
-   "amount": -27.82,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0052",
-   "days_ago": 38,
-   "description": "TARGET 00021455",
-   "amount": -41.12,
-   "category": "shopping"
-  },
-  {
-   "id": "maya-0053",
-   "days_ago": 39,
-   "description": "RACETRAC 2471",
-   "amount": -22.9,
-   "category": "transport"
-  },
-  {
-   "id": "maya-0054",
-   "days_ago": 39,
-   "description": "UBER *EATS PENDING",
-   "amount": -22.23,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0055",
-   "days_ago": 39,
-   "description": "ZELLE PAYMENT TO RIVERSIDE APTS RENT",
-   "amount": -725.0,
-   "category": "housing"
-  },
-  {
-   "id": "maya-0056",
-   "days_ago": 41,
-   "description": "DUNKIN #348812",
-   "amount": -17.37,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0057",
-   "days_ago": 42,
-   "description": "ALDI 72031 FORT MYERS",
-   "amount": -64.66,
-   "category": "groceries"
-  },
-  {
-   "id": "maya-0058",
-   "days_ago": 43,
-   "description": "CHICK-FIL-A #03312",
-   "amount": -25.48,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0059",
-   "days_ago": 43,
-   "description": "PLANET FITNESS CLUB FEES",
-   "amount": -24.99,
-   "category": "health"
-  },
-  {
-   "id": "maya-0060",
-   "days_ago": 44,
-   "description": "FGCU BOOKSTORE",
-   "amount": -164.2,
-   "category": "education"
-  },
-  {
-   "id": "maya-0061",
-   "days_ago": 45,
-   "description": "CHIPOTLE 2291",
-   "amount": -17.16,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0062",
-   "days_ago": 46,
-   "description": "SHEIN.COM",
-   "amount": -23.94,
-   "category": "shopping"
-  },
-  {
-   "id": "maya-0063",
-   "days_ago": 47,
-   "description": "AMC THEATRES 2231",
-   "amount": -29.09,
-   "category": "entertainment"
-  },
-  {
-   "id": "maya-0064",
-   "days_ago": 47,
-   "description": "PANERA BREAD #601",
-   "amount": -29.96,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0065",
-   "days_ago": 47,
-   "description": "SHELL OIL 57442365",
-   "amount": -41.65,
-   "category": "transport"
-  },
-  {
-   "id": "maya-0066",
-   "days_ago": 48,
-   "description": "NETFLIX.COM",
-   "amount": -15.49,
-   "category": "subscriptions"
-  },
-  {
-   "id": "maya-0067",
-   "days_ago": 49,
-   "description": "PUBLIX #1432 FORT MYERS FL",
-   "amount": -46.16,
-   "category": "groceries"
-  },
-  {
-   "id": "maya-0068",
-   "days_ago": 49,
-   "description": "SQ *GOLDEN BOBA TEA",
-   "amount": -12.4,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0069",
-   "days_ago": 50,
-   "description": "STARBUCKS CORP PAYROLL DIR DEP",
-   "amount": 603.1,
-   "category": "income"
-  },
-  {
-   "id": "maya-0070",
-   "days_ago": 51,
-   "description": "APPLE.COM/BILL ICLOUD",
-   "amount": -2.99,
-   "category": "subscriptions"
-  },
-  {
-   "id": "maya-0071",
-   "days_ago": 51,
-   "description": "STARBUCKS STORE 08821",
-   "amount": -10.48,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0072",
-   "days_ago": 53,
-   "description": "DOORDASH*TACO BELL",
-   "amount": -15.84,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0073",
-   "days_ago": 54,
-   "description": "PUBLIX #1432 FORT MYERS FL",
-   "amount": -37.69,
-   "category": "groceries"
-  },
-  {
-   "id": "maya-0074",
-   "days_ago": 54,
-   "description": "SHELL OIL 57442365",
-   "amount": -39.71,
-   "category": "transport"
-  },
-  {
-   "id": "maya-0075",
-   "days_ago": 55,
-   "description": "CHIPOTLE 2291",
-   "amount": -16.26,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0076",
-   "days_ago": 55,
-   "description": "SPOTIFY USA",
-   "amount": -11.99,
-   "category": "subscriptions"
-  },
-  {
-   "id": "maya-0077",
-   "days_ago": 56,
-   "description": "SHEIN.COM",
-   "amount": -21.69,
-   "category": "shopping"
-  },
-  {
-   "id": "maya-0078",
-   "days_ago": 57,
-   "description": "MINT MOBILE 800-683-7392",
-   "amount": -45.0,
-   "category": "utilities"
-  },
-  {
-   "id": "maya-0079",
-   "days_ago": 57,
-   "description": "SQ *GOLDEN BOBA TEA",
-   "amount": -17.34,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0080",
-   "days_ago": 59,
-   "description": "DUNKIN #348812",
-   "amount": -19.75,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0081",
-   "days_ago": 59,
-   "description": "PUBLIX #1432 FORT MYERS FL",
-   "amount": -48.31,
-   "category": "groceries"
-  },
-  {
-   "id": "maya-0082",
-   "days_ago": 61,
-   "description": "PANERA BREAD #601",
-   "amount": -17.59,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0083",
-   "days_ago": 61,
-   "description": "RACETRAC 2471",
-   "amount": -37.29,
-   "category": "transport"
-  },
-  {
-   "id": "maya-0084",
-   "days_ago": 63,
-   "description": "CHIPOTLE 2291",
-   "amount": -11.33,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0085",
-   "days_ago": 64,
-   "description": "STARBUCKS CORP PAYROLL DIR DEP",
-   "amount": 641.85,
-   "category": "income"
-  },
-  {
-   "id": "maya-0086",
-   "days_ago": 64,
-   "description": "TARGET 00021455",
-   "amount": -32.44,
-   "category": "shopping"
-  },
-  {
-   "id": "maya-0087",
-   "days_ago": 64,
-   "description": "VENMO CASHOUT",
-   "amount": 62.63,
-   "category": "other"
-  },
-  {
-   "id": "maya-0088",
-   "days_ago": 65,
-   "description": "UBER *EATS PENDING",
-   "amount": -19.42,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0089",
-   "days_ago": 66,
-   "description": "FPL ELECTRIC BILL PAYMENT",
-   "amount": -60.39,
-   "category": "utilities"
-  },
-  {
-   "id": "maya-0090",
-   "days_ago": 66,
-   "description": "PANERA BREAD #601",
-   "amount": -12.55,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0091",
-   "days_ago": 66,
-   "description": "PUBLIX #1432 FORT MYERS FL",
-   "amount": -55.66,
-   "category": "groceries"
-  },
-  {
-   "id": "maya-0092",
-   "days_ago": 66,
-   "description": "TICKETMASTER",
-   "amount": -34.06,
-   "category": "entertainment"
-  },
-  {
-   "id": "maya-0093",
-   "days_ago": 68,
-   "description": "WAWA 5232",
-   "amount": -41.54,
-   "category": "transport"
-  },
-  {
-   "id": "maya-0094",
-   "days_ago": 69,
-   "description": "STARBUCKS STORE 08821",
-   "amount": -17.02,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0095",
-   "days_ago": 69,
-   "description": "ZELLE PAYMENT TO RIVERSIDE APTS RENT",
-   "amount": -725.0,
-   "category": "housing"
-  },
-  {
-   "id": "maya-0096",
-   "days_ago": 71,
-   "description": "ALDI 72031 FORT MYERS",
-   "amount": -36.41,
-   "category": "groceries"
-  },
-  {
-   "id": "maya-0097",
-   "days_ago": 71,
-   "description": "SQ *GOLDEN BOBA TEA",
-   "amount": -28.99,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0098",
-   "days_ago": 73,
-   "description": "DUNKIN #348812",
-   "amount": -26.0,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0099",
-   "days_ago": 73,
-   "description": "PLANET FITNESS CLUB FEES",
-   "amount": -24.99,
-   "category": "health"
-  },
-  {
-   "id": "maya-0100",
-   "days_ago": 73,
-   "description": "TARGET 00021455",
-   "amount": -31.67,
-   "category": "shopping"
-  },
-  {
-   "id": "maya-0101",
-   "days_ago": 75,
-   "description": "DOORDASH*TACO BELL",
-   "amount": -17.76,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0102",
-   "days_ago": 76,
-   "description": "WAWA 5232",
-   "amount": -33.73,
-   "category": "transport"
-  },
-  {
-   "id": "maya-0103",
-   "days_ago": 77,
-   "description": "SQ *GOLDEN BOBA TEA",
-   "amount": -29.64,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0104",
-   "days_ago": 77,
-   "description": "TRADER JOE'S #712",
-   "amount": -37.04,
-   "category": "groceries"
-  },
-  {
-   "id": "maya-0105",
-   "days_ago": 78,
-   "description": "NETFLIX.COM",
-   "amount": -15.49,
-   "category": "subscriptions"
-  },
-  {
-   "id": "maya-0106",
-   "days_ago": 78,
-   "description": "STARBUCKS CORP PAYROLL DIR DEP",
-   "amount": 641.85,
-   "category": "income"
-  },
-  {
-   "id": "maya-0107",
-   "days_ago": 79,
-   "description": "CHIPOTLE 2291",
-   "amount": -24.95,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0108",
-   "days_ago": 81,
-   "description": "APPLE.COM/BILL ICLOUD",
-   "amount": -2.99,
-   "category": "subscriptions"
-  },
-  {
-   "id": "maya-0109",
-   "days_ago": 81,
-   "description": "DOORDASH*TACO BELL",
-   "amount": -19.07,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0110",
-   "days_ago": 82,
-   "description": "AMAZON.COM*RT4KL2",
-   "amount": -15.5,
-   "category": "shopping"
-  },
-  {
-   "id": "maya-0111",
-   "days_ago": 83,
-   "description": "ALDI 72031 FORT MYERS",
-   "amount": -38.97,
-   "category": "groceries"
-  },
-  {
-   "id": "maya-0112",
-   "days_ago": 83,
-   "description": "RACETRAC 2471",
-   "amount": -24.38,
-   "category": "transport"
-  },
-  {
-   "id": "maya-0113",
-   "days_ago": 83,
-   "description": "UBER *EATS PENDING",
-   "amount": -22.78,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0114",
-   "days_ago": 84,
-   "description": "AMC THEATRES 2231",
-   "amount": -35.04,
-   "category": "entertainment"
-  },
-  {
-   "id": "maya-0115",
-   "days_ago": 85,
-   "description": "CHICK-FIL-A #03312",
-   "amount": -13.61,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0116",
-   "days_ago": 85,
-   "description": "SPOTIFY USA",
-   "amount": -11.99,
-   "category": "subscriptions"
-  },
-  {
-   "id": "maya-0117",
-   "days_ago": 87,
-   "description": "MINT MOBILE 800-683-7392",
-   "amount": -45.0,
-   "category": "utilities"
-  },
-  {
-   "id": "maya-0118",
-   "days_ago": 87,
-   "description": "UBER *EATS PENDING",
-   "amount": -20.32,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0119",
-   "days_ago": 89,
-   "description": "STARBUCKS STORE 08821",
-   "amount": -21.13,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0120",
-   "days_ago": 89,
-   "description": "TRADER JOE'S #712",
-   "amount": -72.95,
-   "category": "groceries"
-  },
-  {
-   "id": "maya-0121",
-   "days_ago": 91,
-   "description": "DUNKIN #348812",
-   "amount": -19.6,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0122",
-   "days_ago": 91,
-   "description": "SHELL OIL 57442365",
-   "amount": -34.1,
-   "category": "transport"
-  },
-  {
-   "id": "maya-0123",
-   "days_ago": 92,
-   "description": "SHEIN.COM",
-   "amount": -53.69,
-   "category": "shopping"
-  },
-  {
-   "id": "maya-0124",
-   "days_ago": 92,
-   "description": "STARBUCKS CORP PAYROLL DIR DEP",
-   "amount": 512.75,
-   "category": "income"
-  },
-  {
-   "id": "maya-0125",
-   "days_ago": 93,
-   "description": "CHIPOTLE 2291",
-   "amount": -23.27,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0126",
-   "days_ago": 94,
-   "description": "VENMO CASHOUT",
-   "amount": 43.38,
-   "category": "other"
-  },
-  {
-   "id": "maya-0127",
-   "days_ago": 95,
-   "description": "PUBLIX #1432 FORT MYERS FL",
-   "amount": -62.45,
-   "category": "groceries"
-  },
-  {
-   "id": "maya-0128",
-   "days_ago": 96,
-   "description": "DUNKIN #348812",
-   "amount": -12.73,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0129",
-   "days_ago": 96,
-   "description": "FPL ELECTRIC BILL PAYMENT",
-   "amount": -68.48,
-   "category": "utilities"
-  },
-  {
-   "id": "maya-0130",
-   "days_ago": 98,
-   "description": "DUNKIN #348812",
-   "amount": -28.52,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0131",
-   "days_ago": 98,
-   "description": "RACETRAC 2471",
-   "amount": -36.71,
-   "category": "transport"
-  },
-  {
-   "id": "maya-0132",
-   "days_ago": 99,
-   "description": "ZELLE PAYMENT TO RIVERSIDE APTS RENT",
-   "amount": -725.0,
-   "category": "housing"
-  },
-  {
-   "id": "maya-0133",
-   "days_ago": 100,
-   "description": "PANERA BREAD #601",
-   "amount": -8.72,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0134",
-   "days_ago": 100,
-   "description": "TJ MAXX #1188",
-   "amount": -26.61,
-   "category": "shopping"
-  },
-  {
-   "id": "maya-0135",
-   "days_ago": 102,
-   "description": "PUBLIX #1432 FORT MYERS FL",
-   "amount": -44.66,
-   "category": "groceries"
-  },
-  {
-   "id": "maya-0136",
-   "days_ago": 103,
-   "description": "PLANET FITNESS CLUB FEES",
-   "amount": -24.99,
-   "category": "health"
-  },
-  {
-   "id": "maya-0137",
-   "days_ago": 103,
-   "description": "STARBUCKS STORE 08821",
-   "amount": -6.89,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0138",
-   "days_ago": 105,
-   "description": "RACETRAC 2471",
-   "amount": -23.29,
-   "category": "transport"
-  },
-  {
-   "id": "maya-0139",
-   "days_ago": 105,
-   "description": "STEAMGAMES.COM",
-   "amount": -40.31,
-   "category": "entertainment"
-  },
-  {
-   "id": "maya-0140",
-   "days_ago": 106,
-   "description": "PANERA BREAD #601",
-   "amount": -12.11,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0141",
-   "days_ago": 106,
-   "description": "STARBUCKS CORP PAYROLL DIR DEP",
-   "amount": 512.75,
-   "category": "income"
-  },
-  {
-   "id": "maya-0142",
-   "days_ago": 107,
-   "description": "PUBLIX #1432 FORT MYERS FL",
-   "amount": -55.13,
-   "category": "groceries"
-  },
-  {
-   "id": "maya-0143",
-   "days_ago": 108,
-   "description": "CHIPOTLE 2291",
-   "amount": -27.3,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0144",
-   "days_ago": 108,
-   "description": "NETFLIX.COM",
-   "amount": -15.49,
-   "category": "subscriptions"
-  },
-  {
-   "id": "maya-0145",
-   "days_ago": 109,
-   "description": "TARGET 00021455",
-   "amount": -45.99,
-   "category": "shopping"
-  },
-  {
-   "id": "maya-0146",
-   "days_ago": 110,
-   "description": "DUNKIN #348812",
-   "amount": -6.58,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0147",
-   "days_ago": 111,
-   "description": "APPLE.COM/BILL ICLOUD",
-   "amount": -2.99,
-   "category": "subscriptions"
-  },
-  {
-   "id": "maya-0148",
-   "days_ago": 112,
-   "description": "DOORDASH*TACO BELL",
-   "amount": -19.45,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0149",
-   "days_ago": 112,
-   "description": "RACETRAC 2471",
-   "amount": -42.45,
-   "category": "transport"
-  },
-  {
-   "id": "maya-0150",
-   "days_ago": 113,
-   "description": "PUBLIX #1432 FORT MYERS FL",
-   "amount": -50.18,
-   "category": "groceries"
-  },
-  {
-   "id": "maya-0151",
-   "days_ago": 114,
-   "description": "CHICK-FIL-A #03312",
-   "amount": -19.24,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0152",
-   "days_ago": 115,
-   "description": "DOORDASH*TACO BELL",
-   "amount": -11.82,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0153",
-   "days_ago": 115,
-   "description": "SPOTIFY USA",
-   "amount": -11.99,
-   "category": "subscriptions"
-  },
-  {
-   "id": "maya-0154",
-   "days_ago": 117,
-   "description": "DOORDASH*TACO BELL",
-   "amount": -13.9,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0155",
-   "days_ago": 117,
-   "description": "MINT MOBILE 800-683-7392",
-   "amount": -45.0,
-   "category": "utilities"
-  },
-  {
-   "id": "maya-0156",
-   "days_ago": 118,
-   "description": "TARGET 00021455",
-   "amount": -35.72,
-   "category": "shopping"
-  },
-  {
-   "id": "maya-0157",
-   "days_ago": 119,
-   "description": "CHICK-FIL-A #03312",
-   "amount": -25.46,
-   "category": "dining"
-  },
-  {
-   "id": "maya-0158",
-   "days_ago": 119,
-   "description": "TRADER JOE'S #712",
-   "amount": -61.91,
-   "category": "groceries"
-  }
- ],
- "order": 0
+  "id": "maya",
+  "name": "Maya",
+  "emoji": "\u2615",
+  "tagline": "Student and part-time barista",
+  "description": "College junior who works 15-25 hours a week at a coffee shop. Her paycheck changes with her hours, rent is split with a roommate, and dining out creeps up fast.",
+  "settings": {
+    "current_balance": 296.4,
+    "savings_buffer": 75.0,
+    "goal": {
+      "name": "Spring textbooks fund",
+      "target": 400.0,
+      "saved": 135.0,
+      "deadline_days": 63
+    }
+  },
+  "plan_history": [
+    {
+      "start_days_ago": 7,
+      "daily_limit": 32.0,
+      "focus_category": "dining",
+      "focus_category_cap": 55.0,
+      "save_this_week": 20.0,
+      "summary": "Keep spending under $32/day, cap dining at $55, save $20."
+    }
+  ],
+  "transactions": [
+    {
+      "id": "maya-0000",
+      "days_ago": 0,
+      "description": "PUBLIX #1432 FORT MYERS FL",
+      "amount": -18.32,
+      "category": "groceries"
+    },
+    {
+      "id": "maya-0001",
+      "days_ago": 0,
+      "description": "STARBUCKS STORE 08821",
+      "amount": -6.45,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0002",
+      "days_ago": 1,
+      "description": "PANERA BREAD #601",
+      "amount": -14.8,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0003",
+      "days_ago": 2,
+      "description": "CHIPOTLE 2291",
+      "amount": -27.78,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0004",
+      "days_ago": 3,
+      "description": "STARBUCKS STORE 08821",
+      "amount": -27.59,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0005",
+      "days_ago": 3,
+      "description": "TICKETMASTER",
+      "amount": -96.5,
+      "category": "entertainment"
+    },
+    {
+      "id": "maya-0006",
+      "days_ago": 3,
+      "description": "TRADER JOE'S #712",
+      "amount": -56.32,
+      "category": "groceries"
+    },
+    {
+      "id": "maya-0007",
+      "days_ago": 4,
+      "description": "DUNKIN #348812",
+      "amount": -15.48,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0008",
+      "days_ago": 4,
+      "description": "SHEIN.COM",
+      "amount": -15.38,
+      "category": "shopping"
+    },
+    {
+      "id": "maya-0009",
+      "days_ago": 4,
+      "description": "VENMO CASHOUT",
+      "amount": 71.18,
+      "category": "other"
+    },
+    {
+      "id": "maya-0010",
+      "days_ago": 6,
+      "description": "CHIPOTLE 2291",
+      "amount": -21.99,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0011",
+      "days_ago": 6,
+      "description": "FPL ELECTRIC BILL PAYMENT",
+      "amount": -58.27,
+      "category": "utilities"
+    },
+    {
+      "id": "maya-0012",
+      "days_ago": 7,
+      "description": "DUNKIN #348812",
+      "amount": -24.21,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0013",
+      "days_ago": 7,
+      "description": "RACETRAC 2471",
+      "amount": -39.38,
+      "category": "transport"
+    },
+    {
+      "id": "maya-0014",
+      "days_ago": 8,
+      "description": "SQ *GOLDEN BOBA TEA",
+      "amount": -17.01,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0015",
+      "days_ago": 8,
+      "description": "STARBUCKS CORP PAYROLL DIR DEP",
+      "amount": 603.1,
+      "category": "income"
+    },
+    {
+      "id": "maya-0016",
+      "days_ago": 9,
+      "description": "CHIPOTLE 2291",
+      "amount": -18.97,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0017",
+      "days_ago": 9,
+      "description": "TICKETMASTER",
+      "amount": -16.71,
+      "category": "entertainment"
+    },
+    {
+      "id": "maya-0018",
+      "days_ago": 9,
+      "description": "ZELLE PAYMENT TO RIVERSIDE APTS RENT",
+      "amount": -725.0,
+      "category": "housing"
+    },
+    {
+      "id": "maya-0019",
+      "days_ago": 10,
+      "description": "ALDI 72031 FORT MYERS",
+      "amount": -43.01,
+      "category": "groceries"
+    },
+    {
+      "id": "maya-0020",
+      "days_ago": 11,
+      "description": "CHIPOTLE 2291",
+      "amount": -18.02,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0021",
+      "days_ago": 12,
+      "description": "TJ MAXX #1188",
+      "amount": -18.64,
+      "category": "shopping"
+    },
+    {
+      "id": "maya-0022",
+      "days_ago": 13,
+      "description": "PLANET FITNESS CLUB FEES",
+      "amount": -24.99,
+      "category": "health"
+    },
+    {
+      "id": "maya-0023",
+      "days_ago": 14,
+      "description": "SQ *GOLDEN BOBA TEA",
+      "amount": -12.4,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0024",
+      "days_ago": 15,
+      "description": "WAWA 5232",
+      "amount": -37.5,
+      "category": "transport"
+    },
+    {
+      "id": "maya-0025",
+      "days_ago": 16,
+      "description": "CHICK-FIL-A #03312",
+      "amount": -18.96,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0026",
+      "days_ago": 17,
+      "description": "ALDI 72031 FORT MYERS",
+      "amount": -73.89,
+      "category": "groceries"
+    },
+    {
+      "id": "maya-0027",
+      "days_ago": 18,
+      "description": "NETFLIX.COM",
+      "amount": -15.49,
+      "category": "subscriptions"
+    },
+    {
+      "id": "maya-0028",
+      "days_ago": 18,
+      "description": "SQ *GOLDEN BOBA TEA",
+      "amount": -18.46,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0029",
+      "days_ago": 21,
+      "description": "APPLE.COM/BILL ICLOUD",
+      "amount": -2.99,
+      "category": "subscriptions"
+    },
+    {
+      "id": "maya-0030",
+      "days_ago": 21,
+      "description": "DUNKIN #348812",
+      "amount": -26.09,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0031",
+      "days_ago": 21,
+      "description": "SHEIN.COM",
+      "amount": -32.37,
+      "category": "shopping"
+    },
+    {
+      "id": "maya-0032",
+      "days_ago": 22,
+      "description": "RACETRAC 2471",
+      "amount": -35.49,
+      "category": "transport"
+    },
+    {
+      "id": "maya-0033",
+      "days_ago": 22,
+      "description": "STARBUCKS CORP PAYROLL DIR DEP",
+      "amount": 641.85,
+      "category": "income"
+    },
+    {
+      "id": "maya-0034",
+      "days_ago": 23,
+      "description": "CHICK-FIL-A #03312",
+      "amount": -15.61,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0035",
+      "days_ago": 23,
+      "description": "PUBLIX #1432 FORT MYERS FL",
+      "amount": -53.9,
+      "category": "groceries"
+    },
+    {
+      "id": "maya-0036",
+      "days_ago": 25,
+      "description": "SPOTIFY USA",
+      "amount": -11.99,
+      "category": "subscriptions"
+    },
+    {
+      "id": "maya-0037",
+      "days_ago": 26,
+      "description": "SQ *GOLDEN BOBA TEA",
+      "amount": -14.77,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0038",
+      "days_ago": 27,
+      "description": "MINT MOBILE 800-683-7392",
+      "amount": -45.0,
+      "category": "utilities"
+    },
+    {
+      "id": "maya-0039",
+      "days_ago": 28,
+      "description": "CHIPOTLE 2291",
+      "amount": -29.75,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0040",
+      "days_ago": 28,
+      "description": "TICKETMASTER",
+      "amount": -41.31,
+      "category": "entertainment"
+    },
+    {
+      "id": "maya-0041",
+      "days_ago": 29,
+      "description": "SHEIN.COM",
+      "amount": -45.78,
+      "category": "shopping"
+    },
+    {
+      "id": "maya-0042",
+      "days_ago": 30,
+      "description": "PUBLIX #1432 FORT MYERS FL",
+      "amount": -49.62,
+      "category": "groceries"
+    },
+    {
+      "id": "maya-0043",
+      "days_ago": 31,
+      "description": "UBER *EATS PENDING",
+      "amount": -29.14,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0044",
+      "days_ago": 31,
+      "description": "WAWA 5232",
+      "amount": -42.93,
+      "category": "transport"
+    },
+    {
+      "id": "maya-0045",
+      "days_ago": 33,
+      "description": "SQ *GOLDEN BOBA TEA",
+      "amount": -22.8,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0046",
+      "days_ago": 34,
+      "description": "VENMO CASHOUT",
+      "amount": 56.41,
+      "category": "other"
+    },
+    {
+      "id": "maya-0047",
+      "days_ago": 35,
+      "description": "SQ *GOLDEN BOBA TEA",
+      "amount": -14.01,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0048",
+      "days_ago": 36,
+      "description": "FPL ELECTRIC BILL PAYMENT",
+      "amount": -51.26,
+      "category": "utilities"
+    },
+    {
+      "id": "maya-0049",
+      "days_ago": 36,
+      "description": "PUBLIX #1432 FORT MYERS FL",
+      "amount": -42.32,
+      "category": "groceries"
+    },
+    {
+      "id": "maya-0050",
+      "days_ago": 36,
+      "description": "STARBUCKS CORP PAYROLL DIR DEP",
+      "amount": 603.1,
+      "category": "income"
+    },
+    {
+      "id": "maya-0051",
+      "days_ago": 36,
+      "description": "UBER *EATS PENDING",
+      "amount": -27.82,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0052",
+      "days_ago": 38,
+      "description": "TARGET 00021455",
+      "amount": -41.12,
+      "category": "shopping"
+    },
+    {
+      "id": "maya-0053",
+      "days_ago": 39,
+      "description": "RACETRAC 2471",
+      "amount": -22.9,
+      "category": "transport"
+    },
+    {
+      "id": "maya-0054",
+      "days_ago": 39,
+      "description": "UBER *EATS PENDING",
+      "amount": -22.23,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0055",
+      "days_ago": 39,
+      "description": "ZELLE PAYMENT TO RIVERSIDE APTS RENT",
+      "amount": -725.0,
+      "category": "housing"
+    },
+    {
+      "id": "maya-0056",
+      "days_ago": 41,
+      "description": "DUNKIN #348812",
+      "amount": -17.37,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0057",
+      "days_ago": 42,
+      "description": "ALDI 72031 FORT MYERS",
+      "amount": -64.66,
+      "category": "groceries"
+    },
+    {
+      "id": "maya-0058",
+      "days_ago": 43,
+      "description": "CHICK-FIL-A #03312",
+      "amount": -25.48,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0059",
+      "days_ago": 43,
+      "description": "PLANET FITNESS CLUB FEES",
+      "amount": -24.99,
+      "category": "health"
+    },
+    {
+      "id": "maya-0060",
+      "days_ago": 44,
+      "description": "FGCU BOOKSTORE",
+      "amount": -164.2,
+      "category": "education"
+    },
+    {
+      "id": "maya-0061",
+      "days_ago": 45,
+      "description": "CHIPOTLE 2291",
+      "amount": -17.16,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0062",
+      "days_ago": 46,
+      "description": "SHEIN.COM",
+      "amount": -23.94,
+      "category": "shopping"
+    },
+    {
+      "id": "maya-0063",
+      "days_ago": 47,
+      "description": "AMC THEATRES 2231",
+      "amount": -29.09,
+      "category": "entertainment"
+    },
+    {
+      "id": "maya-0064",
+      "days_ago": 47,
+      "description": "PANERA BREAD #601",
+      "amount": -29.96,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0065",
+      "days_ago": 47,
+      "description": "SHELL OIL 57442365",
+      "amount": -41.65,
+      "category": "transport"
+    },
+    {
+      "id": "maya-0066",
+      "days_ago": 48,
+      "description": "NETFLIX.COM",
+      "amount": -15.49,
+      "category": "subscriptions"
+    },
+    {
+      "id": "maya-0067",
+      "days_ago": 49,
+      "description": "PUBLIX #1432 FORT MYERS FL",
+      "amount": -46.16,
+      "category": "groceries"
+    },
+    {
+      "id": "maya-0068",
+      "days_ago": 49,
+      "description": "SQ *GOLDEN BOBA TEA",
+      "amount": -12.4,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0069",
+      "days_ago": 50,
+      "description": "STARBUCKS CORP PAYROLL DIR DEP",
+      "amount": 603.1,
+      "category": "income"
+    },
+    {
+      "id": "maya-0070",
+      "days_ago": 51,
+      "description": "APPLE.COM/BILL ICLOUD",
+      "amount": -2.99,
+      "category": "subscriptions"
+    },
+    {
+      "id": "maya-0071",
+      "days_ago": 51,
+      "description": "STARBUCKS STORE 08821",
+      "amount": -10.48,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0072",
+      "days_ago": 53,
+      "description": "DOORDASH*TACO BELL",
+      "amount": -15.84,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0073",
+      "days_ago": 54,
+      "description": "PUBLIX #1432 FORT MYERS FL",
+      "amount": -37.69,
+      "category": "groceries"
+    },
+    {
+      "id": "maya-0074",
+      "days_ago": 54,
+      "description": "SHELL OIL 57442365",
+      "amount": -39.71,
+      "category": "transport"
+    },
+    {
+      "id": "maya-0075",
+      "days_ago": 55,
+      "description": "CHIPOTLE 2291",
+      "amount": -16.26,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0076",
+      "days_ago": 55,
+      "description": "SPOTIFY USA",
+      "amount": -11.99,
+      "category": "subscriptions"
+    },
+    {
+      "id": "maya-0077",
+      "days_ago": 56,
+      "description": "SHEIN.COM",
+      "amount": -21.69,
+      "category": "shopping"
+    },
+    {
+      "id": "maya-0078",
+      "days_ago": 57,
+      "description": "MINT MOBILE 800-683-7392",
+      "amount": -45.0,
+      "category": "utilities"
+    },
+    {
+      "id": "maya-0079",
+      "days_ago": 57,
+      "description": "SQ *GOLDEN BOBA TEA",
+      "amount": -17.34,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0080",
+      "days_ago": 59,
+      "description": "DUNKIN #348812",
+      "amount": -19.75,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0081",
+      "days_ago": 59,
+      "description": "PUBLIX #1432 FORT MYERS FL",
+      "amount": -48.31,
+      "category": "groceries"
+    },
+    {
+      "id": "maya-0082",
+      "days_ago": 61,
+      "description": "PANERA BREAD #601",
+      "amount": -17.59,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0083",
+      "days_ago": 61,
+      "description": "RACETRAC 2471",
+      "amount": -37.29,
+      "category": "transport"
+    },
+    {
+      "id": "maya-0084",
+      "days_ago": 63,
+      "description": "CHIPOTLE 2291",
+      "amount": -11.33,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0085",
+      "days_ago": 64,
+      "description": "STARBUCKS CORP PAYROLL DIR DEP",
+      "amount": 641.85,
+      "category": "income"
+    },
+    {
+      "id": "maya-0086",
+      "days_ago": 64,
+      "description": "TARGET 00021455",
+      "amount": -32.44,
+      "category": "shopping"
+    },
+    {
+      "id": "maya-0087",
+      "days_ago": 64,
+      "description": "VENMO CASHOUT",
+      "amount": 62.63,
+      "category": "other"
+    },
+    {
+      "id": "maya-0088",
+      "days_ago": 65,
+      "description": "UBER *EATS PENDING",
+      "amount": -19.42,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0089",
+      "days_ago": 66,
+      "description": "FPL ELECTRIC BILL PAYMENT",
+      "amount": -60.39,
+      "category": "utilities"
+    },
+    {
+      "id": "maya-0090",
+      "days_ago": 66,
+      "description": "PANERA BREAD #601",
+      "amount": -12.55,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0091",
+      "days_ago": 66,
+      "description": "PUBLIX #1432 FORT MYERS FL",
+      "amount": -55.66,
+      "category": "groceries"
+    },
+    {
+      "id": "maya-0092",
+      "days_ago": 66,
+      "description": "TICKETMASTER",
+      "amount": -34.06,
+      "category": "entertainment"
+    },
+    {
+      "id": "maya-0093",
+      "days_ago": 68,
+      "description": "WAWA 5232",
+      "amount": -41.54,
+      "category": "transport"
+    },
+    {
+      "id": "maya-0094",
+      "days_ago": 69,
+      "description": "STARBUCKS STORE 08821",
+      "amount": -17.02,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0095",
+      "days_ago": 69,
+      "description": "ZELLE PAYMENT TO RIVERSIDE APTS RENT",
+      "amount": -725.0,
+      "category": "housing"
+    },
+    {
+      "id": "maya-0096",
+      "days_ago": 71,
+      "description": "ALDI 72031 FORT MYERS",
+      "amount": -36.41,
+      "category": "groceries"
+    },
+    {
+      "id": "maya-0097",
+      "days_ago": 71,
+      "description": "SQ *GOLDEN BOBA TEA",
+      "amount": -28.99,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0098",
+      "days_ago": 73,
+      "description": "DUNKIN #348812",
+      "amount": -26.0,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0099",
+      "days_ago": 73,
+      "description": "PLANET FITNESS CLUB FEES",
+      "amount": -24.99,
+      "category": "health"
+    },
+    {
+      "id": "maya-0100",
+      "days_ago": 73,
+      "description": "TARGET 00021455",
+      "amount": -31.67,
+      "category": "shopping"
+    },
+    {
+      "id": "maya-0101",
+      "days_ago": 75,
+      "description": "DOORDASH*TACO BELL",
+      "amount": -17.76,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0102",
+      "days_ago": 76,
+      "description": "WAWA 5232",
+      "amount": -33.73,
+      "category": "transport"
+    },
+    {
+      "id": "maya-0103",
+      "days_ago": 77,
+      "description": "SQ *GOLDEN BOBA TEA",
+      "amount": -29.64,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0104",
+      "days_ago": 77,
+      "description": "TRADER JOE'S #712",
+      "amount": -37.04,
+      "category": "groceries"
+    },
+    {
+      "id": "maya-0105",
+      "days_ago": 78,
+      "description": "NETFLIX.COM",
+      "amount": -15.49,
+      "category": "subscriptions"
+    },
+    {
+      "id": "maya-0106",
+      "days_ago": 78,
+      "description": "STARBUCKS CORP PAYROLL DIR DEP",
+      "amount": 641.85,
+      "category": "income"
+    },
+    {
+      "id": "maya-0107",
+      "days_ago": 79,
+      "description": "CHIPOTLE 2291",
+      "amount": -24.95,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0108",
+      "days_ago": 81,
+      "description": "APPLE.COM/BILL ICLOUD",
+      "amount": -2.99,
+      "category": "subscriptions"
+    },
+    {
+      "id": "maya-0109",
+      "days_ago": 81,
+      "description": "DOORDASH*TACO BELL",
+      "amount": -19.07,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0110",
+      "days_ago": 82,
+      "description": "AMAZON.COM*RT4KL2",
+      "amount": -15.5,
+      "category": "shopping"
+    },
+    {
+      "id": "maya-0111",
+      "days_ago": 83,
+      "description": "ALDI 72031 FORT MYERS",
+      "amount": -38.97,
+      "category": "groceries"
+    },
+    {
+      "id": "maya-0112",
+      "days_ago": 83,
+      "description": "RACETRAC 2471",
+      "amount": -24.38,
+      "category": "transport"
+    },
+    {
+      "id": "maya-0113",
+      "days_ago": 83,
+      "description": "UBER *EATS PENDING",
+      "amount": -22.78,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0114",
+      "days_ago": 84,
+      "description": "AMC THEATRES 2231",
+      "amount": -35.04,
+      "category": "entertainment"
+    },
+    {
+      "id": "maya-0115",
+      "days_ago": 85,
+      "description": "CHICK-FIL-A #03312",
+      "amount": -13.61,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0116",
+      "days_ago": 85,
+      "description": "SPOTIFY USA",
+      "amount": -11.99,
+      "category": "subscriptions"
+    },
+    {
+      "id": "maya-0117",
+      "days_ago": 87,
+      "description": "MINT MOBILE 800-683-7392",
+      "amount": -45.0,
+      "category": "utilities"
+    },
+    {
+      "id": "maya-0118",
+      "days_ago": 87,
+      "description": "UBER *EATS PENDING",
+      "amount": -20.32,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0119",
+      "days_ago": 89,
+      "description": "STARBUCKS STORE 08821",
+      "amount": -21.13,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0120",
+      "days_ago": 89,
+      "description": "TRADER JOE'S #712",
+      "amount": -72.95,
+      "category": "groceries"
+    },
+    {
+      "id": "maya-0121",
+      "days_ago": 91,
+      "description": "DUNKIN #348812",
+      "amount": -19.6,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0122",
+      "days_ago": 91,
+      "description": "SHELL OIL 57442365",
+      "amount": -34.1,
+      "category": "transport"
+    },
+    {
+      "id": "maya-0123",
+      "days_ago": 92,
+      "description": "SHEIN.COM",
+      "amount": -53.69,
+      "category": "shopping"
+    },
+    {
+      "id": "maya-0124",
+      "days_ago": 92,
+      "description": "STARBUCKS CORP PAYROLL DIR DEP",
+      "amount": 512.75,
+      "category": "income"
+    },
+    {
+      "id": "maya-0125",
+      "days_ago": 93,
+      "description": "CHIPOTLE 2291",
+      "amount": -23.27,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0126",
+      "days_ago": 94,
+      "description": "VENMO CASHOUT",
+      "amount": 43.38,
+      "category": "other"
+    },
+    {
+      "id": "maya-0127",
+      "days_ago": 95,
+      "description": "PUBLIX #1432 FORT MYERS FL",
+      "amount": -62.45,
+      "category": "groceries"
+    },
+    {
+      "id": "maya-0128",
+      "days_ago": 96,
+      "description": "DUNKIN #348812",
+      "amount": -12.73,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0129",
+      "days_ago": 96,
+      "description": "FPL ELECTRIC BILL PAYMENT",
+      "amount": -68.48,
+      "category": "utilities"
+    },
+    {
+      "id": "maya-0130",
+      "days_ago": 98,
+      "description": "DUNKIN #348812",
+      "amount": -28.52,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0131",
+      "days_ago": 98,
+      "description": "RACETRAC 2471",
+      "amount": -36.71,
+      "category": "transport"
+    },
+    {
+      "id": "maya-0132",
+      "days_ago": 99,
+      "description": "ZELLE PAYMENT TO RIVERSIDE APTS RENT",
+      "amount": -725.0,
+      "category": "housing"
+    },
+    {
+      "id": "maya-0133",
+      "days_ago": 100,
+      "description": "PANERA BREAD #601",
+      "amount": -8.72,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0134",
+      "days_ago": 100,
+      "description": "TJ MAXX #1188",
+      "amount": -26.61,
+      "category": "shopping"
+    },
+    {
+      "id": "maya-0135",
+      "days_ago": 102,
+      "description": "PUBLIX #1432 FORT MYERS FL",
+      "amount": -44.66,
+      "category": "groceries"
+    },
+    {
+      "id": "maya-0136",
+      "days_ago": 103,
+      "description": "PLANET FITNESS CLUB FEES",
+      "amount": -24.99,
+      "category": "health"
+    },
+    {
+      "id": "maya-0137",
+      "days_ago": 103,
+      "description": "STARBUCKS STORE 08821",
+      "amount": -6.89,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0138",
+      "days_ago": 105,
+      "description": "RACETRAC 2471",
+      "amount": -23.29,
+      "category": "transport"
+    },
+    {
+      "id": "maya-0139",
+      "days_ago": 105,
+      "description": "STEAMGAMES.COM",
+      "amount": -40.31,
+      "category": "entertainment"
+    },
+    {
+      "id": "maya-0140",
+      "days_ago": 106,
+      "description": "PANERA BREAD #601",
+      "amount": -12.11,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0141",
+      "days_ago": 106,
+      "description": "STARBUCKS CORP PAYROLL DIR DEP",
+      "amount": 512.75,
+      "category": "income"
+    },
+    {
+      "id": "maya-0142",
+      "days_ago": 107,
+      "description": "PUBLIX #1432 FORT MYERS FL",
+      "amount": -55.13,
+      "category": "groceries"
+    },
+    {
+      "id": "maya-0143",
+      "days_ago": 108,
+      "description": "CHIPOTLE 2291",
+      "amount": -27.3,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0144",
+      "days_ago": 108,
+      "description": "NETFLIX.COM",
+      "amount": -15.49,
+      "category": "subscriptions"
+    },
+    {
+      "id": "maya-0145",
+      "days_ago": 109,
+      "description": "TARGET 00021455",
+      "amount": -45.99,
+      "category": "shopping"
+    },
+    {
+      "id": "maya-0146",
+      "days_ago": 110,
+      "description": "DUNKIN #348812",
+      "amount": -6.58,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0147",
+      "days_ago": 111,
+      "description": "APPLE.COM/BILL ICLOUD",
+      "amount": -2.99,
+      "category": "subscriptions"
+    },
+    {
+      "id": "maya-0148",
+      "days_ago": 112,
+      "description": "DOORDASH*TACO BELL",
+      "amount": -19.45,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0149",
+      "days_ago": 112,
+      "description": "RACETRAC 2471",
+      "amount": -42.45,
+      "category": "transport"
+    },
+    {
+      "id": "maya-0150",
+      "days_ago": 113,
+      "description": "PUBLIX #1432 FORT MYERS FL",
+      "amount": -50.18,
+      "category": "groceries"
+    },
+    {
+      "id": "maya-0151",
+      "days_ago": 114,
+      "description": "CHICK-FIL-A #03312",
+      "amount": -19.24,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0152",
+      "days_ago": 115,
+      "description": "DOORDASH*TACO BELL",
+      "amount": -11.82,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0153",
+      "days_ago": 115,
+      "description": "SPOTIFY USA",
+      "amount": -11.99,
+      "category": "subscriptions"
+    },
+    {
+      "id": "maya-0154",
+      "days_ago": 117,
+      "description": "DOORDASH*TACO BELL",
+      "amount": -13.9,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0155",
+      "days_ago": 117,
+      "description": "MINT MOBILE 800-683-7392",
+      "amount": -45.0,
+      "category": "utilities"
+    },
+    {
+      "id": "maya-0156",
+      "days_ago": 118,
+      "description": "TARGET 00021455",
+      "amount": -35.72,
+      "category": "shopping"
+    },
+    {
+      "id": "maya-0157",
+      "days_ago": 119,
+      "description": "CHICK-FIL-A #03312",
+      "amount": -25.46,
+      "category": "dining"
+    },
+    {
+      "id": "maya-0158",
+      "days_ago": 119,
+      "description": "TRADER JOE'S #712",
+      "amount": -61.91,
+      "category": "groceries"
+    }
+  ],
+  "order": 0
 }

@@ -21,26 +21,51 @@ function Assistant({ m }: { m: ChatMessage }) {
       {m.plan && (
         <div className="space-y-2">
           <PlanCard p={m.plan} compact />
-          <Link to="/plan" className="btn-quiet text-[0.9rem]">Open the full plan to start it</Link>
+          <Link to="/plan" className="btn-quiet text-[0.9rem]">
+            Open the full plan to start it
+          </Link>
         </div>
       )}
       {(m.text || m.pending) && (
         <div className="prose-chat num text-[1rem] leading-relaxed">
-          {m.text ? <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.text}</ReactMarkdown> : (
+          {m.text ? (
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.text}</ReactMarkdown>
+          ) : (
             <span className="inline-flex gap-1 py-2" aria-label="Working">
-              {[0, 1, 2].map((i) => <span key={i} className="h-2 w-2 animate-pulseDot rounded-full bg-forest" style={{ animationDelay: `${i * 0.18}s` }} />)}
+              {[0, 1, 2].map((i) => (
+                <span
+                  key={i}
+                  className="h-2 w-2 animate-pulseDot rounded-full bg-forest"
+                  style={{ animationDelay: `${i * 0.18}s` }}
+                />
+              ))}
             </span>
           )}
         </div>
       )}
-      {m.error && <p className="text-[0.9rem] text-berry">Something went wrong: {m.error}. Try asking again.</p>}
+      {m.error && (
+        <p className="text-[0.9rem] text-berry">
+          Something went wrong: {m.error}. Try asking again.
+        </p>
+      )}
       {m.timeline.length > 0 && (
         <div>
           {!m.pending && (
-            <button onClick={() => setOpen((o) => !o)} className="flex items-center gap-1.5 text-[0.83rem] font-medium text-muted hover:text-ink">
-              <ChevronDown size={15} className={cn("transition-transform", open && "rotate-180")} />
+            <button
+              onClick={() => setOpen((o) => !o)}
+              className="flex items-center gap-1.5 text-[0.83rem] font-medium text-muted hover:text-ink"
+            >
+              <ChevronDown
+                size={15}
+                className={cn("transition-transform", open && "rotate-180")}
+              />
               How I got this answer
-              {m.elapsed !== undefined && <span className="ml-1 inline-flex items-center gap-1 text-faint"><Timer size={13} />{m.elapsed.toFixed(1)}s</span>}
+              {m.elapsed !== undefined && (
+                <span className="ml-1 inline-flex items-center gap-1 text-faint">
+                  <Timer size={13} />
+                  {m.elapsed.toFixed(1)}s
+                </span>
+              )}
             </button>
           )}
           {showSteps && <AgentTimeline items={m.timeline} className="mt-3" />}
@@ -54,9 +79,14 @@ export default function Ask() {
   const { messages, send, busy, reset } = useChat();
   const [q, setQ] = useState("");
   const end = useRef<HTMLDivElement>(null);
-  const { data: s } = useQuery({ queryKey: ["snapshot"], queryFn: api.snapshot });
+  const { data: s } = useQuery({
+    queryKey: ["snapshot"],
+    queryFn: api.snapshot,
+  });
   const readyForMoneyAnswers = Boolean(s?.balance_info.as_of);
-  useEffect(() => { end.current?.scrollIntoView({ behavior: "smooth", block: "end" }); }, [messages]);
+  useEffect(() => {
+    end.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [messages]);
 
   const submit = (text: string) => {
     if (!text.trim() || busy) return;
@@ -68,12 +98,27 @@ export default function Ask() {
     <div className="mx-auto flex min-h-[calc(100vh-11rem)] max-w-3xl flex-col lg:min-h-[calc(100vh-5rem)]">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-[1.9rem] font-bold leading-tight">Ask BudgetWise</h1>
-          <p className="mt-1 text-muted">Tell me your goal, spending, income or bills in your own words. I'll organize what you share, ask one useful question at a time, and verify every calculated amount.</p>
-          <p className="mt-2 text-[0.82rem] text-faint">Share only what you're comfortable sharing. Every question is optional, estimates are fine, and saved information can be corrected or undone.</p>
+          <h1 className="text-[1.9rem] font-bold leading-tight">
+            Ask BudgetWise
+          </h1>
+          <p className="mt-1 text-muted">
+            Tell me your goal, spending, income or bills in your own words. I'll
+            organize what you share, ask one useful question at a time, and
+            verify every calculated amount.
+          </p>
+          <p className="mt-2 text-[0.82rem] text-faint">
+            Share only what you're comfortable sharing. Every question is
+            optional, estimates are fine, and saved information can be corrected
+            or undone.
+          </p>
         </div>
         {messages.length > 0 && (
-          <button onClick={() => reset()} className="btn-ghost shrink-0 text-[0.9rem]"><RotateCcw size={16} /> New chat</button>
+          <button
+            onClick={() => reset()}
+            className="btn-ghost shrink-0 text-[0.9rem]"
+          >
+            <RotateCcw size={16} /> New chat
+          </button>
         )}
       </div>
 
@@ -81,47 +126,118 @@ export default function Ask() {
         {messages.length === 0 && (
           <div className="rounded-3xl border border-dashed border-line p-6 sm:p-8">
             <p className="font-display text-[1.25rem] font-bold">
-              {readyForMoneyAnswers && s ? <>You have <span className="num text-forest">{money(Math.max(s.safe_per_day, 0))}</span> a day to spend until payday. What would you like to know?</> : "What would you like BudgetWise to help you do?"}
+              {readyForMoneyAnswers && s ? (
+                <>
+                  You have{" "}
+                  <span className="num text-forest">
+                    {money(Math.max(s.safe_per_day, 0))}
+                  </span>{" "}
+                  a day to spend until payday. What would you like to know?
+                </>
+              ) : (
+                "What would you like BudgetWise to help you do?"
+              )}
             </p>
-            {!readyForMoneyAnswers && <p className="mt-2 text-[0.9rem] text-muted">Your updates are saved, but I need a current balance before I can calculate safe spending or affordability. You can still set a goal or add any information now.</p>}
+            {!readyForMoneyAnswers && (
+              <p className="mt-2 text-[0.9rem] text-muted">
+                Your updates are saved, but I need a current balance before I
+                can calculate safe spending or affordability. You can still set
+                a goal or add any information now.
+              </p>
+            )}
             <div className="mt-5 grid gap-2 sm:grid-cols-2">
-              {(readyForMoneyAnswers ? [...SUGGESTIONS, "Make me a plan for this week", "I spent about $20 on food today"] : [
-                "I want to save $500 in two months", "I have about $500 in checking", "Rent is $1,000 on the 1st", "I get paid every two weeks", "I spent about $20 on food today", "What information do you need from me?",
-              ]).map((x) => (
-                <button key={x} onClick={() => submit(x)}
-                  className="rounded-2xl border border-line bg-surface px-4 py-3 text-left text-[0.95rem] hover:border-forest/40">
+              {(readyForMoneyAnswers
+                ? [
+                    ...SUGGESTIONS,
+                    "Make me a plan for this week",
+                    "I spent about $20 on food today",
+                  ]
+                : [
+                    "I want to save $500 in two months",
+                    "I have about $500 in checking",
+                    "Rent is $1,000 on the 1st",
+                    "I get paid every two weeks",
+                    "I spent about $20 on food today",
+                    "What information do you need from me?",
+                  ]
+              ).map((x) => (
+                <button
+                  key={x}
+                  onClick={() => submit(x)}
+                  className="rounded-2xl border border-line bg-surface px-4 py-3 text-left text-[0.95rem] hover:border-forest/40"
+                >
                   {x}
                 </button>
               ))}
             </div>
           </div>
         )}
-        {messages.map((m) => m.role === "user" ? (
-          <div key={m.id} className="flex justify-end">
-            <p className="max-w-[80%] rounded-2xl rounded-br-md bg-forest px-4 py-2.5 text-white dark:text-canvas">{m.text}</p>
-          </div>
-        ) : (
-          <div key={m.id} className="flex gap-3">
-            <svg width="32" height="32" viewBox="0 0 64 64" className="mt-1 shrink-0" aria-hidden>
-              <rect width="64" height="64" rx="18" fill="rgb(var(--forest))" />
-              <path d="M14 40c8 0 10-16 18-16s10 10 18 10" stroke="rgb(var(--marigold))" strokeWidth="6" fill="none" strokeLinecap="round" />
-              <circle cx="50" cy="34" r="5" fill="#fff" />
-            </svg>
-            <Assistant m={m} />
-          </div>
-        ))}
+        {messages.map((m) =>
+          m.role === "user" ? (
+            <div key={m.id} className="flex justify-end">
+              <p className="max-w-[80%] rounded-2xl rounded-br-md bg-forest px-4 py-2.5 text-white dark:text-canvas">
+                {m.text}
+              </p>
+            </div>
+          ) : (
+            <div key={m.id} className="flex gap-3">
+              <svg
+                width="32"
+                height="32"
+                viewBox="0 0 64 64"
+                className="mt-1 shrink-0"
+                aria-hidden
+              >
+                <rect
+                  width="64"
+                  height="64"
+                  rx="18"
+                  fill="rgb(var(--forest))"
+                />
+                <path
+                  d="M14 40c8 0 10-16 18-16s10 10 18 10"
+                  stroke="rgb(var(--marigold))"
+                  strokeWidth="6"
+                  fill="none"
+                  strokeLinecap="round"
+                />
+                <circle cx="50" cy="34" r="5" fill="#fff" />
+              </svg>
+              <Assistant m={m} />
+            </div>
+          ),
+        )}
         <div ref={end} />
       </div>
 
-      <form onSubmit={(e) => { e.preventDefault(); submit(q); }}
-        className="sticky bottom-20 z-10 rounded-2xl border border-line bg-surface p-2 shadow-lift lg:bottom-6">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          submit(q);
+        }}
+        className="sticky bottom-20 z-10 rounded-2xl border border-line bg-surface p-2 shadow-lift lg:bottom-6"
+      >
         <div className="flex items-end gap-2">
-          <textarea value={q} onChange={(e) => setQ(e.target.value)} rows={1} placeholder="Ask a question, or tell me what you spent…"
-            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submit(q); } }}
+          <textarea
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            rows={1}
+            placeholder="Ask a question, or tell me what you spent…"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                submit(q);
+              }
+            }}
             className="max-h-40 min-h-[44px] flex-1 resize-none bg-transparent px-3 py-2.5 text-[1rem] outline-none placeholder:text-faint"
-            aria-label="Your question" />
-          <button type="submit" disabled={busy || !q.trim()} aria-label="Send"
-            className="grid h-11 w-11 place-items-center rounded-xl bg-forest text-white disabled:opacity-40 dark:text-canvas">
+            aria-label="Your question"
+          />
+          <button
+            type="submit"
+            disabled={busy || !q.trim()}
+            aria-label="Send"
+            className="grid h-11 w-11 place-items-center rounded-xl bg-forest text-white disabled:opacity-40 dark:text-canvas"
+          >
             <ArrowUp size={20} />
           </button>
         </div>

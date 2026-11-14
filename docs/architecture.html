@@ -1,208 +1,639 @@
 <!doctype html>
-<html><head><meta charset="utf-8">
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { width: 1520px; height: 950px; background: #fff; font-family: "Times New Roman", Times, serif;
-         color: #0f172a; position: relative; }
-  .b { position: absolute; padding: 8px 12px; font-size: 16px; line-height: 1.32; text-align: center; z-index: 8; }
-  .b b.t { display: block; font-size: 19.5px; margin-bottom: 2px; }
-  .b .s { display: block; font-size: 14.8px; line-height: 1.29; }
-  .pat { display: block; font-style: italic; font-size: 13.6px; margin-top: 2px; }
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        width: 1520px;
+        height: 950px;
+        background: #fff;
+        font-family: "Times New Roman", Times, serif;
+        color: #0f172a;
+        position: relative;
+      }
+      .b {
+        position: absolute;
+        padding: 8px 12px;
+        font-size: 16px;
+        line-height: 1.32;
+        text-align: center;
+        z-index: 8;
+      }
+      .b b.t {
+        display: block;
+        font-size: 19.5px;
+        margin-bottom: 2px;
+      }
+      .b .s {
+        display: block;
+        font-size: 14.8px;
+        line-height: 1.29;
+      }
+      .pat {
+        display: block;
+        font-style: italic;
+        font-size: 13.6px;
+        margin-top: 2px;
+      }
 
-  .user  { background: #ffffff; border: 2.5px solid #334155; }
-  .code  { background: #f1f5f9; border: 2.5px solid #475569; }
-  .guard { background: #fef2f2; border: 2.5px solid #dc2626; color: #7f1d1d; }
-  .agent { background: #eef2ff; border: 2.5px solid #4f46e5; color: #1e1b4b; }
-  .tool  { background: #ecfdf5; border: 2.5px solid #059669; color: #064e3b; }
-  .store { background: #fff7ed; border: 2.5px solid #c2410c; color: #7c2d12; }
-  .out   { background: #fdf4ff; border: 2.5px solid #a21caf; color: #4a044e; }
-  .agent .pat { color: #4338ca; } .tool .pat { color: #047857; }
+      .user {
+        background: #ffffff;
+        border: 2.5px solid #334155;
+      }
+      .code {
+        background: #f1f5f9;
+        border: 2.5px solid #475569;
+      }
+      .guard {
+        background: #fef2f2;
+        border: 2.5px solid #dc2626;
+        color: #7f1d1d;
+      }
+      .agent {
+        background: #eef2ff;
+        border: 2.5px solid #4f46e5;
+        color: #1e1b4b;
+      }
+      .tool {
+        background: #ecfdf5;
+        border: 2.5px solid #059669;
+        color: #064e3b;
+      }
+      .store {
+        background: #fff7ed;
+        border: 2.5px solid #c2410c;
+        color: #7c2d12;
+      }
+      .out {
+        background: #fdf4ff;
+        border: 2.5px solid #a21caf;
+        color: #4a044e;
+      }
+      .agent .pat {
+        color: #4338ca;
+      }
+      .tool .pat {
+        color: #047857;
+      }
 
-  .cont { position: absolute; border: 1.5px dashed #cbd5e1; border-radius: 7px; background: #fcfdfe; z-index: 1; }
-  .cont .ct { position: absolute; top: 10px; width: 100%; text-align: center; font-size: 18px; color: #475569; }
-  .cont .ct b { color: #0f172a; font-size: 19px; }
+      .cont {
+        position: absolute;
+        border: 1.5px dashed #cbd5e1;
+        border-radius: 7px;
+        background: #fcfdfe;
+        z-index: 1;
+      }
+      .cont .ct {
+        position: absolute;
+        top: 10px;
+        width: 100%;
+        text-align: center;
+        font-size: 18px;
+        color: #475569;
+      }
+      .cont .ct b {
+        color: #0f172a;
+        font-size: 19px;
+      }
 
-  h1 { position: absolute; left: 44px; top: 24px; font-size: 31px; letter-spacing: -0.2px; }
-  .sub { position: absolute; left: 46px; top: 64px; font-size: 17.5px; color: #475569; }
+      h1 {
+        position: absolute;
+        left: 44px;
+        top: 24px;
+        font-size: 31px;
+        letter-spacing: -0.2px;
+      }
+      .sub {
+        position: absolute;
+        left: 46px;
+        top: 64px;
+        font-size: 17.5px;
+        color: #475569;
+      }
 
-  .note { font-size: 14.8px; text-align: left; line-height: 1.38; }
-  .note b.t { text-align: center; }
-  code { font-family: "Courier New", monospace; font-size: 0.93em; }
-  .mcp { text-align: left; font-size: 15.4px; line-height: 1.48; }
-  .mcp .g { color: #047857; font-style: italic; font-size: 13.8px; }
+      .note {
+        font-size: 14.8px;
+        text-align: left;
+        line-height: 1.38;
+      }
+      .note b.t {
+        text-align: center;
+      }
+      code {
+        font-family: "Courier New", monospace;
+        font-size: 0.93em;
+      }
+      .mcp {
+        text-align: left;
+        font-size: 15.4px;
+        line-height: 1.48;
+      }
+      .mcp .g {
+        color: #047857;
+        font-style: italic;
+        font-size: 13.8px;
+      }
 
-  .key { position: absolute; left: 46px; top: 886px; font-size: 15.5px; color: #334155; }
-  .key span { display: inline-block; margin-right: 27px; }
-  .key i { display: inline-block; width: 25px; height: 13px; border-radius: 2px; vertical-align: -1px; margin-right: 7px; }
-  svg { position: absolute; left: 0; top: 0; z-index: 5; pointer-events: none; }
-  text { font-family: "Times New Roman", Times, serif; }
-</style></head><body>
+      .key {
+        position: absolute;
+        left: 46px;
+        top: 886px;
+        font-size: 15.5px;
+        color: #334155;
+      }
+      .key span {
+        display: inline-block;
+        margin-right: 27px;
+      }
+      .key i {
+        display: inline-block;
+        width: 25px;
+        height: 13px;
+        border-radius: 2px;
+        vertical-align: -1px;
+        margin-right: 7px;
+      }
+      svg {
+        position: absolute;
+        left: 0;
+        top: 0;
+        z-index: 5;
+        pointer-events: none;
+      }
+      text {
+        font-family: "Times New Roman", Times, serif;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>BudgetWise AI &mdash; Agent Architecture (M4)</h1>
+    <div class="sub">
+      The model reads plain language and writes the explanation. Python code
+      picks the route, keeps the records, and calculates every dollar.
+    </div>
 
-<h1>BudgetWise AI &mdash; Agent Architecture (M4)</h1>
-<div class="sub">The model reads plain language and writes the explanation. Python code picks the route, keeps the records, and calculates every dollar.</div>
+    <!-- ============ STAGE 1 ============ -->
+    <div
+      class="cont"
+      style="left: 44px; top: 110px; width: 350px; height: 600px"
+    >
+      <div class="ct">
+        <b>1 &middot; Front door</b> &nbsp;code only, no model call
+      </div>
+    </div>
 
-<!-- ============ STAGE 1 ============ -->
-<div class="cont" style="left:44px;top:110px;width:350px;height:600px;"><div class="ct"><b>1 &middot; Front door</b> &nbsp;code only, no model call</div></div>
+    <div
+      class="b user"
+      style="left: 60px; top: 156px; width: 318px; height: 70px"
+    >
+      <b class="t">User</b
+      ><span class="s"
+        >&ldquo;spent $40 on gas&rdquo; &middot; &ldquo;can I afford
+        $60?&rdquo;</span
+      >
+    </div>
+    <div
+      class="b code"
+      style="left: 60px; top: 246px; width: 318px; height: 58px"
+    >
+      <b class="t">React web app</b
+      ><span class="s"
+        >Home &middot; Activity &middot; Plan &middot; Settings</span
+      >
+    </div>
+    <div
+      class="b code"
+      style="left: 60px; top: 324px; width: 318px; height: 58px"
+    >
+      <b class="t">FastAPI server</b
+      ><span class="s">REST + live progress stream (SSE)</span>
+    </div>
+    <div
+      class="b code"
+      style="left: 60px; top: 402px; width: 318px; height: 78px"
+    >
+      <b class="t">Guided conversation</b
+      ><span class="s"
+        >Answers common setup replies instantly.<br />Remembers anything you
+        skipped.</span
+      >
+    </div>
+    <div
+      class="b guard"
+      style="left: 60px; top: 500px; width: 318px; height: 62px"
+    >
+      <b class="t">Input guardrail</b
+      ><span class="s"
+        >Off-topic &middot; card numbers &middot; prompt injection</span
+      >
+    </div>
+    <div
+      class="b code"
+      style="left: 60px; top: 580px; width: 318px; height: 80px"
+    >
+      <b class="t">Code router</b
+      ><span class="s"
+        >log &middot; afford &middot; plan &middot; question &middot; help<br /><i
+          style="font-size: 13.6px"
+          >a regex, so it never varies</i
+        ></span
+      >
+    </div>
 
-<div class="b user" style="left:60px;top:156px;width:318px;height:70px;">
-  <b class="t">User</b><span class="s">&ldquo;spent $40 on gas&rdquo; &middot; &ldquo;can I afford $60?&rdquo;</span></div>
-<div class="b code" style="left:60px;top:246px;width:318px;height:58px;">
-  <b class="t">React web app</b><span class="s">Home &middot; Activity &middot; Plan &middot; Settings</span></div>
-<div class="b code" style="left:60px;top:324px;width:318px;height:58px;">
-  <b class="t">FastAPI server</b><span class="s">REST + live progress stream (SSE)</span></div>
-<div class="b code" style="left:60px;top:402px;width:318px;height:78px;">
-  <b class="t">Guided conversation</b><span class="s">Answers common setup replies instantly.<br>Remembers anything you skipped.</span></div>
-<div class="b guard" style="left:60px;top:500px;width:318px;height:62px;">
-  <b class="t">Input guardrail</b><span class="s">Off-topic &middot; card numbers &middot; prompt injection</span></div>
-<div class="b code" style="left:60px;top:580px;width:318px;height:80px;">
-  <b class="t">Code router</b><span class="s">log &middot; afford &middot; plan &middot; question &middot; help<br><i style="font-size:13.6px;">a regex, so it never varies</i></span></div>
+    <!-- ============ STAGE 2 ============ -->
+    <div
+      class="cont"
+      style="left: 414px; top: 110px; width: 350px; height: 600px"
+    >
+      <div class="ct">
+        <b>2 &middot; Agents</b> &nbsp;NRP <code>gpt-oss</code>
+      </div>
+    </div>
 
-<!-- ============ STAGE 2 ============ -->
-<div class="cont" style="left:414px;top:110px;width:350px;height:600px;"><div class="ct"><b>2 &middot; Agents</b> &nbsp;NRP <code>gpt-oss</code></div></div>
+    <div
+      class="b agent"
+      style="left: 430px; top: 154px; width: 318px; height: 100px"
+    >
+      <b class="t">Bookkeeper</b
+      ><span class="s"
+        >Plain words &rarr; saved records.<br />10 write tools; every save
+        undoable.</span
+      ><span class="pat"
+        >function tools (Ch 2) &middot; human in the loop (Ch 8)</span
+      >
+    </div>
+    <div
+      class="b agent"
+      style="left: 430px; top: 266px; width: 318px; height: 80px"
+    >
+      <b class="t">Analyst</b
+      ><span class="s">Answers money questions from saved data.</span
+      ><span class="pat">ReAct (Ch 5)</span>
+    </div>
+    <div
+      class="b agent"
+      style="left: 430px; top: 366px; width: 318px; height: 80px"
+    >
+      <b class="t">Planner</b
+      ><span class="s">Chooses this week's strategy.</span
+      ><span class="pat">chain of thought (Ch 5)</span>
+    </div>
+    <div
+      class="b agent"
+      style="left: 430px; top: 470px; width: 318px; height: 80px"
+    >
+      <b class="t">Critic</b
+      ><span class="s">Scores the plan 1&ndash;10. Code approves at 7+.</span
+      ><span class="pat">critic agent (Ch 7)</span>
+    </div>
+    <div
+      class="b agent"
+      style="left: 430px; top: 570px; width: 318px; height: 80px"
+    >
+      <b class="t">Categorizer</b
+      ><span class="s">Names only the stores the rules miss.</span
+      ><span class="pat">typed JSON output (Ch 2)</span>
+    </div>
 
-<div class="b agent" style="left:430px;top:154px;width:318px;height:100px;">
-  <b class="t">Bookkeeper</b><span class="s">Plain words &rarr; saved records.<br>10 write tools; every save undoable.</span><span class="pat">function tools (Ch 2) &middot; human in the loop (Ch 8)</span></div>
-<div class="b agent" style="left:430px;top:266px;width:318px;height:80px;">
-  <b class="t">Analyst</b><span class="s">Answers money questions from saved data.</span><span class="pat">ReAct (Ch 5)</span></div>
-<div class="b agent" style="left:430px;top:366px;width:318px;height:80px;">
-  <b class="t">Planner</b><span class="s">Chooses this week's strategy.</span><span class="pat">chain of thought (Ch 5)</span></div>
-<div class="b agent" style="left:430px;top:470px;width:318px;height:80px;">
-  <b class="t">Critic</b><span class="s">Scores the plan 1&ndash;10. Code approves at 7+.</span><span class="pat">critic agent (Ch 7)</span></div>
-<div class="b agent" style="left:430px;top:570px;width:318px;height:80px;">
-  <b class="t">Categorizer</b><span class="s">Names only the stores the rules miss.</span><span class="pat">typed JSON output (Ch 2)</span></div>
+    <!-- ============ STAGE 3 ============ -->
+    <div
+      class="cont"
+      style="left: 794px; top: 110px; width: 350px; height: 600px"
+    >
+      <div class="ct">
+        <b>3 &middot; Numbers</b> &nbsp;Python, never the model
+      </div>
+    </div>
 
-<!-- ============ STAGE 3 ============ -->
-<div class="cont" style="left:794px;top:110px;width:350px;height:600px;"><div class="ct"><b>3 &middot; Numbers</b> &nbsp;Python, never the model</div></div>
+    <div
+      class="b tool mcp"
+      style="left: 810px; top: 152px; width: 318px; height: 214px"
+    >
+      <b class="t" style="text-align: center">MCP tool server</b>
+      <span class="s" style="text-align: center; margin-bottom: 6px"
+        >6 read tools over stdio, started once at boot</span
+      >
+      <code>search_transactions</code><br />
+      <code>get_spending_by_category</code><br />
+      <code>check_affordability</code><br />
+      <code>get_income_details</code><br />
+      <code>search_budget_knowledge</code><br />
+      <code>build_weekly_plan</code> <span class="g">&larr; Planner only</span>
+    </div>
+    <div
+      class="b store"
+      style="left: 810px; top: 380px; width: 214px; height: 78px"
+    >
+      <b class="t">Guides</b
+      ><span class="s">CFPB &amp; Penn State, in ChromaDB</span>
+    </div>
+    <div
+      class="b tool"
+      style="left: 810px; top: 470px; width: 318px; height: 124px"
+    >
+      <b class="t">Money engine</b
+      ><span class="s"><code>budgetwise/finance.py</code></span>
+      <span class="s" style="margin-top: 3px"
+        >Looks 30 days ahead at pay, bills and living costs, then spreads what
+        is left across at least 14 days. Goal pace, affordability, weekly
+        plan.</span
+      >
+    </div>
+    <div
+      class="b store"
+      style="left: 810px; top: 610px; width: 318px; height: 84px"
+    >
+      <b class="t">SQLite workspace</b
+      ><span class="s"
+        >Every record in whole cents. One batch ID per message, so
+        <b>Undo</b> removes all of it.</span
+      >
+    </div>
 
-<div class="b tool mcp" style="left:810px;top:152px;width:318px;height:214px;">
-  <b class="t" style="text-align:center;">MCP tool server</b>
-  <span class="s" style="text-align:center;margin-bottom:6px;">6 read tools over stdio, started once at boot</span>
-  <code>search_transactions</code><br>
-  <code>get_spending_by_category</code><br>
-  <code>check_affordability</code><br>
-  <code>get_income_details</code><br>
-  <code>search_budget_knowledge</code><br>
-  <code>build_weekly_plan</code> <span class="g">&larr; Planner only</span>
-</div>
-<div class="b store" style="left:810px;top:380px;width:214px;height:78px;">
-  <b class="t">Guides</b><span class="s">CFPB &amp; Penn State, in ChromaDB</span></div>
-<div class="b tool" style="left:810px;top:470px;width:318px;height:124px;">
-  <b class="t">Money engine</b><span class="s"><code>budgetwise/finance.py</code></span>
-  <span class="s" style="margin-top:3px;">Looks 30 days ahead at pay, bills and living costs, then spreads what is left across at least 14 days. Goal pace, affordability, weekly plan.</span></div>
-<div class="b store" style="left:810px;top:610px;width:318px;height:84px;">
-  <b class="t">SQLite workspace</b><span class="s">Every record in whole cents. One batch ID per message, so <b>Undo</b> removes all of it.</span></div>
+    <!-- ============ SIDE NOTES ============ -->
+    <div
+      class="b code note"
+      style="left: 1174px; top: 152px; width: 300px; height: 150px"
+    >
+      <b class="t">Why it splits this way</b>
+      <span class="s"
+        >A model that invents a number is a bug a budgeting app cannot ship. So
+        the model never does arithmetic, never picks the account, and never sees
+        a tool it does not need.</span
+      >
+    </div>
+    <div
+      class="b code note"
+      style="left: 1174px; top: 320px; width: 300px; height: 212px"
+    >
+      <b class="t">Cost ladder (Ch 4)</b>
+      <span class="s"
+        >The free checks run first, so most messages never reach the model at
+        all.</span
+      >
+      <span class="s" style="margin-top: 6px"
+        >1. Saved setup reply &mdash; instant<br />2. Guardrail &mdash;
+        instant<br />3. Router &mdash; a regex, no model call<br />4. One agent,
+        with only its own tools<br />5. Critic &mdash; one extra call, plans
+        only</span
+      >
+    </div>
+    <div
+      class="b store note"
+      style="left: 1174px; top: 550px; width: 300px; height: 142px"
+    >
+      <b class="t">Stays on your computer</b>
+      <span class="s"
+        >No login and no bank connection. The database, the
+        <code>.env</code> token and any development logs are all
+        git-ignored.</span
+      >
+    </div>
 
-<!-- ============ SIDE NOTES ============ -->
-<div class="b code note" style="left:1174px;top:152px;width:300px;height:150px;">
-  <b class="t">Why it splits this way</b>
-  <span class="s">A model that invents a number is a bug a budgeting app cannot ship. So the model never does arithmetic, never picks the account, and never sees a tool it does not need.</span></div>
-<div class="b code note" style="left:1174px;top:320px;width:300px;height:212px;">
-  <b class="t">Cost ladder (Ch 4)</b>
-  <span class="s">The free checks run first, so most messages never reach the model at all.</span>
-  <span class="s" style="margin-top:6px;">1. Saved setup reply &mdash; instant<br>2. Guardrail &mdash; instant<br>3. Router &mdash; a regex, no model call<br>4. One agent, with only its own tools<br>5. Critic &mdash; one extra call, plans only</span></div>
-<div class="b store note" style="left:1174px;top:550px;width:300px;height:142px;">
-  <b class="t">Stays on your computer</b>
-  <span class="s">No login and no bank connection. The database, the <code>.env</code> token and any development logs are all git-ignored.</span></div>
+    <!-- ============ BOTTOM BAND ============ -->
+    <div
+      class="b out"
+      style="left: 44px; top: 740px; width: 350px; height: 106px"
+    >
+      <b class="t">What the user sees</b
+      ><span class="s"
+        >The answer, a saved card with <b>Undo</b>, or a plan card that is only
+        saved when they press <b>Start this plan</b>.</span
+      >
+    </div>
+    <div
+      class="b guard"
+      style="left: 414px; top: 740px; width: 350px; height: 106px"
+    >
+      <b class="t">Grounding check</b
+      ><span class="s"
+        >Every $ amount must match the saved data. If one does not: retry once,
+        then show Python's own numbers instead.</span
+      >
+    </div>
+    <div
+      class="b tool"
+      style="left: 794px; top: 740px; width: 350px; height: 106px"
+    >
+      <b class="t">Bank CSV import</b
+      ><span class="s"
+        >Any bank's export. Keyword rules label most rows; only unknown stores
+        reach the Categorizer. Re-uploads never double-count.</span
+      >
+    </div>
 
-<!-- ============ BOTTOM BAND ============ -->
-<div class="b out" style="left:44px;top:740px;width:350px;height:106px;">
-  <b class="t">What the user sees</b><span class="s">The answer, a saved card with <b>Undo</b>, or a plan card that is only saved when they press <b>Start this plan</b>.</span></div>
-<div class="b guard" style="left:414px;top:740px;width:350px;height:106px;">
-  <b class="t">Grounding check</b><span class="s">Every $ amount must match the saved data. If one does not: retry once, then show Python's own numbers instead.</span></div>
-<div class="b tool" style="left:794px;top:740px;width:350px;height:106px;">
-  <b class="t">Bank CSV import</b><span class="s">Any bank's export. Keyword rules label most rows; only unknown stores reach the Categorizer. Re-uploads never double-count.</span></div>
+    <div class="key">
+      <span
+        ><i style="background: #f1f5f9; border: 2px solid #475569"></i>Python
+        code</span
+      >
+      <span
+        ><i style="background: #eef2ff; border: 2px solid #4f46e5"></i>AI
+        agent</span
+      >
+      <span
+        ><i style="background: #ecfdf5; border: 2px solid #059669"></i>Tools
+        &amp; calculations</span
+      >
+      <span
+        ><i style="background: #fef2f2; border: 2px solid #dc2626"></i
+        >Guardrail</span
+      >
+      <span
+        ><i style="background: #fff7ed; border: 2px solid #c2410c"></i>Stored
+        data</span
+      >
+      <span
+        ><i style="background: #fdf4ff; border: 2px solid #a21caf"></i>Shown to
+        the user</span
+      >
+    </div>
 
-<div class="key">
-  <span><i style="background:#f1f5f9;border:2px solid #475569;"></i>Python code</span>
-  <span><i style="background:#eef2ff;border:2px solid #4f46e5;"></i>AI agent</span>
-  <span><i style="background:#ecfdf5;border:2px solid #059669;"></i>Tools &amp; calculations</span>
-  <span><i style="background:#fef2f2;border:2px solid #dc2626;"></i>Guardrail</span>
-  <span><i style="background:#fff7ed;border:2px solid #c2410c;"></i>Stored data</span>
-  <span><i style="background:#fdf4ff;border:2px solid #a21caf;"></i>Shown to the user</span>
-</div>
+    <svg width="1520" height="950">
+      <defs>
+        <marker
+          id="a"
+          viewBox="0 0 10 10"
+          refX="9"
+          refY="5"
+          markerWidth="7"
+          markerHeight="7"
+          orient="auto-start-reverse"
+        >
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#334155" />
+        </marker>
+        <marker
+          id="ag"
+          viewBox="0 0 10 10"
+          refX="9"
+          refY="5"
+          markerWidth="7"
+          markerHeight="7"
+          orient="auto-start-reverse"
+        >
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#059669" />
+        </marker>
+        <marker
+          id="ao"
+          viewBox="0 0 10 10"
+          refX="9"
+          refY="5"
+          markerWidth="7"
+          markerHeight="7"
+          orient="auto-start-reverse"
+        >
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#c2410c" />
+        </marker>
+        <marker
+          id="ar"
+          viewBox="0 0 10 10"
+          refX="9"
+          refY="5"
+          markerWidth="7"
+          markerHeight="7"
+          orient="auto-start-reverse"
+        >
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#b91c1c" />
+        </marker>
+        <marker
+          id="ap"
+          viewBox="0 0 10 10"
+          refX="9"
+          refY="5"
+          markerWidth="7"
+          markerHeight="7"
+          orient="auto-start-reverse"
+        >
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#a21caf" />
+        </marker>
+        <marker
+          id="ad"
+          viewBox="0 0 10 10"
+          refX="9"
+          refY="5"
+          markerWidth="7"
+          markerHeight="7"
+          orient="auto-start-reverse"
+        >
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#94a3b8" />
+        </marker>
+        <marker
+          id="ai"
+          viewBox="0 0 10 10"
+          refX="9"
+          refY="5"
+          markerWidth="7"
+          markerHeight="7"
+          orient="auto-start-reverse"
+        >
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#4f46e5" />
+        </marker>
+      </defs>
 
-<svg width="1520" height="950">
-  <defs>
-    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M 0 0 L 10 5 L 0 10 z" fill="#334155"/></marker>
-    <marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M 0 0 L 10 5 L 0 10 z" fill="#059669"/></marker>
-    <marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M 0 0 L 10 5 L 0 10 z" fill="#c2410c"/></marker>
-    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M 0 0 L 10 5 L 0 10 z" fill="#b91c1c"/></marker>
-    <marker id="ap" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M 0 0 L 10 5 L 0 10 z" fill="#a21caf"/></marker>
-    <marker id="ad" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M 0 0 L 10 5 L 0 10 z" fill="#94a3b8"/></marker>
-    <marker id="ai" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M 0 0 L 10 5 L 0 10 z" fill="#4f46e5"/></marker>
-  </defs>
+      <!-- stage 1 spine -->
+      <g fill="none" stroke="#334155" stroke-width="2.2" marker-end="url(#a)">
+        <path d="M 219 226 L 219 242" />
+        <path d="M 219 304 L 219 320" />
+        <path d="M 219 382 L 219 398" />
+        <path d="M 219 480 L 219 496" />
+        <path d="M 219 562 L 219 576" />
+      </g>
 
-  <!-- stage 1 spine -->
-  <g fill="none" stroke="#334155" stroke-width="2.2" marker-end="url(#a)">
-    <path d="M 219 226 L 219 242"/>
-    <path d="M 219 304 L 219 320"/>
-    <path d="M 219 382 L 219 398"/>
-    <path d="M 219 480 L 219 496"/>
-    <path d="M 219 562 L 219 576"/>
-  </g>
+      <!-- router fan-out -->
+      <g fill="none" stroke="#334155" stroke-width="2.2">
+        <path d="M 378 616 L 404 616 L 404 204" />
+      </g>
+      <g fill="none" stroke="#334155" stroke-width="2.2" marker-end="url(#a)">
+        <path d="M 404 204 L 426 204" />
+        <path d="M 404 306 L 426 306" />
+        <path d="M 404 406 L 426 406" />
+      </g>
 
-  <!-- router fan-out -->
-  <g fill="none" stroke="#334155" stroke-width="2.2">
-    <path d="M 378 616 L 404 616 L 404 204"/></g>
-  <g fill="none" stroke="#334155" stroke-width="2.2" marker-end="url(#a)">
-    <path d="M 404 204 L 426 204"/>
-    <path d="M 404 306 L 426 306"/>
-    <path d="M 404 406 L 426 406"/>
-  </g>
+      <!-- planner <-> critic -->
+      <g fill="none" stroke="#4f46e5" stroke-width="2.2" marker-end="url(#ai)">
+        <path d="M 520 446 L 520 466" />
+      </g>
+      <g
+        fill="none"
+        stroke="#b91c1c"
+        stroke-width="2"
+        stroke-dasharray="5 3"
+        marker-end="url(#ar)"
+      >
+        <path d="M 672 466 L 672 446" />
+      </g>
+      <text x="530" y="461" font-size="13.4" fill="#4338ca">draft plan</text>
+      <text x="684" y="461" font-size="13.4" fill="#b91c1c">under 7</text>
 
-  <!-- planner <-> critic -->
-  <g fill="none" stroke="#4f46e5" stroke-width="2.2" marker-end="url(#ai)">
-    <path d="M 520 446 L 520 466"/></g>
-  <g fill="none" stroke="#b91c1c" stroke-width="2" stroke-dasharray="5 3" marker-end="url(#ar)">
-    <path d="M 672 466 L 672 446"/></g>
-  <text x="530" y="461" font-size="13.4" fill="#4338ca">draft plan</text>
-  <text x="684" y="461" font-size="13.4" fill="#b91c1c">under 7</text>
+      <!-- bookkeeper writes -->
+      <g fill="none" stroke="#c2410c" stroke-width="2.4" marker-end="url(#ao)">
+        <path d="M 752 204 L 780 204 L 780 652 L 806 652" />
+      </g>
+      <text
+        transform="translate(774,430) rotate(-90)"
+        text-anchor="middle"
+        font-size="13.8"
+        fill="#9a3412"
+      >
+        10 write tools &#183; saves, fixes, undo
+      </text>
 
-  <!-- bookkeeper writes -->
-  <g fill="none" stroke="#c2410c" stroke-width="2.4" marker-end="url(#ao)">
-    <path d="M 752 204 L 780 204 L 780 652 L 806 652"/></g>
-  <text transform="translate(774,430) rotate(-90)" text-anchor="middle" font-size="13.8" fill="#9a3412">10 write tools &#183; saves, fixes, undo</text>
+      <!-- analyst / planner read via MCP -->
+      <g fill="none" stroke="#059669" stroke-width="2.2" marker-end="url(#ag)">
+        <path d="M 752 306 L 806 306" />
+        <path d="M 752 406 L 792 406 L 792 340 L 806 340" />
+      </g>
 
-  <!-- analyst / planner read via MCP -->
-  <g fill="none" stroke="#059669" stroke-width="2.2" marker-end="url(#ag)">
-    <path d="M 752 306 L 806 306"/>
-    <path d="M 752 406 L 792 406 L 792 340 L 806 340"/></g>
+      <!-- MCP down to guides and money engine -->
+      <g fill="none" stroke="#059669" stroke-width="2.2" marker-end="url(#ag)">
+        <path d="M 890 366 L 890 376" />
+        <path d="M 1070 366 L 1070 466" />
+      </g>
 
-  <!-- MCP down to guides and money engine -->
-  <g fill="none" stroke="#059669" stroke-width="2.2" marker-end="url(#ag)">
-    <path d="M 890 366 L 890 376"/>
-    <path d="M 1070 366 L 1070 466"/></g>
+      <!-- money engine -> sqlite -->
+      <g fill="none" stroke="#c2410c" stroke-width="2.4" marker-end="url(#ao)">
+        <path d="M 969 594 L 969 606" />
+      </g>
 
-  <!-- money engine -> sqlite -->
-  <g fill="none" stroke="#c2410c" stroke-width="2.4" marker-end="url(#ao)">
-    <path d="M 969 594 L 969 606"/></g>
+      <!-- agents -> grounding -->
+      <g fill="none" stroke="#b91c1c" stroke-width="2.2" marker-end="url(#ar)">
+        <path d="M 418 656 L 418 736" />
+      </g>
+      <text x="426" y="706" font-size="14" fill="#b91c1c">
+        every draft answer
+      </text>
 
-  <!-- agents -> grounding -->
-  <g fill="none" stroke="#b91c1c" stroke-width="2.2" marker-end="url(#ar)">
-    <path d="M 418 656 L 418 736"/></g>
-  <text x="426" y="706" font-size="14" fill="#b91c1c">every draft answer</text>
+      <!-- grounding -> output -->
+      <g fill="none" stroke="#a21caf" stroke-width="2.4" marker-end="url(#ap)">
+        <path d="M 410 793 L 398 793" />
+      </g>
 
-  <!-- grounding -> output -->
-  <g fill="none" stroke="#a21caf" stroke-width="2.4" marker-end="url(#ap)">
-    <path d="M 410 793 L 398 793"/></g>
+      <!-- output back to the app -->
+      <g
+        fill="none"
+        stroke="#94a3b8"
+        stroke-width="2"
+        stroke-dasharray="6 4"
+        marker-end="url(#ad)"
+      >
+        <path d="M 40 793 L 22 793 L 22 275 L 56 275" />
+      </g>
 
-  <!-- output back to the app -->
-  <g fill="none" stroke="#94a3b8" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#ad)">
-    <path d="M 40 793 L 22 793 L 22 275 L 56 275"/></g>
-
-  <!-- CSV -->
-  <g fill="none" stroke="#059669" stroke-width="2.2" marker-end="url(#ag)">
-    <path d="M 860 736 L 860 724 L 690 724 L 690 656"/></g>
-  <text x="696" y="719" font-size="13.8" fill="#047857">unknown stores only</text>
-  <g fill="none" stroke="#c2410c" stroke-width="2.2" marker-end="url(#ao)">
-    <path d="M 1010 736 L 1010 696"/></g>
-</svg>
-
-</body></html>
+      <!-- CSV -->
+      <g fill="none" stroke="#059669" stroke-width="2.2" marker-end="url(#ag)">
+        <path d="M 860 736 L 860 724 L 690 724 L 690 656" />
+      </g>
+      <text x="696" y="719" font-size="13.8" fill="#047857">
+        unknown stores only
+      </text>
+      <g fill="none" stroke="#c2410c" stroke-width="2.2" marker-end="url(#ao)">
+        <path d="M 1010 736 L 1010 696" />
+      </g>
+    </svg>
+  </body>
+</html>
