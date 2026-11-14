@@ -35,5 +35,15 @@
     "tailwindcss": "^3.4.15",
     "typescript": "^5.6.3",
     "vite": "^5.4.11"
+  },
+  "overrides": {
+    "function-bind": "npm:@socketregistry/function-bind@^1",
+    "hasown": "npm:@socketregistry/hasown@^1",
+    "is-core-module": "npm:@socketregistry/is-core-module@^1",
+    "object-assign": "npm:@socketregistry/object-assign@^1",
+    "path-parse": "npm:@socketregistry/path-parse@^1"
+  },
+  "allowScripts": {
+    "esbuild@0.21.5": true
   }
 }
