@@ -34,7 +34,8 @@ def search_transactions(query: str = "", category: str = "", days: int = 30) -> 
     Returns the matching purchases and the total spent. Use it for questions about a
     specific store or category, e.g. query="starbucks" or category="dining".
     Categories: groceries, dining, transport, shopping, entertainment, subscriptions,
-    health, personal, housing, utilities, insurance, debt_payment, education, fees, other."""
+    health, personal, housing, utilities, insurance, debt_payment, education, fees, other.
+    """
     return finance.search_transactions(None, query=query, category=category, days=days)
 
 
@@ -51,14 +52,17 @@ def get_spending_by_category(days: int = 30) -> dict:
         "from": (as_of - timedelta(days=days - 1)).isoformat(),
         "to": as_of.isoformat(),
         "total": round(sum(spent.values()), 2),
-        "by_category": [{"category": c, "label": label(c), "amount": v} for c, v in spent.items()],
+        "by_category": [
+            {"category": c, "label": label(c), "amount": v} for c, v in spent.items()
+        ],
     }
 
 
 @mcp.tool()
 def check_affordability(amount: float, what: str = "") -> dict:
     """Check whether a purchase of `amount` dollars fits before the next payday.
-    Returns verdict (yes / tight / no), safe-to-spend before and after, and the new daily amount."""
+    Returns verdict (yes / tight / no), safe-to-spend before and after, and the new daily amount.
+    """
     return finance.can_afford(None, amount, what=what)
 
 
@@ -68,12 +72,26 @@ def get_income_details() -> dict:
     conservative amounts of the next expected paychecks."""
     snap = finance.snapshot()
     inc = snap["income"]
-    return {k: inc[k] for k in ("sources", "monthly", "average_monthly", "lowest_month", "swing_percent",
-                                "irregular", "next_payday", "next_payday_confidence", "projected_income")}
+    return {
+        k: inc[k]
+        for k in (
+            "sources",
+            "monthly",
+            "average_monthly",
+            "lowest_month",
+            "swing_percent",
+            "irregular",
+            "next_payday",
+            "next_payday_confidence",
+            "projected_income",
+        )
+    }
 
 
 @mcp.tool()
-def build_weekly_plan(save_this_week: float, focus_category: str, cut_percent: int = 20) -> dict:
+def build_weekly_plan(
+    save_this_week: float, focus_category: str, cut_percent: int = 20
+) -> dict:
     """Do the math for a 7-day spending plan. You choose the strategy; this calculates every number.
     save_this_week: dollars to move toward the savings goal this week (0 or more).
     focus_category: ONE flexible category to cap this week (e.g. "dining").
@@ -85,7 +103,8 @@ def build_weekly_plan(save_this_week: float, focus_category: str, cut_percent: i
 @mcp.tool()
 def search_budget_knowledge(query: str, top_k: int = 2) -> dict:
     """Search the budgeting guide library (Penn State Extension and CFPB advice) for passages
-    about a strategy, e.g. "irregular income baseline" or "cutting dining out". Cite the source."""
+    about a strategy, e.g. "irregular income baseline" or "cutting dining out". Cite the source.
+    """
     return knowledge.search(query, top_k=top_k)
 
 

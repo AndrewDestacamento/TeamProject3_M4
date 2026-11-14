@@ -25,14 +25,30 @@ from dotenv import load_dotenv
 load_dotenv(Path(__file__).with_name(".env"))
 
 from fastapi import FastAPI, File, HTTPException, UploadFile  # noqa: E402
-from fastapi.responses import FileResponse, JSONResponse, StreamingResponse  # noqa: E402
+from fastapi.responses import (
+    FileResponse,
+    JSONResponse,
+    StreamingResponse,
+)  # noqa: E402
 from fastapi.staticfiles import StaticFiles  # noqa: E402
 from pydantic import BaseModel, Field  # noqa: E402
 
-from budgetwise import conversation, devlog, finance, importer, knowledge, store  # noqa: E402
+from budgetwise import (
+    conversation,
+    devlog,
+    finance,
+    importer,
+    knowledge,
+    store,
+)  # noqa: E402
 import guardrails
 from budgetwise.agents import MODEL, BudgetWiseTeam, route  # noqa: E402
-from budgetwise.categories import CATEGORIES, FLEXIBLE, merchant_key, rule_category  # noqa: E402
+from budgetwise.categories import (
+    CATEGORIES,
+    FLEXIBLE,
+    merchant_key,
+    rule_category,
+)  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent
 DIST = ROOT / "frontend" / "dist"
@@ -43,9 +59,13 @@ team = BudgetWiseTeam()
 async def lifespan(app: FastAPI):
     t0 = time.perf_counter()
     store.ensure_default_personal()
-    kb = await asyncio.to_thread(knowledge.warm_up)  # load the embedding model before the first question
+    kb = await asyncio.to_thread(
+        knowledge.warm_up
+    )  # load the embedding model before the first question
     await team.start()
-    print(f"[BudgetWise] ready in {time.perf_counter() - t0:.1f}s · model={MODEL} · knowledge={kb}")
+    print(
+        f"[BudgetWise] ready in {time.perf_counter() - t0:.1f}s · model={MODEL} · knowledge={kb}"
+    )
     yield
     await team.stop()
 
@@ -55,14 +75,19 @@ app = FastAPI(title="BudgetWise API", version="4.0.0", lifespan=lifespan)
 
 def sse(events):
     """Wrap an async generator of dicts as a Server-Sent Events stream."""
+
     async def gen():
         try:
             async for ev in events:
                 yield f"data: {json.dumps(ev, default=str)}\n\n"
         except Exception as e:  # noqa: BLE001
             yield f"data: {json.dumps({'type': 'error', 'message': str(e)[:200]})}\n\n"
-    return StreamingResponse(gen(), media_type="text/event-stream",
-                             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+    return StreamingResponse(
+        gen(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 # ------------------------------------------------------------------ accounts and dashboard
@@ -73,7 +98,11 @@ def health():
 
 @app.get("/api/accounts")
 def accounts():
-    return {"active": store.active_account_id(), "accounts": store.list_accounts(), "personas": store.list_personas()}
+    return {
+        "active": store.active_account_id(),
+        "accounts": store.list_accounts(),
+        "personas": store.list_personas(),
+    }
 
 
 class ActiveIn(BaseModel):
@@ -94,7 +123,9 @@ def delete_account(account_id: str):
     was_active = store.active_account_id() == account_id
     store.delete_account(account_id)
     if was_active:
-        personal = next((a for a in store.list_accounts() if a["kind"] == "personal"), None)
+        personal = next(
+            (a for a in store.list_accounts() if a["kind"] == "personal"), None
+        )
         replacement = personal["id"] if personal else store.create_account("My Budget")
         store.set_active_account(replacement)
     return {"ok": True, "active": store.active_account_id()}
@@ -107,14 +138,19 @@ def snapshot():
 
 @app.get("/api/categories")
 def categories():
-    return [{"id": c, "label": lbl, "kind": kind} for c, (lbl, kind) in CATEGORIES.items()]
+    return [
+        {"id": c, "label": lbl, "kind": kind} for c, (lbl, kind) in CATEGORIES.items()
+    ]
 
 
 @app.get("/api/transactions")
 def transactions():
     acc = store.active_account_id()
     rows = store.load_transactions(acc)
-    return {"account": acc, "transactions": [{**t, "date": t["date"].isoformat()} for t in rows]}
+    return {
+        "account": acc,
+        "transactions": [{**t, "date": t["date"].isoformat()} for t in rows],
+    }
 
 
 class CategoryIn(BaseModel):
@@ -125,7 +161,9 @@ class CategoryIn(BaseModel):
 @app.patch("/api/transactions/{txn_id}")
 def update_category(txn_id: str, body: CategoryIn):
     try:
-        changed = store.set_category(store.active_account_id(), txn_id, body.category, body.apply_to_merchant)
+        changed = store.set_category(
+            store.active_account_id(), txn_id, body.category, body.apply_to_merchant
+        )
     except ValueError as e:
         raise HTTPException(400, str(e))
     return {"changed": changed}
@@ -134,7 +172,9 @@ def update_category(txn_id: str, body: CategoryIn):
 @app.delete("/api/transactions/{txn_id}")
 def delete_txn(txn_id: str):
     if not store.delete_transaction(store.active_account_id(), txn_id):
-        raise HTTPException(404, "Only entries you added (not demo or bank rows) can be deleted here.")
+        raise HTTPException(
+            404, "Only entries you added (not demo or bank rows) can be deleted here."
+        )
     return {"ok": True}
 
 
@@ -159,8 +199,11 @@ def get_settings():
 @app.get("/api/development-logs")
 def development_logs():
     """Expose only safe status metadata; never expose log contents or environment values."""
-    return {"enabled": devlog.enabled(), "active_path": devlog.display_path(),
-            "has_active_log": devlog.path().exists() and devlog.path().stat().st_size > 0}
+    return {
+        "enabled": devlog.enabled(),
+        "active_path": devlog.display_path(),
+        "has_active_log": devlog.path().exists() and devlog.path().stat().st_size > 0,
+    }
 
 
 @app.post("/api/development-logs/archive")
@@ -211,18 +254,36 @@ def checkin(body: CheckinIn):
     batch = None
     if body.amount:
         batch = store.new_id("chk-")
-        entry = {"date": store.today().isoformat(), "amount": body.amount if body.kind == "income" else -body.amount,
-                 "description": "Income (check-in)" if body.kind == "income" else "Everyday spending (check-in)",
-                 "category": "income" if body.kind == "income" else "other", "approx": True}
+        entry = {
+            "date": store.today().isoformat(),
+            "amount": body.amount if body.kind == "income" else -body.amount,
+            "description": (
+                "Income (check-in)"
+                if body.kind == "income"
+                else "Everyday spending (check-in)"
+            ),
+            "category": "income" if body.kind == "income" else "other",
+            "approx": True,
+        }
         store.add_transactions(acc, [entry], source="checkin", batch_id=batch)
-    store.record_checkin(acc, body.kind, "nothing" if not body.amount else f"about {body.amount}")
+    store.record_checkin(
+        acc, body.kind, "nothing" if not body.amount else f"about {body.amount}"
+    )
     snap = finance.snapshot(acc)
-    return {"batch_id": batch, "left_today": snap["left_today"], "safe_per_day": snap["safe_per_day"]}
+    return {
+        "batch_id": batch,
+        "left_today": snap["left_today"],
+        "safe_per_day": snap["safe_per_day"],
+    }
 
 
 @app.patch("/api/settings")
 def patch_settings(body: SettingsIn):
-    changes = {k: v for k, v in body.model_dump().items() if v is not None and k != "clear_payday"}
+    changes = {
+        k: v
+        for k, v in body.model_dump().items()
+        if v is not None and k != "clear_payday"
+    }
     if body.clear_payday:
         changes["next_payday"] = None
     if "goal" in changes:
@@ -231,11 +292,23 @@ def patch_settings(body: SettingsIn):
             target, saved = float(g["target"]), float(g.get("saved", 0))
             from datetime import date
             import math
+
             deadline = date.fromisoformat(str(g["deadline"]))
-            if not math.isfinite(target) or not math.isfinite(saved) or target <= 0 or saved < 0 or deadline <= store.today():
+            if (
+                not math.isfinite(target)
+                or not math.isfinite(saved)
+                or target <= 0
+                or saved < 0
+                or deadline <= store.today()
+            ):
                 raise ValueError("Invalid goal")
-            changes["goal"] = {"name": str(g["name"])[:40], "target": target,
-                               "saved": saved, "saved_known": g.get("saved_known", "saved" in g), "deadline": deadline.isoformat()}
+            changes["goal"] = {
+                "name": str(g["name"])[:40],
+                "target": target,
+                "saved": saved,
+                "saved_known": g.get("saved_known", "saved" in g),
+                "deadline": deadline.isoformat(),
+            }
         except (KeyError, TypeError, ValueError):
             raise HTTPException(400, "goal needs name, target, saved and deadline")
     return store.save_settings(store.active_account_id(), changes)
@@ -247,24 +320,44 @@ PENDING_IMPORTS: dict[str, dict] = {}
 
 @app.get("/api/sample-csv")
 def sample_csv():
-    return FileResponse(ROOT / "data" / "samples" / "sample_chase_checking.csv", media_type="text/csv",
-                        filename="sample_chase_checking.csv")
+    return FileResponse(
+        ROOT / "data" / "samples" / "sample_chase_checking.csv",
+        media_type="text/csv",
+        filename="sample_chase_checking.csv",
+    )
 
 
 @app.post("/api/import/preview")
 async def import_preview(file: UploadFile = File(...)):
     raw = await file.read()
     if len(raw) > 5_000_000:
-        raise HTTPException(413, "That file is too big. Export up to a few months of transactions.")
+        raise HTTPException(
+            413, "That file is too big. Export up to a few months of transactions."
+        )
     try:
         parsed = importer.parse_csv(raw)
     except importer.ImportError_ as e:
         raise HTTPException(400, str(e))
     token = uuid.uuid4().hex
-    PENDING_IMPORTS[token] = {"parsed": parsed, "filename": file.filename, "at": time.time()}
-    sample = [{"date": t["date"].isoformat(), "description": t["description"], "amount": t["amount"]}
-              for t in parsed["transactions"][:6]]
-    return {"token": token, "detected": parsed["detected"], "balance": parsed["balance"], "sample": sample}
+    PENDING_IMPORTS[token] = {
+        "parsed": parsed,
+        "filename": file.filename,
+        "at": time.time(),
+    }
+    sample = [
+        {
+            "date": t["date"].isoformat(),
+            "description": t["description"],
+            "amount": t["amount"],
+        }
+        for t in parsed["transactions"][:6]
+    ]
+    return {
+        "token": token,
+        "detected": parsed["detected"],
+        "balance": parsed["balance"],
+        "sample": sample,
+    }
 
 
 class CommitIn(BaseModel):
@@ -293,8 +386,16 @@ async def import_commit(body: CommitIn):
             cat, how = cache[key], "memory"
         if cat is None:
             unknown.setdefault(key, t["description"])
-        labeled.append({"date": t["date"].isoformat(), "description": t["description"],
-                        "amount": t["amount"], "category": cat, "_key": key, "_how": how})
+        labeled.append(
+            {
+                "date": t["date"].isoformat(),
+                "description": t["description"],
+                "amount": t["amount"],
+                "category": cat,
+                "_key": key,
+                "_how": how,
+            }
+        )
     ai = await team.categorize(unknown) if unknown else {}
     if ai:
         store.cache_merchants(ai)
@@ -310,10 +411,18 @@ async def import_commit(body: CommitIn):
         account_id = active
     else:
         account_id = store.create_account(body.name, tagline="Your bank data")
-    merged = store.import_rows(account_id, labeled, body.balance, store.today().isoformat())
+    merged = store.import_rows(
+        account_id, labeled, body.balance, store.today().isoformat()
+    )
     store.set_active_account(account_id)
-    return {"account": account_id, "transactions": len(labeled), "merchants_sent_to_ai": len(unknown),
-            "how_categorized": stats, "seconds": round(time.perf_counter() - t0, 1), **merged}
+    return {
+        "account": account_id,
+        "transactions": len(labeled),
+        "merchants_sent_to_ai": len(unknown),
+        "how_categorized": stats,
+        "seconds": round(time.perf_counter() - t0, 1),
+        **merged,
+    }
 
 
 # ------------------------------------------------------------------ chat and plans (streamed)
@@ -325,9 +434,13 @@ def get_conversation():
 class ChatIn(BaseModel):
     message: str = Field(..., min_length=1, max_length=1000)
     session_id: str | None = None
-    mode: str | None = Field(None, pattern="^log$")      # "log": send straight to the Bookkeeper
+    mode: str | None = Field(
+        None, pattern="^log$"
+    )  # "log": send straight to the Bookkeeper
     checkin: str | None = Field(None, pattern="^(spend|income)$")
-    context_hint: str | None = Field(None, max_length=200)  # e.g. the setup question being answered
+    context_hint: str | None = Field(
+        None, max_length=200
+    )  # e.g. the setup question being answered
 
 
 @app.post("/api/chat")
@@ -341,7 +454,11 @@ async def chat(body: ChatIn):
         readiness_before = finance.snapshot(account)["readiness"]
         yield {"type": "session", "session_id": sid}
         check = guardrails.check_user_input(body.message)
-        quick = None if check.blocked else await conversation.quick_reply(body.message, account)
+        quick = (
+            None
+            if check.blocked
+            else await conversation.quick_reply(body.message, account)
+        )
         if quick is not None:
             answer, saved = quick
             transition = conversation.complete_guided_turn(account, before, bool(saved))
@@ -352,31 +469,56 @@ async def chat(body: ChatIn):
             yield {"type": "replace", "text": answer}
             conversation.remember(account, body.message, answer, saved)
             after = conversation.state(account)
-            devlog.log_turn(account=account, session_id=sid, message=body.message, answer=answer,
-                            handler="quick", intent="guided", elapsed=time.perf_counter() - started,
-                            before=before, after=after, readiness_before=readiness_before,
-                            readiness_after=finance.snapshot(account)["readiness"], saved=saved,
-                            blocked=check.category if check.blocked else None)
+            devlog.log_turn(
+                account=account,
+                session_id=sid,
+                message=body.message,
+                answer=answer,
+                handler="quick",
+                intent="guided",
+                elapsed=time.perf_counter() - started,
+                before=before,
+                after=after,
+                readiness_before=readiness_before,
+                readiness_after=finance.snapshot(account)["readiness"],
+                saved=saved,
+                blocked=check.category if check.blocked else None,
+            )
             yield {"type": "done", "answer": answer, "intent": "guided", "elapsed": 0}
             return
         current = conversation.state(account)
         history = current["history"]
-        team.memory.items[sid] = [{"role": m["role"], "content": m["text"]} for m in history[-12:]]
+        team.memory.items[sid] = [
+            {"role": m["role"], "content": m["text"]} for m in history[-12:]
+        ]
         hint = body.context_hint
         mode = body.mode
         # Short answers inherit the actual pending question; a new question can change topic.
-        if current["question"] and route(body.message)[0] == "analyst" and not re.match(r"\s*(what|why|how|can|could|should|will|do|does|is|are)\b", body.message, re.I) and not body.message.rstrip().endswith("?"):
+        if (
+            current["question"]
+            and route(body.message)[0] == "analyst"
+            and not re.match(
+                r"\s*(what|why|how|can|could|should|will|do|does|is|are)\b",
+                body.message,
+                re.I,
+            )
+            and not body.message.rstrip().endswith("?")
+        ):
             hint = current["question"]
             mode = "log"
         saved = None
         draft_plan = None
         error_reason = None
-        async for ev in team.chat(body.message, sid, mode=mode, checkin=body.checkin, context_hint=hint):
+        async for ev in team.chat(
+            body.message, sid, mode=mode, checkin=body.checkin, context_hint=hint
+        ):
             if ev["type"] == "card" and ev.get("kind") == "saved":
                 saved = ev["data"]
             if ev["type"] == "card" and ev.get("kind") == "plan":
                 draft_plan = ev["data"]
-            if ev["type"] in {"step", "error"} and (ev.get("status") == "error" or ev["type"] == "error"):
+            if ev["type"] in {"step", "error"} and (
+                ev.get("status") == "error" or ev["type"] == "error"
+            ):
                 error_reason = ev.get("detail") or ev.get("message")
             if ev["type"] == "done":
                 if not check.blocked:
@@ -388,44 +530,77 @@ async def chat(body: ChatIn):
                             answer = safe_answer
                             replacement_needed = True
                     if ev.get("intent") == "log":
-                        topic = (current.get("clarification_for") if current.get("question_key") == "clarification"
-                                 else current.get("question_key"))
+                        topic = (
+                            current.get("clarification_for")
+                            if current.get("question_key") == "clarification"
+                            else current.get("question_key")
+                        )
                         asked_for_clarification = not saved and "?" in answer
-                        clarification = conversation.set_clarification(account, topic) if asked_for_clarification else None
+                        clarification = (
+                            conversation.set_clarification(account, topic)
+                            if asked_for_clarification
+                            else None
+                        )
                         if clarification:
                             answer = f"I don’t want to guess. {clarification}"
                             replacement_needed = True
-                        elif asked_for_clarification and topic and store.load_settings(account).get("conversation_guidance_paused"):
+                        elif (
+                            asked_for_clarification
+                            and topic
+                            and store.load_settings(account).get(
+                                "conversation_guidance_paused"
+                            )
+                        ):
                             answer = f"No problem—I won’t keep asking for that. {conversation.TRANSITION}"
                             replacement_needed = True
                         else:
-                            transition = conversation.complete_guided_turn(account, current, bool(saved))
+                            transition = conversation.complete_guided_turn(
+                                account, current, bool(saved)
+                            )
                             if transition and transition not in answer:
                                 answer = f"{answer}\n\n{transition}"
                                 replacement_needed = True
                     if replacement_needed:
                         yield {"type": "replace", "text": answer}
                         ev["answer"] = answer
-                    conversation.remember(account, body.message, answer, saved, draft_plan)
+                    conversation.remember(
+                        account, body.message, answer, saved, draft_plan
+                    )
                     after = conversation.state(account)
-                    devlog.log_turn(account=account, session_id=sid, message=body.message, answer=answer,
-                                    handler="agent", intent=ev.get("intent"),
-                                    elapsed=ev.get("elapsed", time.perf_counter() - started),
-                                    before=before, after=after, readiness_before=readiness_before,
-                                    readiness_after=finance.snapshot(account)["readiness"], saved=saved,
-                                    blocked=check.category if check.blocked else None, error_reason=error_reason)
+                    devlog.log_turn(
+                        account=account,
+                        session_id=sid,
+                        message=body.message,
+                        answer=answer,
+                        handler="agent",
+                        intent=ev.get("intent"),
+                        elapsed=ev.get("elapsed", time.perf_counter() - started),
+                        before=before,
+                        after=after,
+                        readiness_before=readiness_before,
+                        readiness_after=finance.snapshot(account)["readiness"],
+                        saved=saved,
+                        blocked=check.category if check.blocked else None,
+                        error_reason=error_reason,
+                    )
             yield ev
+
     return sse(events())
 
 
 @app.post("/api/chat/reset")
 def chat_reset(session_id: str):
     team.memory.reset(session_id)
-    store.save_settings(store.active_account_id(), {"conversation_history": [],
-                                                     "conversation_pending_intent": None,
-                                                     "pending_money_event": None,
-                                                     "pending_clarification": None,
-                                                     "pending_clarification_key": None})
+    store.save_settings(
+        store.active_account_id(),
+        {
+            "conversation_history": [],
+            "conversation_pending_intent": None,
+            "pending_money_event": None,
+            "pending_clarification": None,
+            "pending_clarification_key": None,
+        },
+    )
     return {"ok": True}
 
 
@@ -436,6 +611,7 @@ async def plan_generate():
         async for ev in team.make_plan():
             yield ev
         yield {"type": "done", "elapsed": round(time.perf_counter() - t0, 2)}
+
     return sse(events())
 
 
@@ -447,12 +623,33 @@ class AcceptIn(BaseModel):
 def plan_accept(body: AcceptIn):
     """Human-in-the-loop (Chapter 8): a plan is only saved when the user chooses to start it."""
     p = body.plan
-    keep = ["week_start", "week_end", "daily_limit", "focus_category", "focus_label", "focus_category_cap",
-            "focus_weekly_average", "cut_percent", "freed_up_by_cut", "weekly_safe_to_spend", "save_this_week",
-            "weekly_spending_allowance", "goal_name", "goal_needed_per_week", "on_track_for_goal",
-            "headline", "why", "today_action", "tip_source", "critic", "attempts"]
+    keep = [
+        "week_start",
+        "week_end",
+        "daily_limit",
+        "focus_category",
+        "focus_label",
+        "focus_category_cap",
+        "focus_weekly_average",
+        "cut_percent",
+        "freed_up_by_cut",
+        "weekly_safe_to_spend",
+        "save_this_week",
+        "weekly_spending_allowance",
+        "goal_name",
+        "goal_needed_per_week",
+        "on_track_for_goal",
+        "headline",
+        "why",
+        "today_action",
+        "tip_source",
+        "critic",
+        "attempts",
+    ]
     plan = {k: p.get(k) for k in keep}
-    if plan["focus_category"] not in FLEXIBLE or not isinstance(plan["daily_limit"], (int, float)):
+    if plan["focus_category"] not in FLEXIBLE or not isinstance(
+        plan["daily_limit"], (int, float)
+    ):
         raise HTTPException(400, "That plan is incomplete.")
     plan["accepted_at"] = time.strftime("%Y-%m-%dT%H:%M:%S")
     store.save_plan(store.active_account_id(), plan)
@@ -465,18 +662,39 @@ def plans():
     snap = finance.snapshot(acc)
     history = store.load_plans(acc)
     as_of = finance.date.fromisoformat(snap["as_of"])
-    current = next((p for p in reversed(history)
-                    if finance.date.fromisoformat(p["week_start"]) <= as_of <= finance.date.fromisoformat(p["week_start"]) + finance.timedelta(days=6)), None)
+    current = next(
+        (
+            p
+            for p in reversed(history)
+            if finance.date.fromisoformat(p["week_start"])
+            <= as_of
+            <= finance.date.fromisoformat(p["week_start"]) + finance.timedelta(days=6)
+        ),
+        None,
+    )
     progress = None
     if current:
         start = finance.date.fromisoformat(current["week_start"])
         txns = store.load_transactions(acc)
         spent = finance.spending_by_category(txns, start, as_of)
-        flex = round(sum(v for k, v in spent.items() if k in FLEXIBLE and k != "subscriptions"), 2)
+        flex = round(
+            sum(v for k, v in spent.items() if k in FLEXIBLE and k != "subscriptions"),
+            2,
+        )
         days_in = (as_of - start).days + 1
-        progress = {"days_in": days_in, "flexible_spent": flex, "allowance_so_far": round(current["daily_limit"] * days_in, 2),
-                    "focus_spent": spent.get(current["focus_category"], 0.0), "focus_cap": current["focus_category_cap"]}
-    return {"current": current, "progress": progress, "last_week": snap["last_plan"], "history": list(reversed(history))[:8]}
+        progress = {
+            "days_in": days_in,
+            "flexible_spent": flex,
+            "allowance_so_far": round(current["daily_limit"] * days_in, 2),
+            "focus_spent": spent.get(current["focus_category"], 0.0),
+            "focus_cap": current["focus_category_cap"],
+        }
+    return {
+        "current": current,
+        "progress": progress,
+        "last_week": snap["last_plan"],
+        "history": list(reversed(history))[:8],
+    }
 
 
 # ------------------------------------------------------------------ the React app
@@ -494,4 +712,9 @@ def spa(path: str):
     index = DIST / "index.html"
     if index.exists():
         return FileResponse(index)
-    return JSONResponse({"detail": "Frontend not built. Run: cd frontend && npm install && npm run build"}, status_code=503)
+    return JSONResponse(
+        {
+            "detail": "Frontend not built. Run: cd frontend && npm install && npm run build"
+        },
+        status_code=503,
+    )

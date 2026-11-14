@@ -50,15 +50,23 @@ def spending_by_category(txns, start: date, end: date) -> dict[str, float]:
     """Money spent per category between start and end (inclusive). Transfers excluded."""
     out: dict[str, float] = defaultdict(float)
     for t in txns:
-        if start <= t["date"] <= end and t["amount"] < 0 and t["category"] not in ("transfer", "income"):
+        if (
+            start <= t["date"] <= end
+            and t["amount"] < 0
+            and t["category"] not in ("transfer", "income")
+        ):
             out[t["category"]] += -t["amount"]
     return {k: _r(v) for k, v in sorted(out.items(), key=lambda kv: -kv[1])}
 
 
-def _flex_daily_average(txns, as_of: date, days: int = 30, baseline_weekly: float | None = None) -> float:
+def _flex_daily_average(
+    txns, as_of: date, days: int = 30, baseline_weekly: float | None = None
+) -> float:
     """Usual everyday spending per day. With little history (a new account that only has a few
     logged entries), it uses the weekly amount the user gave during setup instead."""
-    flexible_dates = {t["date"] for t in txns if t["amount"] < 0 and t["category"] in FLEXIBLE}
+    flexible_dates = {
+        t["date"] for t in txns if t["amount"] < 0 and t["category"] in FLEXIBLE
+    }
     first = min(flexible_dates, default=as_of)
     history_days = (as_of - first).days + 1
     if baseline_weekly is not None and history_days < 14:
@@ -68,8 +76,13 @@ def _flex_daily_average(txns, as_of: date, days: int = 30, baseline_weekly: floa
     days = max(min(days, history_days), 7)
     # Use completed days for the baseline. Today's purchases reduce today's remaining amount;
     # they should not simultaneously redefine what the user "usually" spends.
-    spent = spending_by_category(txns, as_of - timedelta(days=days), as_of - timedelta(days=1))
-    return _r(sum(v for k, v in spent.items() if k in FLEXIBLE and k != "subscriptions") / days)
+    spent = spending_by_category(
+        txns, as_of - timedelta(days=days), as_of - timedelta(days=1)
+    )
+    return _r(
+        sum(v for k, v in spent.items() if k in FLEXIBLE and k != "subscriptions")
+        / days
+    )
 
 
 def month_comparison(txns, as_of: date) -> dict:
@@ -81,14 +94,22 @@ def month_comparison(txns, as_of: date) -> dict:
     this_m = spending_by_category(txns, this_start, as_of)
     last_m = spending_by_category(txns, last_start, last_same_day)
     last_full = spending_by_category(txns, last_start, last_end_full)
-    cats = sorted(set(this_m) | set(last_m), key=lambda c: -(this_m.get(c, 0) + last_m.get(c, 0)))
+    cats = sorted(
+        set(this_m) | set(last_m), key=lambda c: -(this_m.get(c, 0) + last_m.get(c, 0))
+    )
     rows = []
     for c in cats:
         a, b = this_m.get(c, 0.0), last_m.get(c, 0.0)
-        rows.append({
-            "category": c, "label": label(c), "this_month": a, "last_month_same_days": b,
-            "change": _r(a - b), "change_pct": round(100 * (a - b) / b) if b >= 1 else None,
-        })
+        rows.append(
+            {
+                "category": c,
+                "label": label(c),
+                "this_month": a,
+                "last_month_same_days": b,
+                "change": _r(a - b),
+                "change_pct": round(100 * (a - b) / b) if b >= 1 else None,
+            }
+        )
     return {
         "this_month_label": as_of.strftime("%B"),
         "last_month_label": last_start.strftime("%B"),
@@ -120,7 +141,12 @@ def _next_from_schedule(sched: dict, as_of: date, last_seen: date | None) -> dat
         d = _with_day(as_of, dom)
         return d if d >= as_of else _with_day(_add_month(as_of.replace(day=1)), dom)
     if every == "twice_monthly":
-        days = sorted({int(sched.get("day_of_month") or 1), 15 if (sched.get("day_of_month") or 1) != 15 else 30})
+        days = sorted(
+            {
+                int(sched.get("day_of_month") or 1),
+                15 if (sched.get("day_of_month") or 1) != 15 else 30,
+            }
+        )
         for month_start in (as_of.replace(day=1), _add_month(as_of.replace(day=1))):
             for dom in days:
                 d = _with_day(month_start, dom)
@@ -148,10 +174,18 @@ def _with_day(d: date, day: int) -> date:
     return d.replace(day=28)
 
 
-def income_summary(txns, as_of: date, settings: dict, pay_schedule: dict | None = None) -> dict:
+def income_summary(
+    txns, as_of: date, settings: dict, pay_schedule: dict | None = None
+) -> dict:
     """Detect paychecks, how often they arrive, how much they swing, and the next payday.
     If the user told us their pay schedule, that wins over what is detected."""
-    window = [t for t in txns if t["category"] == "income" and t["amount"] > 0 and t["date"] > as_of - timedelta(days=120)]
+    window = [
+        t
+        for t in txns
+        if t["category"] == "income"
+        and t["amount"] > 0
+        and t["date"] > as_of - timedelta(days=120)
+    ]
     by_source: dict[str, list[dict]] = defaultdict(list)
     for t in window:
         by_source[t["merchant_key"]].append(t)
@@ -160,11 +194,19 @@ def income_summary(txns, as_of: date, settings: dict, pay_schedule: dict | None 
         dates = [r["date"] for r in rows]
         amounts = [r["amount"] for r in rows]
         cad = _cadence(dates)
-        sources.append({
-            "key": key, "source": rows[0]["merchant"], "count": len(rows), "total": _r(sum(amounts)),
-            "average": _r(statistics.mean(amounts)), "lowest": _r(min(amounts)), "highest": _r(max(amounts)),
-            "every_days": round(cad) if cad else None, "last_date": max(dates),
-        })
+        sources.append(
+            {
+                "key": key,
+                "source": rows[0]["merchant"],
+                "count": len(rows),
+                "total": _r(sum(amounts)),
+                "average": _r(statistics.mean(amounts)),
+                "lowest": _r(min(amounts)),
+                "highest": _r(max(amounts)),
+                "every_days": round(cad) if cad else None,
+                "last_date": max(dates),
+            }
+        )
     sources.sort(key=lambda s: -s["total"])
 
     # monthly totals for the last 3 complete months
@@ -174,7 +216,9 @@ def income_summary(txns, as_of: date, settings: dict, pay_schedule: dict | None 
         m -= 1
         if m == 0:
             y, m = y - 1, 12
-        total = sum(t["amount"] for t in window if t["date"].year == y and t["date"].month == m)
+        total = sum(
+            t["amount"] for t in window if t["date"].year == y and t["date"].month == m
+        )
         months.append({"month": date(y, m, 1).strftime("%b %Y"), "income": _r(total)})
     months.reverse()
     vals = [x["income"] for x in months if x["income"] > 0] or [0.0]
@@ -198,8 +242,13 @@ def income_summary(txns, as_of: date, settings: dict, pay_schedule: dict | None 
     for s in sources:
         if not s["every_days"] or s["count"] < 3:
             continue
-        recent = sorted(r["amount"] for r in sorted(by_source[s["key"]], key=lambda r: r["date"])[-6:])
-        conservative = _r(recent[0] if len(recent) < 4 else statistics.quantiles(recent, n=4)[0])
+        recent = sorted(
+            r["amount"]
+            for r in sorted(by_source[s["key"]], key=lambda r: r["date"])[-6:]
+        )
+        conservative = _r(
+            recent[0] if len(recent) < 4 else statistics.quantiles(recent, n=4)[0]
+        )
         step = max(s["every_days"], 1)
         d = s["last_date"] + timedelta(days=step)
         while d <= as_of:
@@ -208,7 +257,9 @@ def income_summary(txns, as_of: date, settings: dict, pay_schedule: dict | None 
             next_payday = d
             confidence = "high" if s["count"] >= 4 else "medium"
         while d <= as_of + timedelta(days=40):
-            projected.append({"date": d.isoformat(), "amount": conservative, "source": s["source"]})
+            projected.append(
+                {"date": d.isoformat(), "amount": conservative, "source": s["source"]}
+            )
             d += timedelta(days=step)
     pay_every = main["every_days"] if main else None
     told = None
@@ -225,41 +276,76 @@ def income_summary(txns, as_of: date, settings: dict, pay_schedule: dict | None 
         if amount:
             d = nxt
             while d <= as_of + timedelta(days=40):
-                projected.append({"date": d.isoformat(), "amount": _r(amount), "source": "Your pay (as you described it)"})
-                d = _next_from_schedule(pay_schedule, d + timedelta(days=1), d) if pay_schedule["every"] in ("monthly", "twice_monthly") else d + timedelta(days=step)
+                projected.append(
+                    {
+                        "date": d.isoformat(),
+                        "amount": _r(amount),
+                        "source": "Your pay (as you described it)",
+                    }
+                )
+                d = (
+                    _next_from_schedule(pay_schedule, d + timedelta(days=1), d)
+                    if pay_schedule["every"] in ("monthly", "twice_monthly")
+                    else d + timedelta(days=step)
+                )
         pay_every = step
-        told = {"every": pay_schedule["every"], "amount": pay_schedule.get("amount"), "low": pay_schedule.get("low"),
-                "high": pay_schedule.get("high"), "varies": pay_schedule.get("varies")}
+        told = {
+            "every": pay_schedule["every"],
+            "amount": pay_schedule.get("amount"),
+            "low": pay_schedule.get("low"),
+            "high": pay_schedule.get("high"),
+            "varies": pay_schedule.get("varies"),
+        }
     projected.sort(key=lambda x: x["date"])
     if not next_payday:
         next_payday = as_of + timedelta(days=14)
-    expected = next((p["amount"] for p in projected if p["date"] == next_payday.isoformat()), None)
+    expected = next(
+        (p["amount"] for p in projected if p["date"] == next_payday.isoformat()), None
+    )
     if expected is None and projected:
         expected = projected[0]["amount"]
     return {
-        "sources": [{**{k: v for k, v in s.items() if k != "key"}, "last_date": s["last_date"].isoformat()} for s in sources[:4]],
+        "sources": [
+            {
+                **{k: v for k, v in s.items() if k != "key"},
+                "last_date": s["last_date"].isoformat(),
+            }
+            for s in sources[:4]
+        ],
         "monthly": months,
         "average_monthly": _r(avg),
         "lowest_month": _r(min(vals)),
         "swing_percent": swing_pct,
-        "irregular": swing_pct >= 25 or (main is not None and (main["every_days"] or 99) < 10) or bool(told and told["varies"]),
+        "irregular": swing_pct >= 25
+        or (main is not None and (main["every_days"] or 99) < 10)
+        or bool(told and told["varies"]),
         "next_payday": next_payday.isoformat(),
         "next_payday_confidence": confidence,
         "expected_next_paycheck": expected,
         "projected_income": projected,
-        "main_source": main["source"] if main else ("Your pay (as you described it)" if told else None),
+        "main_source": (
+            main["source"]
+            if main
+            else ("Your pay (as you described it)" if told else None)
+        ),
         "pay_every_days": pay_every,
         "pay_schedule_told": told,
     }
 
 
 # ------------------------------------------------------------------ recurring bills
-def recurring_bills(txns, as_of: date, settings: dict, told_bills: list[dict] | None = None) -> list[dict]:
+def recurring_bills(
+    txns, as_of: date, settings: dict, told_bills: list[dict] | None = None
+) -> list[dict]:
     """Find bills and subscriptions that repeat on a schedule (rent, phone, Netflix...)
     and predict the next due date. Bills the user told us about are included and win."""
     groups: dict[str, list[dict]] = defaultdict(list)
     for t in txns:
-        if t["amount"] < 0 and t["category"] in BILL_CATEGORIES and t["date"] > as_of - timedelta(days=100):
+        if (
+            t["amount"] < 0
+            and t["category"] in BILL_CATEGORIES
+            and t["date"] > as_of - timedelta(days=100)
+        ):
             groups[t["merchant_key"]].append(t)
     bills = []
     for key, rows in groups.items():
@@ -289,34 +375,69 @@ def recurring_bills(txns, as_of: date, settings: dict, told_bills: list[dict] | 
             nxt = last["date"] + timedelta(days=every)
             while nxt <= as_of:
                 nxt += timedelta(days=every)
-        bills.append({
-            "name": last["merchant"], "amount": _r(-last["amount"]), "average": _r(mean),
-            "category": last["category"], "every": {30: "monthly", 14: "every 2 weeks", 7: "weekly"}[every],
-            "next_due": nxt.isoformat(), "days_until": (nxt - as_of).days, "source": "detected",
-            "cadence_days": every,
-            "monthly_cost": _r(mean * 30 / every),
-        })
+        bills.append(
+            {
+                "name": last["merchant"],
+                "amount": _r(-last["amount"]),
+                "average": _r(mean),
+                "category": last["category"],
+                "every": {30: "monthly", 14: "every 2 weeks", 7: "weekly"}[every],
+                "next_due": nxt.isoformat(),
+                "days_until": (nxt - as_of).days,
+                "source": "detected",
+                "cadence_days": every,
+                "monthly_cost": _r(mean * 30 / every),
+            }
+        )
     # Bills the user told us about ("rent is $725 on the 1st"). They replace a detected bill
     # that looks like the same thing, so nothing is counted twice.
     for sc in told_bills or []:
         if sc.get("amount") is None:
             continue
-        paid_recently = any(t["amount"] < 0 and abs(-t["amount"] - sc["amount"]) <= 0.15 * sc["amount"]
-                            and t["date"] > as_of - timedelta(days=4) for t in txns)
-        nxt = _next_from_schedule(sc, as_of + timedelta(days=1) if paid_recently else as_of, None)
+        paid_recently = any(
+            t["amount"] < 0
+            and abs(-t["amount"] - sc["amount"]) <= 0.15 * sc["amount"]
+            and t["date"] > as_of - timedelta(days=4)
+            for t in txns
+        )
+        nxt = _next_from_schedule(
+            sc, as_of + timedelta(days=1) if paid_recently else as_of, None
+        )
         words = set(sc["name"].upper().split())
-        bills = [b for b in bills if not (
-            (b["category"] == (sc.get("category") or b["category"]) and abs(b["average"] - sc["amount"]) <= 0.25 * sc["amount"])
-            or words & set(b["name"].upper().split()))]
+        bills = [
+            b
+            for b in bills
+            if not (
+                (
+                    b["category"] == (sc.get("category") or b["category"])
+                    and abs(b["average"] - sc["amount"]) <= 0.25 * sc["amount"]
+                )
+                or words & set(b["name"].upper().split())
+            )
+        ]
         step = STEP_DAYS.get(sc["every"], 30)
-        bills.append({
-            "name": sc["name"], "amount": _r(sc["amount"]), "average": _r(sc["amount"]),
-            "category": sc.get("category") or "other",
-            "every": {"monthly": "monthly", "biweekly": "every 2 weeks", "weekly": "weekly", "twice_monthly": "twice a month", "once": "once"}.get(sc["every"], sc["every"]),
-            "next_due": nxt.isoformat(), "days_until": (nxt - as_of).days, "source": "you told me",
-            "cadence_days": None if sc["every"] == "once" else step,
-            "monthly_cost": 0.0 if sc["every"] == "once" else _r(sc["amount"] * 30 / step),
-        })
+        bills.append(
+            {
+                "name": sc["name"],
+                "amount": _r(sc["amount"]),
+                "average": _r(sc["amount"]),
+                "category": sc.get("category") or "other",
+                "every": {
+                    "monthly": "monthly",
+                    "biweekly": "every 2 weeks",
+                    "weekly": "weekly",
+                    "twice_monthly": "twice a month",
+                    "once": "once",
+                }.get(sc["every"], sc["every"]),
+                "next_due": nxt.isoformat(),
+                "days_until": (nxt - as_of).days,
+                "source": "you told me",
+                "cadence_days": None if sc["every"] == "once" else step,
+                "monthly_cost": (
+                    0.0 if sc["every"] == "once" else _r(sc["amount"] * 30 / step)
+                ),
+            }
+        )
     bills.sort(key=lambda b: b["next_due"])
     return bills
 
@@ -338,7 +459,13 @@ def _bill_occurrences(bills: list[dict], start: date, end: date) -> list[dict]:
         due = date.fromisoformat(bill["next_due"])
         while due <= end:
             if due >= start:
-                occurrences.append({**bill, "next_due": due.isoformat(), "days_until": (due - start).days})
+                occurrences.append(
+                    {
+                        **bill,
+                        "next_due": due.isoformat(),
+                        "days_until": (due - start).days,
+                    }
+                )
             if bill.get("every") == "monthly":
                 due = _add_month(due)
             elif bill.get("cadence_days"):
@@ -348,9 +475,16 @@ def _bill_occurrences(bills: list[dict], start: date, end: date) -> list[dict]:
     return sorted(occurrences, key=lambda b: b["next_due"])
 
 
-def _safe_cash_pool(balance: float, bills: list[dict], projected_income: list[dict],
-                    as_of: date, horizon_end: date, buffer: float,
-                    typical_daily: float = 0.0, current_payday: date | None = None) -> float:
+def _safe_cash_pool(
+    balance: float,
+    bills: list[dict],
+    projected_income: list[dict],
+    as_of: date,
+    horizon_end: date,
+    buffer: float,
+    typical_daily: float = 0.0,
+    current_payday: date | None = None,
+) -> float:
     """Maximum cash removable today while still covering known 30-day commitments.
 
     Bills and normal living costs are applied before income on the same date. Spending
@@ -404,13 +538,32 @@ def snapshot(account_id: str | None = None) -> dict:
     horizon_end = as_of + timedelta(days=horizon_days)
     spend_window_days = min(max(days_left, 14), horizon_days)
     bill_occurrences = _bill_occurrences(bills, as_of, horizon_end)
-    next_cycle_bills = [b for b in bill_occurrences if payday.isoformat() < b["next_due"] <= horizon_end.isoformat()]
+    next_cycle_bills = [
+        b
+        for b in bill_occurrences
+        if payday.isoformat() < b["next_due"] <= horizon_end.isoformat()
+    ]
     next_cycle_bills_total = _r(sum(b["amount"] for b in next_cycle_bills))
-    next_cycle_income = _r(sum(p["amount"] for p in income["projected_income"]
-                               if payday.isoformat() <= p["date"] <= horizon_end.isoformat()))
-    typical_daily = _flex_daily_average(txns, as_of, baseline_weekly=settings.get("typical_weekly_spend"))
-    cash_surplus = _safe_cash_pool(balance, bill_occurrences, income["projected_income"], as_of, horizon_end,
-                                   buffer, typical_daily=typical_daily, current_payday=payday)
+    next_cycle_income = _r(
+        sum(
+            p["amount"]
+            for p in income["projected_income"]
+            if payday.isoformat() <= p["date"] <= horizon_end.isoformat()
+        )
+    )
+    typical_daily = _flex_daily_average(
+        txns, as_of, baseline_weekly=settings.get("typical_weekly_spend")
+    )
+    cash_surplus = _safe_cash_pool(
+        balance,
+        bill_occurrences,
+        income["projected_income"],
+        as_of,
+        horizon_end,
+        buffer,
+        typical_daily=typical_daily,
+        current_payday=payday,
+    )
     # The cash-flow check above reserves normal living costs after payday. Add the normal
     # amount for this planning window back before turning the pool into a daily allowance.
     safe_total = _r(cash_surplus + typical_daily * spend_window_days)
@@ -419,17 +572,29 @@ def snapshot(account_id: str | None = None) -> dict:
     reserve = _r(max(balance - bills_total - buffer - cash_surplus, 0.0))
     # Today's spending has already left the balance. Work out the daily amount from the START of today
     # (safe_total + what was spent today), so today's spending is only counted once.
-    spent_today = _r(sum(-t["amount"] for t in txns if t["date"] == as_of and t["amount"] < 0 and t["category"] in FLEXIBLE))
+    spent_today = _r(
+        sum(
+            -t["amount"]
+            for t in txns
+            if t["date"] == as_of and t["amount"] < 0 and t["category"] in FLEXIBLE
+        )
+    )
     # The daily number still answers "until my next payday". Its available pool has already
     # been stress-tested across 30 days above, so a nearby payday cannot expose rent money.
     per_day = _r((safe_total + spent_today) / spend_window_days)
     left_today = _r(per_day - spent_today)
     # The days after today share what is left once today's unspent amount is set aside
     # (if today went over, the overspend is spread across the remaining days).
-    per_day_after_today = _r((safe_total - max(left_today, 0.0)) / (spend_window_days - 1)) if spend_window_days > 1 else per_day
+    per_day_after_today = (
+        _r((safe_total - max(left_today, 0.0)) / (spend_window_days - 1))
+        if spend_window_days > 1
+        else per_day
+    )
     # Never inflate a short pay window into a seven-day allowance. If payday is tomorrow,
     # this week's available money is the remaining pool—not seven copies of it.
-    weekly_safe = _r(max(safe_total * min(spend_window_days, 7) / spend_window_days, 0.0))
+    weekly_safe = _r(
+        max(safe_total * min(spend_window_days, 7) / spend_window_days, 0.0)
+    )
     weekly_saving_capacity = _r(max(cash_surplus * 7 / horizon_days, 0.0))
     if safe_total <= 0:
         status = "red"
@@ -440,43 +605,106 @@ def snapshot(account_id: str | None = None) -> dict:
     else:
         status = "red"
 
-    forecast = balance_forecast(balance, bill_occurrences, as_of, payday, horizon_end, typical_daily, income["projected_income"])
+    forecast = balance_forecast(
+        balance,
+        bill_occurrences,
+        as_of,
+        payday,
+        horizon_end,
+        typical_daily,
+        income["projected_income"],
+    )
     month = month_comparison(txns, as_of)
     last30 = spending_by_category(txns, as_of - timedelta(days=29), as_of)
     subs = [b for b in bills if b["category"] == "subscriptions"]
-    balance_known = store.balance_note(account_id)["as_of"] is not None or store.is_demo(account_id)
+    balance_known = store.balance_note(account_id)[
+        "as_of"
+    ] is not None or store.is_demo(account_id)
     bills_known = bool(settings.get("bills_reviewed")) or store.is_demo(account_id)
-    spending_history_days = len({t["date"] for t in txns if t["amount"] < 0 and t["category"] in FLEXIBLE})
-    spending_known = settings.get("typical_weekly_spend") is not None or spending_history_days >= 7
-    payday_known = bool(settings.get("next_payday")) or bool(pay_sched and (pay_sched.get("next_date") or pay_sched.get("day_of_month"))) or income["next_payday_confidence"] in ("high", "medium")
+    spending_history_days = len(
+        {t["date"] for t in txns if t["amount"] < 0 and t["category"] in FLEXIBLE}
+    )
+    spending_known = (
+        settings.get("typical_weekly_spend") is not None or spending_history_days >= 7
+    )
+    payday_known = (
+        bool(settings.get("next_payday"))
+        or bool(
+            pay_sched and (pay_sched.get("next_date") or pay_sched.get("day_of_month"))
+        )
+        or income["next_payday_confidence"] in ("high", "medium")
+    )
     readiness_missing = []
-    for key, known in (("balance", balance_known), ("payday", payday_known),
-                       ("income", income.get("expected_next_paycheck") is not None), ("bills", bills_known),
-                       ("spending", spending_known or settings.get("typical_weekly_spend") is not None)):
+    for key, known in (
+        ("balance", balance_known),
+        ("payday", payday_known),
+        ("income", income.get("expected_next_paycheck") is not None),
+        ("bills", bills_known),
+        (
+            "spending",
+            spending_known or settings.get("typical_weekly_spend") is not None,
+        ),
+    ):
         if not known:
             readiness_missing.append(key)
     income_amount_known = income.get("expected_next_paycheck") is not None
-    goal = goal_progress(settings, as_of, weekly_saving_capacity, balance_known, income_amount_known, bills_known, spending_known)
+    goal = goal_progress(
+        settings,
+        as_of,
+        weekly_saving_capacity,
+        balance_known,
+        income_amount_known,
+        bills_known,
+        spending_known,
+    )
     last_plan = check_last_plan(account_id, txns=txns, as_of=as_of)
 
-    recent_est = [t for t in txns if t["approx"] and t["date"] > as_of - timedelta(days=30)]
-    logged_today = [t for t in txns if t["source"] in store.LOGGED_SOURCES and t["date"] == as_of]
+    recent_est = [
+        t for t in txns if t["approx"] and t["date"] > as_of - timedelta(days=30)
+    ]
+    logged_today = [
+        t for t in txns if t["source"] in store.LOGGED_SOURCES and t["date"] == as_of
+    ]
     weekly_earner = (income["pay_every_days"] or 99) <= 8 or not income["sources"]
-    income_last_week = any(t["category"] == "income" and t["date"] > as_of - timedelta(days=7) for t in txns)
+    income_last_week = any(
+        t["category"] == "income" and t["date"] > as_of - timedelta(days=7)
+        for t in txns
+    )
     snap = {
-        "readiness": {"ready": not readiness_missing, "missing": readiness_missing, "payday_known": payday_known,
-                      "spending_history_days": spending_history_days},
-        "account": {"id": account_id, "name": settings.get("name"), "kind": "demo" if store.is_demo(account_id) else "personal"},
-        "setup_needed": not store.is_demo(account_id) and not settings.get("onboarding_complete")
-                        and not txns and not told and store.balance_note(account_id)["as_of"] is None,
+        "readiness": {
+            "ready": not readiness_missing,
+            "missing": readiness_missing,
+            "payday_known": payday_known,
+            "spending_history_days": spending_history_days,
+        },
+        "account": {
+            "id": account_id,
+            "name": settings.get("name"),
+            "kind": "demo" if store.is_demo(account_id) else "personal",
+        },
+        "setup_needed": not store.is_demo(account_id)
+        and not settings.get("onboarding_complete")
+        and not txns
+        and not told
+        and store.balance_note(account_id)["as_of"] is None,
         "use_case": settings.get("use_case"),
         "balance_info": store.balance_note(account_id),
-        "estimates": {"count": len(recent_est), "total": _r(sum(-t["amount"] for t in recent_est if t["amount"] < 0))},
+        "estimates": {
+            "count": len(recent_est),
+            "total": _r(sum(-t["amount"] for t in recent_est if t["amount"] < 0)),
+        },
         "told": told,
         "checkins": {
-            "spend_today": not store.checkin_done(account_id, "spend") and not logged_today,
-            "income_week": weekly_earner and not income_last_week and not any(
-                store.checkin_done(account_id, "income", (as_of - timedelta(days=i)).isoformat()) for i in range(7)),
+            "spend_today": not store.checkin_done(account_id, "spend")
+            and not logged_today,
+            "income_week": weekly_earner
+            and not income_last_week
+            and not any(
+                store.checkin_done(
+                    account_id, "income", (as_of - timedelta(days=i)).isoformat()
+                )
+                for i in range(7)
+            ),
         },
         "as_of": as_of.isoformat(),
         "data_is_old": stale,
@@ -487,14 +715,21 @@ def snapshot(account_id: str | None = None) -> dict:
         "expected_next_paycheck": income.get("expected_next_paycheck"),
         "bills_before_payday": bills_before,
         "bills_before_payday_total": bills_total,
-        "next_cycle": {"ends": horizon_end.isoformat(), "bills": next_cycle_bills, "bills_total": next_cycle_bills_total,
-                       "expected_income": next_cycle_income, "held_back": reserve},
+        "next_cycle": {
+            "ends": horizon_end.isoformat(),
+            "bills": next_cycle_bills,
+            "bills_total": next_cycle_bills_total,
+            "expected_income": next_cycle_income,
+            "held_back": reserve,
+        },
         "held_back_for_next_cycle": reserve,
         "cash_surplus_after_living_costs": cash_surplus,
         "planning_horizon_days": horizon_days,
         "planning_horizon_end": horizon_end.isoformat(),
         "safe_to_spend_window_days": spend_window_days,
-        "safe_to_spend_window_end": (as_of + timedelta(days=spend_window_days - 1)).isoformat(),
+        "safe_to_spend_window_end": (
+            as_of + timedelta(days=spend_window_days - 1)
+        ).isoformat(),
         "weekly_safe_to_spend": weekly_safe,
         "weekly_saving_capacity": weekly_saving_capacity,
         "safe_to_spend_total": safe_total,
@@ -506,29 +741,59 @@ def snapshot(account_id: str | None = None) -> dict:
         "status": status,
         "income": income,
         "upcoming_bills": bills[:12],
-        "subscriptions": {"count": len(subs), "monthly_total": _r(sum(s["monthly_cost"] for s in subs)), "items": subs},
-        "spending_last_30_days": [{"category": c, "label": label(c), "amount": v} for c, v in last30.items()],
+        "subscriptions": {
+            "count": len(subs),
+            "monthly_total": _r(sum(s["monthly_cost"] for s in subs)),
+            "items": subs,
+        },
+        "spending_last_30_days": [
+            {"category": c, "label": label(c), "amount": v} for c, v in last30.items()
+        ],
         "month": month,
         "forecast": forecast,
         "goal": goal,
         "last_plan": last_plan,
     }
     if goal:
-        goal["saved_known"] = bool(settings["goal"].get("saved_known", store.is_demo(account_id)))
-        goal["days_remaining"] = max((date.fromisoformat(goal["deadline"]) - as_of).days, 0)
-        goal["pace_amount"] = goal["needed_per_day"] if goal["days_remaining"] < 7 else goal["needed_per_week"]
+        goal["saved_known"] = bool(
+            settings["goal"].get("saved_known", store.is_demo(account_id))
+        )
+        goal["days_remaining"] = max(
+            (date.fromisoformat(goal["deadline"]) - as_of).days, 0
+        )
+        goal["pace_amount"] = (
+            goal["needed_per_day"]
+            if goal["days_remaining"] < 7
+            else goal["needed_per_week"]
+        )
         goal["pace_unit"] = "day" if goal["days_remaining"] < 7 else "week"
         goal["fits"] = goal["fits"] if not readiness_missing else None
-        goal["weekly_safe_to_spend"] = goal["weekly_safe_to_spend"] if not readiness_missing else None
+        goal["weekly_safe_to_spend"] = (
+            goal["weekly_safe_to_spend"] if not readiness_missing else None
+        )
     snap["insights"] = insights(snap, txns, as_of)
     if readiness_missing:
-        snap["insights"] = [i for i in snap["insights"] if i["id"] not in {"short", "low_balance", "held_back", "goal_pace", "goal_ok"}]
+        snap["insights"] = [
+            i
+            for i in snap["insights"]
+            if i["id"]
+            not in {"short", "low_balance", "held_back", "goal_pace", "goal_ok"}
+        ]
     return snap
 
 
-def balance_forecast(balance, bills, as_of: date, payday: date, end: date, daily_spend: float, projected_income) -> dict:
+def balance_forecast(
+    balance,
+    bills,
+    as_of: date,
+    payday: date,
+    end: date,
+    daily_spend: float,
+    projected_income,
+) -> dict:
     """Day-by-day balance projection from today through the next pay cycle:
-    usual daily spending, every predicted bill, and every expected (conservative) paycheck."""
+    usual daily spending, every predicted bill, and every expected (conservative) paycheck.
+    """
     due: dict[str, float] = defaultdict(float)
     for b in bills:
         due[b["next_due"]] += b["amount"]
@@ -545,17 +810,39 @@ def balance_forecast(balance, bills, as_of: date, payday: date, end: date, daily
         bal = bal - due.get(iso, 0.0) + pay.get(iso, 0.0)
         if bal < low:
             low, low_day = bal, d
-        points.append({"date": iso, "balance": _r(bal), "bill": _r(due[iso]) if iso in due else None,
-                       "income": _r(pay[iso]) if iso in pay else None, "payday": d == payday})
+        points.append(
+            {
+                "date": iso,
+                "balance": _r(bal),
+                "bill": _r(due[iso]) if iso in due else None,
+                "income": _r(pay[iso]) if iso in pay else None,
+                "payday": d == payday,
+            }
+        )
         d += timedelta(days=1)
-    return {"points": points, "lowest_before_payday": _r(min([p["balance"] for p in points if p["date"] <= payday.isoformat()] or [balance])),
-            "lowest": _r(low), "lowest_date": low_day.isoformat(),
-            "assumes_daily_spending": daily_spend}
+    return {
+        "points": points,
+        "lowest_before_payday": _r(
+            min(
+                [p["balance"] for p in points if p["date"] <= payday.isoformat()]
+                or [balance]
+            )
+        ),
+        "lowest": _r(low),
+        "lowest_date": low_day.isoformat(),
+        "assumes_daily_spending": daily_spend,
+    }
 
 
-def goal_progress(settings: dict, as_of: date, weekly_safe: float,
-                  balance_known: bool = True, income_known: bool = True,
-                  bills_known: bool = True, spending_known: bool = True) -> dict | None:
+def goal_progress(
+    settings: dict,
+    as_of: date,
+    weekly_safe: float,
+    balance_known: bool = True,
+    income_known: bool = True,
+    bills_known: bool = True,
+    spending_known: bool = True,
+) -> dict | None:
     g = settings.get("goal")
     if not g:
         return None
@@ -584,14 +871,31 @@ def goal_progress(settings: dict, as_of: date, weekly_safe: float,
         "bills": "What important bills should I plan around?",
         "spending_history": "Keep logging purchases or import a bank CSV so I can find realistic places to save.",
     }
-    plan_level = "starter" if not balance_known or not income_known else "estimated" if not bills_known or not spending_known else "personalized"
+    plan_level = (
+        "starter"
+        if not balance_known or not income_known
+        else "estimated" if not bills_known or not spending_known else "personalized"
+    )
     return {
-        "name": g["name"], "target": _r(g["target"]), "saved": _r(g.get("saved", 0.0)), "remaining": remaining,
+        "name": g["name"],
+        "target": _r(g["target"]),
+        "saved": _r(g.get("saved", 0.0)),
+        "remaining": remaining,
         "percent": round(100 * g.get("saved", 0.0) / g["target"]) if g["target"] else 0,
-        "deadline": g["deadline"], "weeks_left": round(days_to_deadline / 7, 1),
-        "needed_per_day": per_day, "needed_per_week": per_week, "needed_per_month": per_month,
-        "weekly_safe_to_spend": weekly_safe, "fits": (per_week <= max(weekly_safe, 0)) if balance_known and income_known else None,
-        "plan_level": plan_level, "missing": missing, "next_question": questions[missing[0]] if missing else None,
+        "deadline": g["deadline"],
+        "weeks_left": round(days_to_deadline / 7, 1),
+        "needed_per_day": per_day,
+        "needed_per_week": per_week,
+        "needed_per_month": per_month,
+        "weekly_safe_to_spend": weekly_safe,
+        "fits": (
+            (per_week <= max(weekly_safe, 0))
+            if balance_known and income_known
+            else None
+        ),
+        "plan_level": plan_level,
+        "missing": missing,
+        "next_question": questions[missing[0]] if missing else None,
     }
 
 
@@ -602,7 +906,12 @@ def goal_coach_text(snap: dict) -> str:
         return "Tell me what you're working toward and when you'd like to reach it."
     pace = f"Your starter pace is **${g['needed_per_week']:,.2f} a week**, about **${g['needed_per_day']:,.2f} a day**."
     if g.get("next_question"):
-        return pace + " I’ll make this more realistic as you add information.\n\n**Next question:** " + g["next_question"] + " You can answer, import a CSV, or skip it for now."
+        return (
+            pace
+            + " I’ll make this more realistic as you add information.\n\n**Next question:** "
+            + g["next_question"]
+            + " You can answer, import a CSV, or skip it for now."
+        )
     return pace + " I have enough information to build a personalized weekly plan."
 
 
@@ -612,90 +921,202 @@ def insights(snap: dict, txns, as_of: date) -> list[dict]:
     out = []
     f = snap["forecast"]
     if snap["safe_to_spend_total"] < 0:
-        out.append({"id": "short", "severity": "high", "icon": "alert",
-                    "title": "Bills are bigger than your balance",
-                    "detail": f"Bills due before payday (${snap['bills_before_payday_total']:,.2f}) plus your ${snap['savings_buffer']:,.2f} cushion are more than your ${snap['balance']:,.2f} balance."})
+        out.append(
+            {
+                "id": "short",
+                "severity": "high",
+                "icon": "alert",
+                "title": "Bills are bigger than your balance",
+                "detail": f"Bills due before payday (${snap['bills_before_payday_total']:,.2f}) plus your ${snap['savings_buffer']:,.2f} cushion are more than your ${snap['balance']:,.2f} balance.",
+            }
+        )
     elif f["lowest"] < max(50.0, snap["savings_buffer"] * 0.5):
-        out.append({"id": "low_balance", "severity": "high", "icon": "alert",
-                    "title": "Your balance may run low soon",
-                    "detail": f"At your usual pace it could drop to {money_text(f['lowest'])} around {_nice(f['lowest_date'])}."})
+        out.append(
+            {
+                "id": "low_balance",
+                "severity": "high",
+                "icon": "alert",
+                "title": "Your balance may run low soon",
+                "detail": f"At your usual pace it could drop to {money_text(f['lowest'])} around {_nice(f['lowest_date'])}.",
+            }
+        )
     if snap["held_back_for_next_cycle"] > 0:
         nc = snap["next_cycle"]
-        out.append({"id": "held_back", "severity": "medium", "icon": "shield",
-                    "title": f"${nc['held_back']:,.2f} protected for after payday",
-                    "detail": f"BudgetWise is protecting part of your available money because ${nc['bills_total']:,.2f} "
-                              f"in bills is due after payday and everyday costs continue between paychecks."})
+        out.append(
+            {
+                "id": "held_back",
+                "severity": "medium",
+                "icon": "shield",
+                "title": f"${nc['held_back']:,.2f} protected for after payday",
+                "detail": f"BudgetWise is protecting part of your available money because ${nc['bills_total']:,.2f} "
+                f"in bills is due after payday and everyday costs continue between paychecks.",
+            }
+        )
     for row in snap["month"]["categories"]:
-        if row["category"] in FLEXIBLE and row["category"] != "other" and row["change"] >= 25 and (row["change_pct"] or 100) >= 25:
-            title = (f"{row['label']} is up {row['change_pct']}% this month" if row["change_pct"] is not None
-                     else f"{row['label']} is new this month")
-            out.append({"id": f"up_{row['category']}", "severity": "medium", "icon": "trending-up",
-                        "title": title,
-                        "detail": f"${row['this_month']:,.2f} so far vs ${row['last_month_same_days']:,.2f} by this point in {snap['month']['last_month_label']}.",
-                        "category": row["category"]})
+        if (
+            row["category"] in FLEXIBLE
+            and row["category"] != "other"
+            and row["change"] >= 25
+            and (row["change_pct"] or 100) >= 25
+        ):
+            title = (
+                f"{row['label']} is up {row['change_pct']}% this month"
+                if row["change_pct"] is not None
+                else f"{row['label']} is new this month"
+            )
+            out.append(
+                {
+                    "id": f"up_{row['category']}",
+                    "severity": "medium",
+                    "icon": "trending-up",
+                    "title": title,
+                    "detail": f"${row['this_month']:,.2f} so far vs ${row['last_month_same_days']:,.2f} by this point in {snap['month']['last_month_label']}.",
+                    "category": row["category"],
+                }
+            )
             break
     soon = [b for b in snap["subscriptions"]["items"] if b["days_until"] <= 7]
     if soon:
         names = ", ".join(b["name"] for b in soon[:3])
-        out.append({"id": "subs_soon", "severity": "low", "icon": "repeat",
-                    "title": f"{len(soon)} subscription{'s renew' if len(soon) > 1 else ' renews'} this week",
-                    "detail": f"{names}: ${sum(b['amount'] for b in soon):,.2f} total."})
+        out.append(
+            {
+                "id": "subs_soon",
+                "severity": "low",
+                "icon": "repeat",
+                "title": f"{len(soon)} subscription{'s renew' if len(soon) > 1 else ' renews'} this week",
+                "detail": f"{names}: ${sum(b['amount'] for b in soon):,.2f} total.",
+            }
+        )
     if snap["subscriptions"]["count"] >= 3:
-        out.append({"id": "subs_total", "severity": "low", "icon": "repeat",
-                    "title": f"Subscriptions cost about ${snap['subscriptions']['monthly_total']:,.2f} a month",
-                    "detail": f"{snap['subscriptions']['count']} recurring services. Cancelling one you rarely use is the easiest saving."})
+        out.append(
+            {
+                "id": "subs_total",
+                "severity": "low",
+                "icon": "repeat",
+                "title": f"Subscriptions cost about ${snap['subscriptions']['monthly_total']:,.2f} a month",
+                "detail": f"{snap['subscriptions']['count']} recurring services. Cancelling one you rarely use is the easiest saving.",
+            }
+        )
     g = snap["goal"]
     if g and g["remaining"] > 0:
         recent_counts = defaultdict(int)
         for txn in txns:
             if txn["amount"] < 0 and txn["date"] >= as_of - timedelta(days=29):
                 recent_counts[txn["category"]] += 1
-        optional = [r for r in snap["spending_last_30_days"]
-                    if snap["readiness"]["spending_history_days"] >= 7
-                    and r["category"] in {"dining", "entertainment", "shopping", "subscriptions", "personal"}
-                    and r["amount"] >= 20 and recent_counts[r["category"]] >= 3]
+        optional = [
+            r
+            for r in snap["spending_last_30_days"]
+            if snap["readiness"]["spending_history_days"] >= 7
+            and r["category"]
+            in {"dining", "entertainment", "shopping", "subscriptions", "personal"}
+            and r["amount"] >= 20
+            and recent_counts[r["category"]] >= 3
+        ]
         if optional:
             top = max(optional, key=lambda r: r["amount"])
             weekly_cut = _r(top["amount"] * 0.20 * 7 / 30)
-            share = round(100 * weekly_cut / g["needed_per_week"]) if g["needed_per_week"] else 0
-            out.append({"id": "goal_opportunity", "severity": "good", "icon": "target",
-                        "title": f"{top['label']} could help fund {g['name']}",
-                        "detail": f"You logged ${top['amount']:,.2f} in {top['label']} over the last 30 days. Cutting about 20% would free roughly ${weekly_cut:,.2f} a week—about {share}% of your weekly goal pace. Only choose this if it feels realistic.",
-                        "category": top["category"]})
+            share = (
+                round(100 * weekly_cut / g["needed_per_week"])
+                if g["needed_per_week"]
+                else 0
+            )
+            out.append(
+                {
+                    "id": "goal_opportunity",
+                    "severity": "good",
+                    "icon": "target",
+                    "title": f"{top['label']} could help fund {g['name']}",
+                    "detail": f"You logged ${top['amount']:,.2f} in {top['label']} over the last 30 days. Cutting about 20% would free roughly ${weekly_cut:,.2f} a week—about {share}% of your weekly goal pace. Only choose this if it feels realistic.",
+                    "category": top["category"],
+                }
+            )
     if g and g["fits"] is False and g["remaining"] > 0:
-        out.append({"id": "goal_pace", "severity": "medium", "icon": "target",
-                    "title": f"{g['name']} needs ${g['needed_per_week']:,.2f} a week",
-                    "detail": f"That is more than this week's safe-to-spend of ${max(g['weekly_safe_to_spend'], 0):,.2f}. A weekly plan can help you get closer."})
+        out.append(
+            {
+                "id": "goal_pace",
+                "severity": "medium",
+                "icon": "target",
+                "title": f"{g['name']} needs ${g['needed_per_week']:,.2f} a week",
+                "detail": f"That is more than this week's safe-to-spend of ${max(g['weekly_safe_to_spend'], 0):,.2f}. A weekly plan can help you get closer.",
+            }
+        )
     elif g and g["fits"] is True and g["remaining"] > 0:
-        out.append({"id": "goal_ok", "severity": "good", "icon": "target",
-                    "title": f"{g['name']} is within reach",
-                    "detail": f"Saving ${g['needed_per_week']:,.2f} a week gets you there by {_nice(g['deadline'])}."})
+        out.append(
+            {
+                "id": "goal_ok",
+                "severity": "good",
+                "icon": "target",
+                "title": f"{g['name']} is within reach",
+                "detail": f"Saving ${g['needed_per_week']:,.2f} a week gets you there by {_nice(g['deadline'])}.",
+            }
+        )
     # unusually large purchase in the last 7 days
     by_cat: dict[str, list[float]] = defaultdict(list)
     for t in txns:
-        if t["amount"] < 0 and t["category"] in FLEXIBLE and t["date"] > as_of - timedelta(days=90):
+        if (
+            t["amount"] < 0
+            and t["category"] in FLEXIBLE
+            and t["date"] > as_of - timedelta(days=90)
+        ):
             by_cat[t["category"]].append(-t["amount"])
     for t in txns:
-        if t["date"] > as_of - timedelta(days=7) and t["amount"] < 0 and t["category"] in FLEXIBLE:
+        if (
+            t["date"] > as_of - timedelta(days=7)
+            and t["amount"] < 0
+            and t["category"] in FLEXIBLE
+        ):
             vals = by_cat[t["category"]]
-            if len(vals) >= 5 and -t["amount"] >= 3 * statistics.median(vals) and -t["amount"] >= 40:
-                out.append({"id": f"big_{t['id']}", "severity": "low", "icon": "receipt",
-                            "title": f"Bigger than usual: {t['merchant']}",
-                            "detail": f"${-t['amount']:,.2f} on {_nice(t['date'].isoformat())}, about {round(-t['amount'] / statistics.median(vals))}x your typical {label(t['category']).lower()} purchase."})
+            if (
+                len(vals) >= 5
+                and -t["amount"] >= 3 * statistics.median(vals)
+                and -t["amount"] >= 40
+            ):
+                out.append(
+                    {
+                        "id": f"big_{t['id']}",
+                        "severity": "low",
+                        "icon": "receipt",
+                        "title": f"Bigger than usual: {t['merchant']}",
+                        "detail": f"${-t['amount']:,.2f} on {_nice(t['date'].isoformat())}, about {round(-t['amount'] / statistics.median(vals))}x your typical {label(t['category']).lower()} purchase.",
+                    }
+                )
                 break
     inc = snap["income"]
     if inc["irregular"] and inc["swing_percent"] >= 25 and inc["lowest_month"] > 0:
-        out.append({"id": "irregular", "severity": "low", "icon": "wave",
-                    "title": "Your income changes from check to check",
-                    "detail": f"Monthly income swung {inc['swing_percent']}% over 3 months, so BudgetWise plans with your lower months (${inc['lowest_month']:,.2f})."})
-    elif inc.get("pay_schedule_told") and inc["pay_schedule_told"].get("varies") and snap.get("expected_next_paycheck"):
-        out.append({"id": "irregular", "severity": "low", "icon": "wave",
-                    "title": "Planning with a smaller paycheck",
-                    "detail": f"You said your pay changes, so BudgetWise counts on ${snap['expected_next_paycheck']:,.2f}, a bit less than usual. Extra money is a bonus."})
+        out.append(
+            {
+                "id": "irregular",
+                "severity": "low",
+                "icon": "wave",
+                "title": "Your income changes from check to check",
+                "detail": f"Monthly income swung {inc['swing_percent']}% over 3 months, so BudgetWise plans with your lower months (${inc['lowest_month']:,.2f}).",
+            }
+        )
+    elif (
+        inc.get("pay_schedule_told")
+        and inc["pay_schedule_told"].get("varies")
+        and snap.get("expected_next_paycheck")
+    ):
+        out.append(
+            {
+                "id": "irregular",
+                "severity": "low",
+                "icon": "wave",
+                "title": "Planning with a smaller paycheck",
+                "detail": f"You said your pay changes, so BudgetWise counts on ${snap['expected_next_paycheck']:,.2f}, a bit less than usual. Extra money is a bonus.",
+            }
+        )
     lp = snap.get("last_plan")
     if lp and lp.get("stuck_to_plan"):
-        out.append({"id": "plan_win", "severity": "good", "icon": "check",
-                    "title": "You stuck to last week's plan", "detail": lp["summary"]})
+        out.append(
+            {
+                "id": "plan_win",
+                "severity": "good",
+                "icon": "check",
+                "title": "You stuck to last week's plan",
+                "detail": lp["summary"],
+            }
+        )
     return out[:6]
 
 
@@ -705,18 +1126,25 @@ def _nice(iso: str) -> str:
 
 
 # ------------------------------------------------------------------ actions
-def can_afford(account_id: str | None, amount: float, when: str | None = None, what: str = "") -> dict:
+def can_afford(
+    account_id: str | None, amount: float, when: str | None = None, what: str = ""
+) -> dict:
     """Would this purchase still leave enough money until payday?"""
     snap = snapshot(account_id)
     amount = _r(abs(float(amount)))
     balance_known = "balance" not in snap["readiness"]["missing"]
     if not snap["readiness"]["ready"]:
         return {
-            "item": what or "this purchase", "amount": amount, "verdict": "unknown",
+            "item": what or "this purchase",
+            "amount": amount,
+            "verdict": "unknown",
             "reason": "There is not enough information for a safe-to-spend verdict.",
-            "missing": snap["readiness"]["missing"], "balance_known": balance_known,
+            "missing": snap["readiness"]["missing"],
+            "balance_known": balance_known,
             "balance": snap["balance"] if balance_known else None,
-            "remaining_balance": _r(snap["balance"] - amount) if balance_known else None,
+            "remaining_balance": (
+                _r(snap["balance"] - amount) if balance_known else None
+            ),
         }
     after_total = _r(snap["safe_to_spend_total"] - amount)
     days = snap["safe_to_spend_window_days"]
@@ -729,57 +1157,97 @@ def can_afford(account_id: str | None, amount: float, when: str | None = None, w
     if low_after < 0:
         verdict, reason = "no", "It would make your projected balance fall below zero."
     elif after_total < 0:
-        verdict, reason = "no", "It would use money already needed for bills and your cushion."
+        verdict, reason = (
+            "no",
+            "It would use money already needed for bills and your cushion.",
+        )
     elif amount > max(snap["left_today"], 0.0):
-        verdict, reason = "tight", "It is more than the amount left for today, even though it may fit in the longer plan."
+        verdict, reason = (
+            "tight",
+            "It is more than the amount left for today, even though it may fit in the longer plan.",
+        )
     elif after_per_day < typical * 0.75:
-        verdict, reason = "tight", "You could, but the rest of the days until payday would be very tight."
+        verdict, reason = (
+            "tight",
+            "You could, but the rest of the days until payday would be very tight.",
+        )
     else:
         verdict, reason = "yes", "It fits within your safe-to-spend money."
     return {
-        "item": what or "this purchase", "amount": amount, "verdict": verdict, "reason": reason,
-        "safe_to_spend_before": snap["safe_to_spend_total"], "safe_to_spend_after": after_total,
-        "left_today": snap["left_today"], "over_today": amount > max(snap["left_today"], 0.0),
-        "per_day_before": before_per_day, "per_day_after": after_per_day, "days_after_today": max(days - 1, 0),
-        "days_until_payday": snap["days_until_payday"], "planning_window_days": days,
+        "item": what or "this purchase",
+        "amount": amount,
+        "verdict": verdict,
+        "reason": reason,
+        "safe_to_spend_before": snap["safe_to_spend_total"],
+        "safe_to_spend_after": after_total,
+        "left_today": snap["left_today"],
+        "over_today": amount > max(snap["left_today"], 0.0),
+        "per_day_before": before_per_day,
+        "per_day_after": after_per_day,
+        "days_after_today": max(days - 1, 0),
+        "days_until_payday": snap["days_until_payday"],
+        "planning_window_days": days,
         "next_payday": snap["next_payday"],
-        "typical_daily_spending": typical, "lowest_balance_after": low_after,
-        "goal_needed_per_week": snap["goal"]["needed_per_week"] if snap["goal"] else None,
+        "typical_daily_spending": typical,
+        "lowest_balance_after": low_after,
+        "goal_needed_per_week": (
+            snap["goal"]["needed_per_week"] if snap["goal"] else None
+        ),
     }
 
 
-def build_weekly_plan(account_id: str | None, save_this_week: float, focus_category: str, cut_percent: int = 20) -> dict:
+def build_weekly_plan(
+    account_id: str | None,
+    save_this_week: float,
+    focus_category: str,
+    cut_percent: int = 20,
+) -> dict:
     """The math for a 7-day plan. The Planner agent chooses the strategy; this computes every number.
-    Fix from M3: the focus cap is never looser than last week's cap for the same category."""
+    Fix from M3: the focus cap is never looser than last week's cap for the same category.
+    """
     account_id = account_id or store.active_account_id()
     snap = snapshot(account_id)
     txns = store.load_transactions(account_id)
     if not snap["readiness"]["ready"]:
-        return {"error": "Add your balance, next payday, expected income, bills and everyday spending before building a spending plan."}
+        return {
+            "error": "Add your balance, next payday, expected income, bills and everyday spending before building a spending plan."
+        }
     as_of = date.fromisoformat(snap["as_of"])
     weekly_safe = snap["weekly_safe_to_spend"]
     if weekly_safe <= 0:
-        return {"error": "Nothing is safe to spend before payday, so focus on covering bills first."}
+        return {
+            "error": "Nothing is safe to spend before payday, so focus on covering bills first."
+        }
     try:
         save_this_week = _r(save_this_week)
         cut_percent = int(cut_percent)
     except (TypeError, ValueError):
-        return {"error": "save_this_week must be a number and cut_percent a whole number"}
+        return {
+            "error": "save_this_week must be a number and cut_percent a whole number"
+        }
     max_saving = snap["weekly_saving_capacity"]
     if not 0 <= save_this_week <= max_saving:
-        return {"error": f"save_this_week must be between 0 and {max_saving} (this week's saving capacity)"}
+        return {
+            "error": f"save_this_week must be between 0 and {max_saving} (this week's saving capacity)"
+        }
     if not 0 <= cut_percent <= 50:
         return {"error": "cut_percent must be between 0 and 50"}
     last30 = spending_by_category(txns, as_of - timedelta(days=29), as_of)
     focus = str(focus_category).strip().lower()
-    history_days = len({t["date"] for t in txns if t["amount"] < 0 and t["category"] in FLEXIBLE})
+    history_days = len(
+        {t["date"] for t in txns if t["amount"] < 0 and t["category"] in FLEXIBLE}
+    )
     category_entries = defaultdict(int)
     for txn in txns:
         if txn["amount"] < 0 and txn["date"] >= as_of - timedelta(days=29):
             category_entries[txn["category"]] += 1
     # A single purchase is not a spending habit. Use a category-specific cap only after
     # the same evidence threshold as dashboard insights: a week of history and 3 entries.
-    options = [c for c in last30 if c in FLEXIBLE and history_days >= 7 and category_entries[c] >= 3]
+    options = [
+        c
+        for c in last30
+        if c in FLEXIBLE and history_days >= 7 and category_entries[c] >= 3
+    ]
     if not options:
         focus = "other"
     elif focus not in options:
@@ -788,29 +1256,56 @@ def build_weekly_plan(account_id: str | None, save_this_week: float, focus_categ
     allowance = _r(min(weekly_safe - save_this_week, typical_weekly or weekly_safe))
     weekly_avg = typical_weekly if not options else _r(last30[focus] * 7 / 30)
     cap = _r(min(weekly_avg * (100 - cut_percent) / 100, allowance))
-    prev = next((p for p in reversed(store.load_plans(account_id)) if p.get("focus_category") == focus), None)
+    prev = next(
+        (
+            p
+            for p in reversed(store.load_plans(account_id))
+            if p.get("focus_category") == focus
+        ),
+        None,
+    )
     capped_by_last = False
-    if prev and prev.get("focus_category_cap") is not None and cap > prev["focus_category_cap"]:
+    if (
+        prev
+        and prev.get("focus_category_cap") is not None
+        and cap > prev["focus_category_cap"]
+    ):
         cap, capped_by_last = _r(prev["focus_category_cap"]), True
     g = snap["goal"]
     return {
-        "week_start": as_of.isoformat(), "week_end": (as_of + timedelta(days=6)).isoformat(),
-        "weekly_safe_to_spend": weekly_safe, "save_this_week": save_this_week,
-        "weekly_spending_allowance": allowance, "daily_limit": _r(allowance / 7),
-        "focus_category": focus, "focus_label": "Everyday spending" if not options else label(focus), "focus_weekly_average": weekly_avg,
-        "cut_percent": cut_percent, "focus_category_cap": cap, "freed_up_by_cut": _r(weekly_avg - cap),
+        "week_start": as_of.isoformat(),
+        "week_end": (as_of + timedelta(days=6)).isoformat(),
+        "weekly_safe_to_spend": weekly_safe,
+        "save_this_week": save_this_week,
+        "weekly_spending_allowance": allowance,
+        "daily_limit": _r(allowance / 7),
+        "focus_category": focus,
+        "focus_label": "Everyday spending" if not options else label(focus),
+        "focus_weekly_average": weekly_avg,
+        "cut_percent": cut_percent,
+        "focus_category_cap": cap,
+        "freed_up_by_cut": _r(weekly_avg - cap),
         "cap_kept_at_last_week": capped_by_last,
-        "goal_name": g["name"] if g else None, "goal_needed_per_week": g["needed_per_week"] if g else None,
-        "on_track_for_goal": (save_this_week + 0.005 >= g["needed_per_week"]) if g else None,
+        "goal_name": g["name"] if g else None,
+        "goal_needed_per_week": g["needed_per_week"] if g else None,
+        "on_track_for_goal": (
+            (save_this_week + 0.005 >= g["needed_per_week"]) if g else None
+        ),
     }
 
 
-def check_last_plan(account_id: str | None, txns=None, as_of: date | None = None) -> dict | None:
+def check_last_plan(
+    account_id: str | None, txns=None, as_of: date | None = None
+) -> dict | None:
     """Compare the most recent finished plan with what was actually spent."""
     account_id = account_id or store.active_account_id()
     txns = txns if txns is not None else store.load_transactions(account_id)
     as_of = as_of or _as_of(txns)[0]
-    plans = [p for p in store.load_plans(account_id) if date.fromisoformat(p["week_start"]) < as_of]
+    plans = [
+        p
+        for p in store.load_plans(account_id)
+        if date.fromisoformat(p["week_start"]) < as_of
+    ]
     if not plans:
         return None
     plan = plans[-1]
@@ -820,23 +1315,40 @@ def check_last_plan(account_id: str | None, txns=None, as_of: date | None = None
     if days < 1:
         return None
     spent = spending_by_category(txns, start, end)
-    flex = _r(sum(v for k, v in spent.items() if k in FLEXIBLE and k != "subscriptions"))
+    flex = _r(
+        sum(v for k, v in spent.items() if k in FLEXIBLE and k != "subscriptions")
+    )
     avg = _r(flex / days)
     focus_spent = spent.get(plan["focus_category"], 0.0)
     ok_daily = avg <= plan["daily_limit"]
     ok_focus = focus_spent <= plan["focus_category_cap"]
-    summary = (f"You averaged ${avg:,.2f}/day vs a ${plan['daily_limit']:,.2f} limit, and spent "
-               f"${focus_spent:,.2f} on {label(plan['focus_category']).lower()} vs a ${plan['focus_category_cap']:,.2f} cap.")
+    summary = (
+        f"You averaged ${avg:,.2f}/day vs a ${plan['daily_limit']:,.2f} limit, and spent "
+        f"${focus_spent:,.2f} on {label(plan['focus_category']).lower()} vs a ${plan['focus_category_cap']:,.2f} cap."
+    )
     return {
-        "week_start": plan["week_start"], "days_checked": days, "daily_limit": plan["daily_limit"],
-        "actual_daily_average": avg, "focus_category": plan["focus_category"],
-        "focus_category_cap": plan["focus_category_cap"], "actual_focus_spent": _r(focus_spent),
-        "planned_savings": plan.get("save_this_week"), "stuck_to_daily_limit": ok_daily,
-        "stuck_to_focus_cap": ok_focus, "stuck_to_plan": ok_daily and ok_focus, "summary": summary,
+        "week_start": plan["week_start"],
+        "days_checked": days,
+        "daily_limit": plan["daily_limit"],
+        "actual_daily_average": avg,
+        "focus_category": plan["focus_category"],
+        "focus_category_cap": plan["focus_category_cap"],
+        "actual_focus_spent": _r(focus_spent),
+        "planned_savings": plan.get("save_this_week"),
+        "stuck_to_daily_limit": ok_daily,
+        "stuck_to_focus_cap": ok_focus,
+        "stuck_to_plan": ok_daily and ok_focus,
+        "summary": summary,
     }
 
 
-def search_transactions(account_id: str | None, query: str = "", category: str = "", days: int = 30, limit: int = 15) -> dict:
+def search_transactions(
+    account_id: str | None,
+    query: str = "",
+    category: str = "",
+    days: int = 30,
+    limit: int = 15,
+) -> dict:
     """Find transactions by merchant text and/or category over the last N days."""
     account_id = account_id or store.active_account_id()
     txns = store.load_transactions(account_id)
@@ -844,20 +1356,36 @@ def search_transactions(account_id: str | None, query: str = "", category: str =
     days = max(1, min(int(days), 120))
     q = (query or "").strip().upper()
     cat = (category or "").strip().lower()
-    rows = [t for t in txns if t["date"] > as_of - timedelta(days=days)
-            and (not q or q in t["description"].upper() or q in t["merchant"].upper())
-            and (not cat or t["category"] == cat)]
+    rows = [
+        t
+        for t in txns
+        if t["date"] > as_of - timedelta(days=days)
+        and (not q or q in t["description"].upper() or q in t["merchant"].upper())
+        and (not cat or t["category"] == cat)
+    ]
     spent = _r(sum(-t["amount"] for t in rows if t["amount"] < 0))
     return {
-        "query": query, "category": cat or None, "days": days, "matches": len(rows), "total_spent": spent,
-        "transactions": [{"date": t["date"].isoformat(), "merchant": t["merchant"], "amount": t["amount"],
-                          "category": t["category"]} for t in rows[:limit]],
+        "query": query,
+        "category": cat or None,
+        "days": days,
+        "matches": len(rows),
+        "total_spent": spent,
+        "transactions": [
+            {
+                "date": t["date"].isoformat(),
+                "merchant": t["merchant"],
+                "amount": t["amount"],
+                "category": t["category"],
+            }
+            for t in rows[:limit]
+        ],
     }
 
 
 def compact_snapshot(snap: dict) -> dict:
     """A smaller version of the snapshot for the agents' context (fewer tokens = faster).
-    Dates are written out with the weekday ("Sun Nov 15") so the model never has to work them out."""
+    Dates are written out with the weekday ("Sun Nov 15") so the model never has to work them out.
+    """
     m = snap["month"]
     facts = {
         "readiness": snap["readiness"],
@@ -868,7 +1396,10 @@ def compact_snapshot(snap: dict) -> dict:
         "next_payday": snap["next_payday"],
         "days_until_payday": snap["days_until_payday"],
         "expected_next_paycheck": snap["expected_next_paycheck"],
-        "bills_before_payday": [{"name": b["name"], "amount": b["amount"], "due": b["next_due"]} for b in snap["bills_before_payday"]],
+        "bills_before_payday": [
+            {"name": b["name"], "amount": b["amount"], "due": b["next_due"]}
+            for b in snap["bills_before_payday"]
+        ],
         "bills_before_payday_total": snap["bills_before_payday_total"],
         "savings_cushion": snap["savings_buffer"],
         "safe_to_spend_total": snap["safe_to_spend_total"],
@@ -884,25 +1415,72 @@ def compact_snapshot(snap: dict) -> dict:
         "next_cycle_expected_income": snap["next_cycle"]["expected_income"],
         "forecast_lowest_balance": snap["forecast"]["lowest"],
         "forecast_lowest_date": snap["forecast"]["lowest_date"],
-        "spending_last_30_days": {r["category"]: r["amount"] for r in snap["spending_last_30_days"][:8]},
+        "spending_last_30_days": {
+            r["category"]: r["amount"] for r in snap["spending_last_30_days"][:8]
+        },
         "this_month_vs_last": {
             "this_month_total_so_far": m["this_month_total"],
             "last_month_same_days_total": m["last_month_same_days_total"],
-            "by_category": [{k: r[k] for k in ("category", "this_month", "last_month_same_days", "change")} for r in m["categories"][:6]],
+            "by_category": [
+                {
+                    k: r[k]
+                    for k in (
+                        "category",
+                        "this_month",
+                        "last_month_same_days",
+                        "change",
+                    )
+                }
+                for r in m["categories"][:6]
+            ],
         },
         "subscriptions_monthly_total": snap["subscriptions"]["monthly_total"],
-        "subscriptions": [{"name": s["name"], "amount": s["amount"], "next": s["next_due"]} for s in snap["subscriptions"]["items"]],
-        "income": {k: snap["income"][k] for k in ("average_monthly", "lowest_month", "swing_percent", "irregular", "main_source", "pay_every_days")},
+        "subscriptions": [
+            {"name": s["name"], "amount": s["amount"], "next": s["next_due"]}
+            for s in snap["subscriptions"]["items"]
+        ],
+        "income": {
+            k: snap["income"][k]
+            for k in (
+                "average_monthly",
+                "lowest_month",
+                "swing_percent",
+                "irregular",
+                "main_source",
+                "pay_every_days",
+            )
+        },
         "goal": snap["goal"],
         "last_week_plan_check": snap["last_plan"],
         "estimates_logged_last_30_days": snap["estimates"],
-        "bills_and_pay_you_told_me": [{k: s[k] for k in ("kind", "name", "amount", "every", "day_of_month", "next_date", "varies")}
-                                      for s in snap.get("told", [])],
+        "bills_and_pay_you_told_me": [
+            {
+                k: s[k]
+                for k in (
+                    "kind",
+                    "name",
+                    "amount",
+                    "every",
+                    "day_of_month",
+                    "next_date",
+                    "varies",
+                )
+            }
+            for s in snap.get("told", [])
+        ],
     }
     if not snap["readiness"]["ready"]:
-        for key in ("safe_to_spend_total", "safe_per_day", "per_day_after_today", "left_today",
-                    "forecast_lowest_balance", "forecast_lowest_date", "held_back_for_bills_after_payday",
-                    "next_cycle_bills_total", "next_cycle_expected_income"):
+        for key in (
+            "safe_to_spend_total",
+            "safe_per_day",
+            "per_day_after_today",
+            "left_today",
+            "forecast_lowest_balance",
+            "forecast_lowest_date",
+            "held_back_for_bills_after_payday",
+            "next_cycle_bills_total",
+            "next_cycle_expected_income",
+        ):
             facts.pop(key, None)
     if not snap["readiness"]["payday_known"]:
         facts["next_payday"] = None
@@ -922,5 +1500,9 @@ def _friendly_dates(obj):
         return [_friendly_dates(v) for v in obj]
     if isinstance(obj, str) and _ISO.match(obj):
         d = date.fromisoformat(obj)
-        return d.strftime("%a %b ") + str(d.day) + (f" {d.year}" if d.year != store.today().year else "")
+        return (
+            d.strftime("%a %b ")
+            + str(d.day)
+            + (f" {d.year}" if d.year != store.today().year else "")
+        )
     return obj
